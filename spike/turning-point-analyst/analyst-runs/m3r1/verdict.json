@@ -1,0 +1,22 @@
+{
+  "cause_type": "player_fatigue",
+  "team": "B",
+  "player_id": "B2",
+  "onset_minute": 50,
+  "one_sentence": "Harbour City's right back Rafe Tindall visibly tired from about the 50th minute, slowing from around 12 km/h to under 5 km/h, and Northgate began attacking the space behind him, which turned the match in their favour.",
+  "evidence": [
+    "B2 mean speed fell from 12.1 km/h (min 0-44) to 3.8 km/h (min 65-94); 9.9 km/h in min 50-54 and 7.0 km/h in min 55-59",
+    "A on-ball passes, carries and shots in the attacking third within 15 m of B2: 12% (min 0-44, n=40) vs 49% (min 57-94, n=57)",
+    "A shots per minute rose from 0.088 (min 0-56, 5 shots, xG 0.38) to 0.316 (min 57-94, 12 shots, xG 1.40); Poisson p=0.045",
+    "B shots per minute fell from 0.34 (19 shots, xG 2.01) to 0.18 (7 shots, xG 0.70) over the same windows"
+  ],
+  "alternatives_ruled_out": [
+    "Substitutions: B7 off for B13 at min 63 and A11 off for A15 at min 71 both came after the shift began at min 57; B13 ran at normal speed (about 10.6 km/h)",
+    "Cards: A4 yellow at min 33 is before the shift; B8 yellow at min 69 is after the shift began, so it cannot be the cause",
+    "Team-wide fatigue: other Harbour City outfielders stayed at 10.3 to 10.9 km/h across all windows, and Northgate speed was unchanged at 10.0 to 10.8 km/h",
+    "Team tactical change: no change in the speed or position pattern of other Harbour City players; the decline is isolated to B2",
+    "Pressure flag: under_pressure for team B drops from 42 events to 0 after min 57 for all players, so it is an unreliable signal and was not used",
+    "Chance: the Northgate shot rise is borderline (p=0.045) and Harbour City's xG fell, so chance is not fully excluded but the territorial shift lines up with B2's decline"
+  ],
+  "confidence": 0.6
+}

@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tempo mock-up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=Noto+Kufi+Arabic:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --paper: #EDF1E8;
+  --ink: #0B2A20;
+  --muted: #4E5F56;
+  --screen: #08241B;
+  --pitch: #1F5A3D;
+  --ng: #FF8A3D;
+  --hc: #4FB4E6;
+  --sig: #E23B2E;
+  --typ: #93A39A;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", sans-serif;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  background-color: #EDF1E8;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+header { padding-top: 56px; }
+h1 { font-size: 44px; font-weight: 700; line-height: 1.15; margin: 0 0 16px; }
+.lede { font-size: 18px; color: var(--muted); max-width: 720px; margin: 0; }
+section { margin-bottom: 72px; }
+h2 { font-size: 26px; font-weight: 650; margin: 0 0 6px; line-height: 1.25; }
+.sub { font-size: 16px; color: var(--muted); margin: 0 0 28px; }
+.panel {
+  background: #FFFFFF;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.05);
+  padding: 28px;
+}
+.note { font-size: 14px; color: var(--muted); margin: 14px 0 0; }
+.chip {
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 4px 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.btn {
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,.55);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 15px;
+  color: #fff;
+  background: transparent;
+  font-family: inherit;
+}
+
+/* Section 1: broadcast screen */
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--screen);
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 0;
+}
+.screen svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* Section 2: phones */
+.phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; justify-items: center; }
+.phone {
+  width: 100%;
+  max-width: 300px;
+  background: var(--screen);
+  border-radius: 36px;
+  padding: 22px;
+  min-height: 400px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.phone .mode { align-self: flex-start; background: rgba(255,255,255,.14); color: #fff; }
+.phone .score { font-size: 13px; opacity: .7; margin: 0; }
+.phone .big { font-size: 22px; font-weight: 650; line-height: 1.3; margin: 0; }
+.phone .btn { align-self: flex-start; }
+.stat { margin-top: 14px; }
+.stat .lbl { font-size: 14px; opacity: .9; }
+.stat .vals { font-size: 13px; opacity: .7; }
+.bar { position: relative; height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 5px; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; display: block; }
+.bar .before { background: rgba(255,255,255,.35); }
+.bar .after.sig { background: var(--sig); }
+.bar .after.amb { background: var(--ng); }
+.tick { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 2px dashed rgba(255,255,255,.6); }
+.legend { font-size: 12px; opacity: .7; margin: 14px 0 0; }
+.ar { direction: rtl; text-align: right; line-height: 1.6; font-family: "Noto Sans Arabic", system-ui, sans-serif; }
+
+/* Section 3: scales */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.ptitle { font-size: 18px; font-weight: 650; margin: 0; }
+.bignum { font-size: 56px; font-weight: 700; line-height: 1.1; margin: 10px 0 0; }
+.grid100 { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 3px; margin-top: 22px; }
+.grid100 i { display: block; aspect-ratio: 1 / 1; background: #DDE4D6; border-radius: 2px; }
+.grid100 i:nth-child(-n+9) { background: var(--ng); }
+
+/* Section 4: player */
+.player { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; align-items: center; }
+.badge {
+  width: 96px; height: 96px; border-radius: 50%; background: var(--ng);
+  color: var(--ink); font-size: 36px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.pname { font-size: 20px; font-weight: 650; margin: 14px 0 0; }
+.prole { font-size: 14px; color: var(--muted); margin: 2px 0 0; }
+.timeline { overflow-x: auto; }
+.timeline svg { display: block; width: 100%; height: auto; min-width: 640px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+.card { background: #F1F4EC; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 650; }
+.card .sec { display: block; font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 4px; }
+
+/* Section 5: producer */
+.producer { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.producer h3 { font-size: 18px; font-weight: 650; margin: 0 0 16px; }
+.story {
+  display: flex; align-items: center; gap: 14px;
+  background: #F1F4EC; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+}
+.story .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.story .txt { flex: 1; min-width: 0; }
+.story .t { font-size: 16px; font-weight: 650; margin: 0; }
+.story .s { font-size: 14px; color: var(--muted); margin: 2px 0 0; }
+.st-on { background: var(--ink); color: #fff; }
+.st-out { border: 1px solid var(--ink); color: var(--ink); }
+.st-grey { border: 1px solid var(--typ); color: var(--muted); }
+.rule {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: #F1F4EC; border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+  font-size: 16px;
+}
+.toggle { position: relative; width: 44px; height: 24px; border-radius: 999px; background: var(--ink); flex: none; }
+.toggle::after { content: ""; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+.value { background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 14px; flex: none; }
+
+/* Section 6: how it works */
+.flow { overflow-x: auto; }
+.flow svg { display: block; width: 100%; height: auto; min-width: 900px; }
+
+footer { margin-top: 72px; margin-bottom: 48px; font-size: 14px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .phones { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .two, .producer, .player, .stats { grid-template-columns: 1fr; }
+  h1 { font-size: 36px; }
+  .panel { padding: 22px; }
+}
+svg{max-width:100%;height:auto}
+.story svg{width:22px;height:22px}
+.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.four .card .n{display:block;font-size:34px;font-weight:700;line-height:1.1}
+.strike{text-decoration:line-through;text-decoration-color:var(--sig);text-decoration-thickness:2px}
+.kick{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:24px;align-items:start}
+.svc{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.svc .chip{background:#F1F4EC;color:var(--ink);font-size:13px;padding:6px 12px}
+@media (max-width:700px){.kick{grid-template-columns:1fr}}
+.page-head,header{margin-bottom:72px}
+
+/* ---------- identity: pine, chalk, two kits, telestrator yellow ---------- */
+:root{--pine:#0E3B2C;--pine2:#0A2E22;--turf:#1C6B48;--turf2:#207652;--chalk:#F3F6EF;--mist:#A9C2B4;--ng:#FF8A3D;--hc:#7FD0F5;--tele:#FFE44D;--tally:#E23B2E;--inkd:#08241B}
+body{background:var(--pine);color:var(--chalk);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.5}
+h1,h2,.ptitle,.producer h3,.bignum,.pname,.badge,.four .card .n{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif;letter-spacing:.005em}
+header{padding-top:40px;margin-bottom:26px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 40px;align-items:end}
+h1{font-size:clamp(40px,5.4vw,72px);font-weight:700;line-height:.95;margin:0;white-space:nowrap}
+.lede{font-size:18px;color:var(--mist);max-width:56ch;margin:0 0 6px}
+@media (max-width:900px){header{grid-template-columns:1fr}h1{white-space:normal}}
+h2{font-size:38px;font-weight:600;line-height:1.05;margin:0 0 8px}
+.ptitle,.producer h3{font-size:22px;font-weight:600}
+.bignum{font-size:76px;line-height:.95}
+.panel{box-shadow:none;border-radius:10px}
+.story,.rule,.card{border-radius:8px}
+.phone{border-radius:30px}
+.ar,.p-ar{font-family:"Noto Kufi Arabic","Barlow",system-ui,sans-serif}
+.bar .after.sig{background:var(--tele)}
+.details{background:#EDF1E8;color:#0B2A20;padding:88px 0 8px;margin-top:88px}
+.details .sub{color:#4E5F56}
+.details section:last-of-type{margin-bottom:40px}
+.details .behind{margin-bottom:44px}
+.details .bh{font-size:56px;line-height:1}
+footer{margin:0;padding:8px 0 56px;color:#4E5F56}
+.strike{text-decoration-color:var(--tally)}
+:focus-visible{outline:3px solid var(--tele);outline-offset:3px}
+
+/* ---------- the stage ---------- */
+.stage{margin-bottom:0}
+.gallery{display:grid;grid-template-columns:minmax(0,1fr) 292px;grid-template-areas:"pgm phone" "desk phone";gap:18px 22px;align-items:start}
+.monitor{margin:0}
+.pgm{grid-area:pgm}
+.bscreen{position:relative;aspect-ratio:16/9;background:var(--inkd);border-radius:14px;overflow:hidden}
+.bscreen svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.umd{display:flex;align-items:center;gap:9px;margin-top:10px;font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:500;color:var(--mist)}
+.lamp{width:10px;height:10px;border-radius:50%;background:#2B5A48;transition:background .25s}
+.lamp.on{background:var(--tally)}
+.phonecol{grid-area:phone}
+.ph{position:relative;background:var(--inkd);border-radius:34px;padding:22px 20px;height:540px;overflow:hidden}
+.ph .mode{display:inline-block;font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:600;background:rgba(243,246,239,.12);border-radius:999px;padding:3px 12px}
+.ph .sc{font-size:14px;color:var(--mist);margin:10px 0 0;font-variant-numeric:tabular-nums}
+.layer{position:absolute;left:20px;right:20px;top:92px;opacity:0;transform:translateY(10px);transition:opacity .45s ease,transform .45s ease;pointer-events:none}
+.ph[data-state="quiet"] .p-quiet,.ph[data-state="casual"] .p-casual,.ph[data-state="analyst"] .p-analyst,.ph[data-state="ar"] .p-ar{opacity:1;transform:none}
+.ph h3{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:600;margin:0 0 12px}
+.wf{display:flex;gap:10px;align-items:flex-start;font-size:15.5px;line-height:1.35;margin-bottom:14px;color:var(--chalk)}
+.wf .tk{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid #4C7564;margin-top:1px;position:relative;transition:background .3s,border-color .3s}
+.wf.done .tk{background:var(--tele);border-color:var(--tele)}
+.wf.done .tk::after{content:"";position:absolute;left:5px;top:1.5px;width:5px;height:9px;border:solid var(--inkd);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.wf small{display:block;color:var(--mist);font-size:13px}
+.quietnote{font-size:14px;color:var(--mist);margin-top:22px}
+.bigline{font-family:"Barlow Condensed",sans-serif;font-size:30px;font-weight:600;line-height:1.12;margin:0 0 18px}
+.p-ar .bigline{font-family:"Noto Kufi Arabic",sans-serif;font-size:23px;line-height:1.7;font-weight:600}
+.pill{display:inline-block;border:1.5px solid rgba(243,246,239,.55);border-radius:999px;padding:7px 15px;font-size:14.5px}
+.srow{margin-bottom:16px}.srow .l{font-size:14.5px}.srow .v{font-size:13px;color:var(--mist);font-variant-numeric:tabular-nums}
+.sb{position:relative;height:8px;border-radius:4px;background:rgba(243,246,239,.09);margin-top:5px;overflow:hidden}
+.sb i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;width:0;transition:width .9s cubic-bezier(.2,.7,.2,1) .25s}
+.sb .b{background:rgba(243,246,239,.38)}.sb .a{background:var(--tele)}
+.ph[data-state="analyst"] .sb i{width:var(--w)}
+.desk{grid-area:desk;display:grid;grid-template-columns:1fr 1.2fr;gap:14px 18px}
+.dcell{background:var(--pine2);border-radius:10px;padding:16px 18px;min-height:118px}
+.dcell h3{font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:500;color:var(--mist);margin:0 0 8px}
+#commline{font-size:19px;line-height:1.35;margin:0;min-height:2.7em}
+#commline.idle{color:#5F8474}
+.caret{display:inline-block;width:2px;height:1.05em;background:var(--tele);vertical-align:-2px;margin-left:2px}
+.prow{display:flex;align-items:center;gap:12px}
+.prow .t{font-size:17px;font-weight:500;margin:0;line-height:1.25}.prow .s{font-size:14px;color:var(--mist);margin:2px 0 0}
+.prow .txt{flex:1;min-width:0}
+.pchip{flex:none;font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:600;border-radius:999px;padding:3px 12px;border:1.5px solid #4C7564;color:var(--mist);white-space:nowrap}
+.pchip.hold{border-color:var(--tele);color:var(--tele)}
+.pchip.air{background:var(--tally);border-color:var(--tally);color:#fff}
+.ph[data-state="num"] .p-num,.ph[data-state="metric"] .p-metric,.ph[data-state="focus"] .p-focus,.ph[data-state="recap"] .p-recap{opacity:1;transform:none}
+.ph[data-state="metric"] .sb i{width:var(--w)}
+.pbig{font-family:"Barlow Condensed",sans-serif;font-size:64px;font-weight:700;line-height:1;margin:0 0 18px;font-variant-numeric:tabular-nums}
+.psub{font-size:15.5px;line-height:1.4;margin:0;color:var(--chalk)}
+.pscale{position:relative;height:12px;border-radius:6px;background:rgba(243,246,239,.12);margin:0 0 34px}
+.pscale.off{display:none}
+.pscale .most{position:absolute;left:38%;width:30%;top:0;bottom:0;border-radius:6px;background:rgba(243,246,239,.3)}
+.pscale .typ{position:absolute;left:52%;top:-5px;bottom:-5px;border-left:2px dashed var(--chalk)}
+.pscale .mk{position:absolute;left:var(--x,80%);top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--ng);transition:left .8s cubic-bezier(.2,.7,.2,1) .2s}
+.pscale .tl{position:absolute;left:52%;top:18px;transform:translateX(-50%);font-size:12.5px;color:var(--mist);white-space:nowrap}
+.frow{display:flex;gap:12px;font-size:15.5px;line-height:1.35;margin-bottom:13px}
+.frow b{flex:none;width:30px;font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600;color:var(--tele)}
+.frow.late{opacity:0;transition:opacity .5s}.frow.late.in{opacity:1}
+.pchip.rej{border-color:var(--tally);color:#FF9A90}
+.bscreen canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0}
+.desk .wide{grid-column:1/-1;min-height:0}
+.dcell{min-height:104px}
+#heard{font-size:19px;line-height:1.35;margin:0;min-height:2.7em}
+#heard.idle{color:#5F8474}
+#heard mark{background:none;color:var(--tele);font-weight:600}
+.wave{display:inline-flex;gap:3px;align-items:center;height:14px;margin-left:8px;vertical-align:-1px;opacity:.35}
+.wave i{width:3px;height:4px;border-radius:2px;background:var(--mist)}
+.wave.on{opacity:1}.wave.on i{background:var(--tele);animation:wv .5s ease-in-out infinite alternate}
+.wave.on i:nth-child(2){animation-delay:.12s}.wave.on i:nth-child(3){animation-delay:.24s}.wave.on i:nth-child(4){animation-delay:.08s}.wave.on i:nth-child(5){animation-delay:.3s}
+@keyframes wv{from{height:3px}to{height:14px}}
+.ph[data-state="form"] .p-form{opacity:1;transform:none}
+.frm{margin-bottom:13px}.frm .l{font-size:14.5px}.frm .v{font-size:13px;color:var(--mist)}
+.ft{position:relative;height:8px;border-radius:4px;background:rgba(243,246,239,.09);margin-top:6px}
+.ft::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;border-left:2px dashed rgba(243,246,239,.7)}
+.ft i{position:absolute;top:50%;left:var(--x,50%);width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--tele);transition:left .8s cubic-bezier(.2,.7,.2,1)}
+.beats{display:flex;align-items:flex-start;gap:14px;margin-top:26px}
+#pp{flex:none;width:46px;height:46px;border-radius:50%;border:0;background:var(--chalk);cursor:pointer;display:grid;place-items:center}
+#pp svg{width:18px;height:18px}
+.track{position:relative;flex:1;display:flex;flex-wrap:wrap;gap:5px}
+.track button{position:relative;flex:0 0 auto;min-width:0;border:0;background:var(--pine2);color:var(--mist);font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:500;padding:11px 9px;text-align:left;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-radius:6px}
+.track button .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#1A5B45}
+.track button span{position:relative}
+.track button.cur{color:var(--chalk)}
+.stagecap{color:var(--chalk);font-size:21px;line-height:1.35;max-width:66ch;margin:22px 0 0;min-height:2.8em}
+@media (max-width:900px){.gallery{grid-template-columns:1fr;grid-template-areas:"pgm" "desk" "phone"}.phonecol{max-width:320px}.desk{grid-template-columns:1fr}.track button{font-size:15px;padding:9px 8px}}
+@media (max-width:700px){h2{font-size:30px}.bignum{font-size:60px}}
+.arch{background:#fff;border-radius:10px;padding:22px 18px;margin-top:14px;overflow-x:auto}
+.arch h3{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:600;color:#0B2A20;margin:0 0 4px}
+.arch p{font-size:15px;color:#4E5F56;margin:0 0 14px;max-width:80ch}
+.arch .mermaid{min-width:760px;text-align:center;background:none;font-family:inherit}
+.arch .mermaid svg{max-width:100%;height:auto}
+.arch .mermaid.wide{min-width:2100px}
+.arch .mermaid.wide svg{max-width:none;width:2100px}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:#4E5F56;margin-top:12px}
+.key i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px;border:1.5px solid #0B2A20}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Tempo</h1>
+  <p class="lede">A match builds slowly toward a few moments that decide it. Tempo shows what is building, so each moment pays off: the stake before it, the reason after it, and a clear screen the rest of the time. Watch one match play out, sped up</p>
+</header>
+
+<section class="stage" aria-label="Animated walk-through of one match">
+  <div class="gallery">
+    <figure class="monitor pgm">
+      <div class="bscreen">
+        <svg id="bc" viewBox="0 0 1600 900" role="img" aria-label="Broadcast view of a football match seen from above">
+          <defs>
+            <clipPath id="cUp"><rect x="0" y="770" width="1600" height="62"/></clipPath>
+            <clipPath id="cDn"><rect x="0" y="832" width="1600" height="62"/></clipPath>
+            <marker id="tarrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFE44D"/></marker>
+          </defs>
+          <rect width="1600" height="900" fill="#08241B"/>
+          <g id="stripes"></g>
+          <g fill="none" stroke="#F3F6EF" stroke-opacity=".62" stroke-width="2.5">
+            <rect x="60" y="56" width="1480" height="690"/>
+            <line x1="800" y1="56" x2="800" y2="746"/><circle cx="800" cy="401" r="98"/>
+            <rect x="60" y="204" width="178" height="394"/><rect x="1362" y="204" width="178" height="394"/>
+            <rect x="60" y="306" width="60" height="190"/><rect x="1480" y="306" width="60" height="190"/>
+            <path d="M238,338 A80,80 0 0 1 238,464"/><path d="M1362,338 A80,80 0 0 0 1362,464"/>
+          </g>
+          <g fill="#F3F6EF" fill-opacity=".62"><circle cx="800" cy="401" r="4.5"/><circle cx="180" cy="401" r="4.5"/><circle cx="1420" cy="401" r="4.5"/></g>
+
+          <g id="tele" opacity="0">
+            <rect id="lane" x="0" y="0" width="10" height="10" rx="10" fill="#FFE44D" fill-opacity=".2"/>
+            <path id="ar1" d="" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" pathLength="1" stroke-dasharray="1" marker-end="url(#tarrow)"/>
+            <path id="ar2" d="" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" pathLength="1" stroke-dasharray="1" marker-end="url(#tarrow)"/>
+          </g>
+          <g id="km0" opacity="0"><rect x="84" y="676" width="470" height="40" rx="8" fill="#08241B" fill-opacity=".92"/><text x="100" y="704" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="600" fill="#F3F6EF">Three things to watch, from the season so far</text></g>
+          <g id="km1" opacity="0">
+            <rect x="1066" y="84" width="430" height="124" rx="14" fill="#FFE44D" fill-opacity=".2"/><rect x="1066" y="594" width="430" height="124" rx="14" fill="#FFE44D" fill-opacity=".2"/>
+            <path d="M972,150 Q1300,112 1452,300" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" marker-end="url(#tarrow)"/>
+            <path d="M972,652 Q1300,690 1452,502" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" marker-end="url(#tarrow)"/>
+            <g id="km1l"><rect x="1086" y="222" width="196" height="40" rx="8" fill="#08241B" fill-opacity=".92"/><text x="1102" y="250" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="600" fill="#F3F6EF">Shots from wide</text>
+          </g></g>
+          <g id="km2" opacity="0">
+            <rect x="-296" y="-104" width="244" height="208" rx="14" fill="#FFE44D" fill-opacity=".08" stroke="#FFE44D" stroke-width="4" stroke-dasharray="12 10"/>
+            <circle r="30" fill="none" stroke="#FFE44D" stroke-width="5"/>
+            <rect x="20" y="-56" width="20" height="28" rx="3" fill="none" stroke="#FFD21F" stroke-width="3"/>
+            <g id="km2l"><rect x="-296" y="116" width="180" height="40" rx="8" fill="#08241B" fill-opacity=".92"/><text x="-280" y="144" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="600" fill="#F3F6EF">If he is booked</text>
+          </g></g>
+          <g id="km3" opacity="0">
+            <g stroke="#FFE44D" stroke-linecap="round"><line x1="-34" y1="0" x2="-62" y2="0" stroke-width="9"/><line x1="-80" y1="0" x2="-104" y2="0" stroke-width="7" stroke-opacity=".7"/><line x1="-122" y1="0" x2="-142" y2="0" stroke-width="5" stroke-opacity=".45"/><line x1="-160" y1="0" x2="-174" y2="0" stroke-width="4" stroke-opacity=".25"/></g>
+            <circle r="24" fill="none" stroke="#FFE44D" stroke-width="4"/>
+            <g id="km3l"><rect x="-174" y="34" width="124" height="40" rx="8" fill="#08241B" fill-opacity=".92"/><text x="-158" y="62" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="600" fill="#F3F6EF">After 60'</text></g>
+          </g>
+          <g id="dots"></g>
+          <circle id="ball" r="7.5" fill="#FFFFFF" stroke="#08241B" stroke-width="2"/>
+          <line id="passln" stroke="#F3F6EF" stroke-width="5" stroke-dasharray="4 12" stroke-linecap="round" opacity="0"/>
+          <line id="trail" stroke="#FF8A3D" stroke-width="9" stroke-linecap="round" stroke-opacity=".45" opacity="0"/>
+          <circle id="ring2" r="27" fill="none" stroke="#FFE44D" stroke-width="5" opacity="0"/>
+          <circle id="ring" r="30" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" opacity="0"/>
+          <text id="stahl" font-family="Barlow Condensed, sans-serif" font-size="30" font-weight="600" fill="#F3F6EF" opacity="0">Stahl 6</text>
+          <rect id="ycard" width="20" height="28" rx="3" fill="#FFD21F" opacity="0"/>
+
+        </svg>
+        <canvas id="gl" aria-hidden="true"></canvas>
+        <svg id="hud" viewBox="0 0 1600 900" aria-hidden="true">
+          <rect x="0" y="762" width="1600" height="138" fill="#08241B"/>
+          <!-- score bug -->
+          <g font-family="Barlow Condensed, sans-serif" font-weight="600">
+            <rect x="84" y="78" width="404" height="58" rx="8" fill="#08241B" fill-opacity=".88"/>
+            <rect x="100" y="96" width="8" height="22" rx="2" fill="#FF8A3D"/><text x="118" y="118" font-size="32" fill="#F3F6EF">NOR</text><text x="182" y="118" font-size="32" fill="#F3F6EF" id="sA">0</text>
+            <rect x="218" y="96" width="8" height="22" rx="2" fill="#7FD0F5"/><text x="236" y="118" font-size="32" fill="#F3F6EF">HAR</text><text x="300" y="118" font-size="32" fill="#F3F6EF" id="sB">1</text>
+            <rect x="334" y="78" width="154" height="58" rx="8" fill="#F3F6EF"/>
+            <text id="clock" x="411" y="118" text-anchor="middle" font-size="32" fill="#08241B" style="font-variant-numeric:tabular-nums">00:00</text>
+            <g id="replayTag" opacity="0"><rect x="500" y="78" width="150" height="58" rx="8" fill="#E23B2E"/><text id="rtxt" x="575" y="118" text-anchor="middle" font-size="32" fill="#fff">Replay</text></g>
+          </g>
+          <!-- counter -->
+          <g font-family="Barlow Condensed, sans-serif" font-weight="500">
+            <rect x="1040" y="78" width="476" height="58" rx="8" fill="#08241B" fill-opacity=".88"/>
+            <text x="1060" y="117" font-size="28" fill="#A9C2B4">Data 0.4 s old</text>
+            <text id="seen" x="1380" y="117" text-anchor="end" font-size="28" fill="#A9C2B4" style="font-variant-numeric:tabular-nums">0 seen</text>
+            <text id="shown" x="1498" y="117" text-anchor="end" font-size="28" fill="#F3F6EF" style="font-variant-numeric:tabular-nums">0 shown</text>
+          </g>
+
+          <!-- the label: six words or fewer and one number -->
+          <g id="label" opacity="0">
+            <rect x="84" y="628" width="640" height="92" rx="8" fill="#08241B" fill-opacity=".94"/>
+            <rect x="84" y="628" width="10" height="92" rx="2" fill="#FFE44D"/>
+            <text x="118" y="689" font-family="Barlow Condensed, sans-serif" font-size="46" font-weight="600" fill="#F3F6EF">Stahl: 0 tackles since booking</text>
+            <rect x="740" y="652" width="150" height="44" rx="22" fill="#08241B" fill-opacity=".85" stroke="#F3F6EF" stroke-opacity=".6" stroke-width="2"/>
+            <text x="815" y="682" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="500" fill="#F3F6EF">AI, checked</text>
+          </g>
+
+          <!-- the tag: one unusual number with what is normal, for about three seconds -->
+          <g id="tag" opacity="0" font-family="Barlow Condensed, sans-serif">
+            <rect id="tagbg" x="0" y="0" width="430" height="104" rx="8" fill="#08241B" fill-opacity=".94"/>
+            <rect id="tagbar" x="0" y="0" width="10" height="104" rx="2" fill="#FF8A3D"/>
+            <text id="tagbig" x="30" y="52" font-size="50" font-weight="700" fill="#F3F6EF" style="font-variant-numeric:tabular-nums"></text>
+            <text id="tagsm" x="30" y="86" font-size="27" font-weight="500" fill="#A9C2B4"></text>
+          </g>
+
+          <g id="form" opacity="0" font-family="Barlow Condensed, sans-serif">
+            <rect x="84" y="574" width="716" height="146" rx="8" fill="#08241B" fill-opacity=".94"/>
+            <rect x="84" y="574" width="10" height="146" rx="2" fill="#7FD0F5"/>
+            <text x="118" y="632" font-size="46" font-weight="700" fill="#F3F6EF">Stahl 6</text>
+            <text id="formv" x="118" y="676" font-size="28" font-weight="500" fill="#FFE44D">Above his usual today</text>
+            <text x="118" y="704" font-size="20" fill="#A9C2B4">Middle mark is his usual</text>
+            <g id="formg"></g>
+          </g>
+
+          <!-- momentum strip -->
+          <g font-family="Barlow Condensed, sans-serif">
+            <text x="84" y="822" font-size="26" font-weight="500" fill="#A9C2B4">Momentum</text>
+            <line x1="250" y1="832" x2="1070" y2="832" stroke="#F3F6EF" stroke-opacity=".28" stroke-width="2"/>
+            <path id="mUp" d="" fill="#FF8A3D" clip-path="url(#cUp)"/>
+            <path id="mDn" d="" fill="#7FD0F5" clip-path="url(#cDn)"/>
+            <g id="mcard" opacity="0"><line x1="678" y1="782" x2="678" y2="884" stroke="#FFD21F" stroke-width="3"/><rect x="670" y="776" width="16" height="22" rx="2.5" fill="#FFD21F"/><text x="695" y="796" font-size="22" fill="#F3F6EF">47' booking</text></g>
+            <path id="dwin" d="M797,779 V771 H1070 V779" fill="none" stroke="#A9C2B4" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round"/>
+            <g font-size="20" fill="#A9C2B4" text-anchor="middle"><text x="250" y="890">0</text><text x="523" y="890">30</text><text x="797" y="890">60</text><text x="1070" y="890">90</text></g>
+            <text x="1150" y="822" font-size="26" font-weight="500" fill="#A9C2B4">Win chance</text>
+            <rect id="wA" x="1150" y="838" width="100" height="16" rx="3" fill="#FF8A3D"/><rect id="wD" x="1250" y="838" width="100" height="16" fill="#5E7F70"/><rect id="wB" x="1350" y="838" width="166" height="16" rx="3" fill="#7FD0F5"/>
+            <text id="wAt" x="1150" y="884" font-size="22" fill="#F3F6EF" style="font-variant-numeric:tabular-nums">NOR 33</text><text id="wBt" x="1516" y="884" text-anchor="end" font-size="22" fill="#F3F6EF" style="font-variant-numeric:tabular-nums">HAR 33</text>
+          </g>
+
+          <g id="winlab" opacity="0"><rect x="797" y="712" width="318" height="40" rx="8" fill="#08241B" fill-opacity=".92"/><text x="813" y="740" font-family="Barlow Condensed, sans-serif" font-size="26" font-weight="600" fill="#F3F6EF">From 60', Varga usually fades</text></g>
+          <!-- before kick-off -->
+          <g id="pre" opacity="0"></g>
+          <g id="ht" opacity="0">
+            <rect width="1600" height="762" fill="#08241B" fill-opacity=".93"/>
+            <g font-family="Barlow Condensed, sans-serif" fill="#F3F6EF">
+              <text x="150" y="186" font-size="72" font-weight="700">Half time. Still open</text>
+              <text x="150" y="230" font-size="30" font-weight="500" fill="#A9C2B4">Northgate 0, Harbour City 1</text>
+              <g id="hc1" opacity="0"><g transform="translate(150,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".5" stroke-width="2" stroke-dasharray="10 9"/>
+                <g transform="translate(35,-34)"><rect x="52" y="112" width="112" height="112" rx="12" fill="#FFE44D" fill-opacity=".1" stroke="#FFE44D" stroke-width="4" stroke-dasharray="11 9"/><path d="M-6,168 L40,168" fill="none" stroke="#FF8A3D" stroke-width="6" stroke-linecap="round"/><path d="M48,150 v36" stroke="#F3F6EF" stroke-width="6" stroke-linecap="round"/><circle cx="206" cy="168" r="27" fill="#7FD0F5"/></g>
+                <text x="28" y="296" font-size="46" font-weight="700">The middle</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">Northgate have 5 shots, all from wide</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">Stahl has closed it every time</text>
+              </g></g>
+              <g id="hc2" opacity="0"><g transform="translate(600,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".5" stroke-width="2" stroke-dasharray="10 9"/>
+                <g transform="translate(35,-34)"><rect x="52" y="112" width="112" height="112" rx="12" fill="#FFE44D" fill-opacity=".1" stroke="#FFE44D" stroke-width="4" stroke-dasharray="11 9"/><circle cx="206" cy="168" r="27" fill="#7FD0F5" stroke="#FFE44D" stroke-width="5"/><rect x="240" y="108" width="24" height="33" rx="3" fill="none" stroke="#FFD21F" stroke-width="3.5"/></g>
+                <text x="28" y="296" font-size="46" font-weight="700">If Stahl is booked</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">He has made 6 tackles</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">One card changes how he can play</text>
+              </g></g>
+              <g id="hc3" opacity="0"><g transform="translate(1050,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".5" stroke-width="2" stroke-dasharray="10 9"/>
+                <g transform="translate(35,-34)"><g stroke="#FFE44D" stroke-linecap="round"><line x1="150" y1="168" x2="122" y2="168" stroke-width="9"/><line x1="104" y1="168" x2="82" y2="168" stroke-width="7" stroke-opacity=".65"/><line x1="66" y1="168" x2="50" y2="168" stroke-width="5" stroke-opacity=".35"/></g><circle cx="190" cy="168" r="27" fill="#7FD0F5" stroke="#FFE44D" stroke-width="4"/><text x="232" y="180" font-size="40" font-weight="700" fill="#FFE44D">60'</text></g>
+                <text x="28" y="296" font-size="46" font-weight="700">Varga after 60'</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">11 sprints in the first half</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">He usually fades late</text>
+              </g></g>
+            </g>
+          </g>
+          <!-- full time -->
+          <g id="ft" opacity="0">
+            <rect width="1600" height="762" fill="#08241B" fill-opacity=".93"/>
+            <g font-family="Barlow Condensed, sans-serif" fill="#F3F6EF">
+              <text x="150" y="186" font-size="72" font-weight="700">What moved the match</text>
+              <text x="150" y="230" font-size="30" font-weight="500" fill="#A9C2B4">Full time. Northgate 1, Harbour City 1</text>
+              <g id="fc1" opacity="0"><g transform="translate(150,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".35" stroke-width="2"/>
+                <text x="28" y="66" font-size="58" font-weight="700" fill="#FFE44D">47'</text>
+                <g transform="translate(35,0)"><rect x="52" y="112" width="112" height="112" rx="12" fill="#FFE44D" fill-opacity=".1" stroke="#FFE44D" stroke-width="4" stroke-dasharray="11 9"/><circle cx="206" cy="168" r="27" fill="#7FD0F5" stroke="#FFE44D" stroke-width="5"/><rect x="240" y="108" width="24" height="33" rx="3" fill="#FFD21F"/></g>
+                <text x="28" y="296" font-size="46" font-weight="700">The booking</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">Stahl made 6 tackles before it</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">and none after</text>
+              </g></g>
+              <g id="fc2" opacity="0"><g transform="translate(600,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".35" stroke-width="2"/>
+                <text x="28" y="66" font-size="58" font-weight="700" fill="#FFE44D">71'</text>
+                <g transform="translate(35,0)"><circle cx="84" cy="168" r="22" fill="#7FD0F5"/><circle cx="146" cy="168" r="22" fill="#FFE44D" fill-opacity=".4" stroke="#FFE44D" stroke-width="3" stroke-dasharray="6 6"/><circle cx="184" cy="168" r="22" fill="#FF8A3D"/><path d="M212,168 L262,168" fill="none" stroke="#FFE44D" stroke-width="6" stroke-linecap="round" marker-end="url(#tarrow)"/><path d="M286,132 h14 v72 h-14" fill="none" stroke="#F3F6EF" stroke-width="5" stroke-linecap="round"/></g>
+                <text x="28" y="296" font-size="46" font-weight="700">The same move twice</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">Stopped at 12', scored at 71'</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">One difference: Stahl holds off</text>
+              </g></g>
+              <g id="fc3" opacity="0"><g transform="translate(1050,262)">
+                <rect width="400" height="390" rx="16" fill="#0E3B2C" stroke="#F3F6EF" stroke-opacity=".35" stroke-width="2"/>
+                <text x="28" y="66" font-size="58" font-weight="700" fill="#FFE44D">84'</text>
+                <g transform="translate(35,0)"><g stroke="#FFE44D" stroke-linecap="round"><line x1="118" y1="184" x2="96" y2="184" stroke-width="9"/><line x1="80" y1="184" x2="62" y2="184" stroke-width="7" stroke-opacity=".65"/><line x1="48" y1="184" x2="36" y2="184" stroke-width="5" stroke-opacity=".35"/></g><circle cx="150" cy="184" r="22" fill="#7FD0F5"/><circle cx="206" cy="150" r="22" fill="#FF8A3D"/><path d="M286,132 h14 v72 h-14" fill="none" stroke="#F3F6EF" stroke-width="5" stroke-linecap="round"/><rect x="262" y="150" width="14" height="40" rx="4" fill="#FFE44D" fill-opacity=".55"/></g>
+                <text x="28" y="296" font-size="46" font-weight="700">The race</text>
+                <text x="28" y="336" font-size="29" font-weight="500" fill="#A9C2B4">Okoye runs past a spent Varga</text>
+                <text x="28" y="370" font-size="29" font-weight="500" fill="#A9C2B4">The keeper saves one on one</text>
+              </g></g>
+              <text x="150" y="712" font-size="28" font-weight="500" fill="#A9C2B4">1,862 events read. 14 things shown</text>
+              <rect x="980" y="678" width="470" height="50" rx="25" fill="none" stroke="#F3F6EF" stroke-opacity=".6" stroke-width="2"/>
+              <path d="M1006 691l20 12-20 12z" fill="#F3F6EF"/>
+              <text x="1042" y="713" font-size="28" font-weight="500">Spoken recap in Arabic, synthetic voice</text>
+            </g>
+            <g fill="#FFE44D"><rect x="676" y="800" width="4" height="34"/><circle cx="678" cy="800" r="7"/><rect x="895" y="776" width="4" height="58"/><circle cx="897" cy="776" r="7"/><rect x="1013" y="800" width="4" height="34"/><circle cx="1015" cy="800" r="7"/></g>
+          </g>
+          <rect id="fade" width="1600" height="900" fill="#08241B" opacity="0"/>
+        </svg>
+      </div>
+      <figcaption class="umd"><span class="lamp" id="lampB"></span>Broadcast</figcaption>
+    </figure>
+
+    <figure class="monitor phonecol">
+      <div class="ph" id="ph" data-state="quiet">
+        <span class="mode" id="pmode">Casual</span>
+        <p class="sc" id="psc">Northgate 0, Harbour City 1</p>
+        <div class="layer p-quiet">
+          <h3>Watch for</h3>
+          <div class="wf" id="wf1"><span class="tk"></span><span>Northgate's first shots will come from wide<small id="wf1s">Not yet</small></span></div>
+          <div class="wf" id="wf2"><span class="tk"></span><span>If Stahl is booked, Harbour City's middle opens<small id="wf2s">Not yet</small></span></div>
+          <div class="wf" id="wf3"><span class="tk"></span><span>A Harbour City full back tires after 60 minutes<small id="wf3s">Not yet</small></span></div>
+          <p class="quietnote" id="qnote">Nothing to explain yet</p>
+        </div>
+        <div class="layer p-num">
+          <h3 id="nt">Shot speed</h3>
+          <p class="pbig" id="nb">104 km/h</p>
+          <div class="pscale" id="nscale"><i class="most"></i><i class="typ"></i><i class="mk" id="nmk"></i><span class="tl" id="ntl">typical 82</span></div>
+          <p class="psub" id="ns">Faster than 97 in 100 shots this season</p>
+        </div>
+        <div class="layer p-form">
+          <h3>Stahl 6, Harbour City</h3>
+          <p class="bigline" style="font-size:25px" id="fv">Above his usual today</p>
+          <div class="frm"><div class="l">Tackles</div><div class="v" id="f1">4 so far, usually 2</div><div class="ft"><i id="d1"></i></div></div>
+          <div class="frm"><div class="l">Interceptions</div><div class="v" id="f2">2 so far, usually 1</div><div class="ft"><i id="d2"></i></div></div>
+          <div class="frm"><div class="l">Duels won</div><div class="v" id="f3">7 of 9, usually 5</div><div class="ft"><i id="d3"></i></div></div>
+          <div class="frm"><div class="l">Passes completed</div><div class="v" id="f4">21 of 24, as usual</div><div class="ft"><i id="d4"></i></div></div>
+        </div>
+        <div class="layer p-metric">
+          <h3>Control or chaos</h3>
+          <p class="bigline" style="font-size:25px">Northgate are taking control</p>
+          <div class="srow"><div class="l">Passes per spell on the ball</div><div class="v">3 then 6</div><div class="sb"><i class="b" style="--w:30%"></i></div><div class="sb"><i class="a" style="--w:60%"></i></div></div>
+          <div class="srow"><div class="l">Giveaways in their own half</div><div class="v">11 then 4</div><div class="sb"><i class="b" style="--w:73%"></i></div><div class="sb"><i class="a" style="--w:27%"></i></div></div>
+          <div class="srow"><div class="l">Shots straight after winning the ball</div><div class="v">0 then 3</div><div class="sb"><i class="b" style="--w:1%"></i></div><div class="sb"><i class="a" style="--w:50%"></i></div></div>
+        </div>
+        <div class="layer p-focus">
+          <h3>Draper 10, Northgate</h3>
+          <div class="frow"><b>12'</b><span>Shot from wide at 104 km/h, saved</span></div>
+          <div class="frow"><b>38'</b><span>Ran onto a pass that comes off 9 in 100</span></div>
+          <div class="frow"><b>50'</b><span>Found space in the middle for the first time</span></div>
+          <div class="frow"><b>58'</b><span>Shot from the centre, saved</span></div>
+          <div class="frow late" id="fgoal"><b>71'</b><span>Scored from the centre, a chance worth 31 in 100</span></div>
+        </div>
+        <div class="layer p-recap">
+          <h3>Your recap</h3>
+          <div class="frow"><b>71'</b><span>Draper scores from the space that opened</span></div>
+          <div class="frow"><b>47'</b><span>Stahl is booked and stops tackling</span></div>
+          <div class="frow"><b>84'</b><span>Okoye runs past a spent Varga, and the keeper saves one on one</span></div>
+          <span class="pill" style="margin-top:10px">Play the spoken recap</span>
+        </div>
+        <div class="layer p-casual">
+          <p class="bigline">Harbour City's midfield shield got booked and has backed off. Northgate are walking through the middle</p>
+          <span class="pill">See the evidence</span>
+        </div>
+        <div class="layer p-analyst">
+          <p class="bigline" style="font-size:24px">Stahl has not won the ball since his 47' booking</p>
+          <div class="srow"><div class="l">Stahl tackles and interceptions</div><div class="v">6 then 0</div><div class="sb"><i class="b" style="--w:60%"></i></div><div class="sb"><i class="a" style="--w:1%"></i></div></div>
+          <div class="srow"><div class="l">Northgate entries through the centre</div><div class="v">5 then 25</div><div class="sb"><i class="b" style="--w:17%"></i></div><div class="sb"><i class="a" style="--w:84%"></i></div></div>
+          <div class="srow"><div class="l">Northgate expected goals</div><div class="v">0.04 then 0.68</div><div class="sb"><i class="b" style="--w:4%"></i></div><div class="sb"><i class="a" style="--w:68%"></i></div></div>
+          <span class="pill">3 events behind this</span>
+        </div>
+        <div class="layer p-ar" dir="rtl" lang="ar" style="text-align:right">
+          <p class="bigline">منذ إنذاره في الدقيقة 47 توقف ستال عن افتكاك الكرة، ونورثغيت يخترق من العمق</p>
+          <span class="pill">عرض الدليل</span>
+        </div>
+      </div>
+      <figcaption class="umd"><span class="lamp" id="lampP"></span>Phone</figcaption>
+    </figure>
+
+    <div class="desk">
+      <div class="dcell">
+        <h3>Commentator's mic, simulated <span class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></span></h3>
+        <p id="heard" class="idle">Listening</p>
+      </div>
+      <div class="dcell">
+        <h3>Line offered to the commentator</h3>
+        <p id="commline" class="idle">Nothing to say yet</p>
+      </div>
+      <div class="dcell wide">
+        <h3>Producer's desk</h3>
+        <div class="prow"><div class="txt"><p class="t" id="pt">No stories yet</p><p class="s" id="ps">Watching every event</p></div><span class="pchip" id="pc">Quiet</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="beats">
+    <button id="pp" type="button" aria-label="Pause"><svg viewBox="0 0 18 18" aria-hidden="true"><path id="ppi" d="M3 2h4v14H3zM11 2h4v14h-4z" fill="#08241B"/></svg></button>
+    <div class="track" id="track"></div>
+  </div>
+  <p class="stagecap" id="cap" aria-live="off"></p>
+</section>
+
+</div>
+<div class="details">
+<div class="wrap">
+<section class="behind">
+  <h2 class="bh">Behind the picture</h2>
+  <p class="sub" style="font-size:18px;max-width:60ch;margin-bottom:0">Five things the animation cannot show on the match itself</p>
+</section>
+
+<section>
+  <h2>One checked sentence, three versions at once</h2>
+  <p class="sub">The stage shows these one after another. Side by side, the same fact at a casual depth, an analyst's depth and in Arabic</p>
+
+  <div class="phones">
+    <div class="phone">
+      <span class="chip mode">Casual</span>
+      <p class="score">NOR 0, HAR 1, 58 min</p>
+      <p class="big">Harbour City's midfield shield got booked and has backed off. Northgate are walking through the middle</p>
+      <button class="btn" type="button">See the evidence</button>
+    </div>
+
+    <div class="phone">
+      <span class="chip mode">Analyst</span>
+      <p class="score">NOR 0, HAR 1, 58 min</p>
+      <p style="font-size:17px;font-weight:650;line-height:1.35;margin:0">Stahl has not won the ball since his 47' booking</p>
+
+      <div class="stat">
+        <div class="lbl">Stahl tackles and interceptions</div>
+        <div class="vals">6 then 0</div>
+        <div class="bar"><i class="before" style="width:60%"></i><span class="tick" style="left:40%"></span></div>
+        <div class="bar"><i class="after sig" style="width:0%"></i><span class="tick" style="left:40%"></span></div>
+      </div>
+
+      <div class="stat">
+        <div class="lbl">Northgate entries through the centre</div>
+        <div class="vals">5 then 25</div>
+        <div class="bar"><i class="before" style="width:17%"></i><span class="tick" style="left:20%"></span></div>
+        <div class="bar"><i class="after amb" style="width:83%"></i><span class="tick" style="left:20%"></span></div>
+      </div>
+
+      <div class="stat">
+        <div class="lbl">Northgate expected goals</div>
+        <div class="vals">0.04 then 0.68</div>
+        <div class="bar"><i class="before" style="width:4%"></i><span class="tick" style="left:15%"></span></div>
+        <div class="bar"><i class="after sig" style="width:68%"></i><span class="tick" style="left:15%"></span></div>
+      </div>
+
+      <p class="legend">Dashed tick marks typical</p>
+      <p class="score" style="margin-top:4px">Minutes 36 to 46 compared with 47 to 58</p>
+      <button class="btn" type="button">3 events behind this</button>
+    </div>
+
+    <div class="phone">
+      <div dir="rtl" lang="ar" class="ar" style="display:flex;flex-direction:column;gap:18px;">
+        <span class="chip mode" style="align-self:flex-end">العربية</span>
+        <p class="score" style="margin:0">NOR 0, HAR 1, 58 min</p>
+        <p class="big ar" style="margin:0;font-size:22px;font-weight:650;line-height:1.6">منذ إنذاره في الدقيقة 47 توقف ستال عن افتكاك الكرة، ونورثغيت يخترق من العمق</p>
+        <button class="btn" type="button" style="align-self:flex-end;font-family:'Noto Sans Arabic',system-ui,sans-serif">عرض الدليل</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>A wrong number never reaches air, and a failure does not stop the match</h2>
+  <p class="sub">The checker rejects a number the record does not hold. When a container is stopped mid-match, the work picks up where it left off</p>
+  <div class="two">
+    <div class="panel">
+      <p class="ptitle" style="margin-bottom:16px">The check</p>
+      <div class="story"><span class="dot" style="background:#93A39A"></span><div class="txt"><p class="t">Northgate have gone through the centre <span class="strike">52</span> times since the booking</p><p class="s">First draft</p></div></div>
+      <div class="story"><span class="dot" style="background:var(--sig)"></span><div class="txt"><p class="t">52 is not in the match record. The record says 25</p><p class="s">Rejected and sent back once</p></div><span class="chip st-out">Rejected</span></div>
+      <div class="story"><svg viewBox="0 0 24 24" width="22" height="22" style="flex:none" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#0B2A20"/><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="txt"><p class="t">Northgate have gone through the centre 25 times since the booking</p><p class="s">Every number traced to an event</p></div><span class="chip st-on">Passed</span></div>
+    </div>
+    <div class="panel">
+      <p class="ptitle" style="margin-bottom:6px">The failure</p>
+      <svg viewBox="0 0 520 210" role="img" aria-label="Five steps in a row. The third stops, then resumes from a saved checkpoint">
+        <line x1="50" y1="70" x2="235" y2="70" stroke="#0B2A20" stroke-width="3"/>
+        <line x1="285" y1="70" x2="470" y2="70" stroke="#0B2A20" stroke-width="3"/>
+        <line x1="235" y1="70" x2="285" y2="70" stroke="#E23B2E" stroke-width="3" stroke-dasharray="5 5"/>
+        <g fill="#0B2A20"><circle cx="50" cy="70" r="12"/><circle cx="155" cy="70" r="12"/><circle cx="365" cy="70" r="12"/><circle cx="470" cy="70" r="12"/></g>
+        <circle cx="260" cy="70" r="15" fill="#FFFFFF" stroke="#E23B2E" stroke-width="4"/>
+        <g font-size="14" fill="#4E5F56" text-anchor="middle">
+          <text x="50" y="40">Home agent</text><text x="155" y="40">Away agent</text><text x="260" y="36" fill="#0B2A20" font-weight="650">Narrator</text><text x="365" y="40">Verifier</text><text x="470" y="40">Director</text>
+        </g>
+        <line x1="260" y1="90" x2="260" y2="118" stroke="#E23B2E" stroke-width="2"/>
+        <text x="260" y="140" text-anchor="middle" font-size="16" font-weight="650" fill="#0B2A20">Container stopped at 58:40</text>
+        <text x="260" y="166" text-anchor="middle" font-size="15" fill="#4E5F56">Resumed from the saved checkpoint 6 seconds later</text>
+        <text x="260" y="190" text-anchor="middle" font-size="15" fill="#4E5F56">No story lost, nothing shown twice</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Who decides what airs</h2>
+  <p class="sub">The producer sets the rules once. For each moment, one agent per team proposes what happened from its side, and the director chooses</p>
+  <div class="two">
+    <div class="panel">
+      <p class="ptitle" style="margin-bottom:16px">Rules the producer sets</p>
+      <div class="rule">
+        <span>Stake marks and turning points air automatically</span>
+        <span class="toggle" aria-hidden="true"></span>
+      </div>
+      <div class="rule">
+        <span>Hold new sentences for a 5 second veto</span>
+        <span class="toggle" aria-hidden="true"></span>
+      </div>
+      <div class="rule">
+        <span>Show speed tags only above</span>
+        <span class="value">top 5%</span>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="ptitle" style="margin-bottom:16px">Two team agents, one director</p>
+      <div class="story"><span class="dot" style="background:#7FD0F5"></span><div class="txt"><p class="t">Stahl held off because he is booked</p><p class="s">Harbour City's agent, from Stahl's ledger</p></div></div>
+      <div class="story"><span class="dot" style="background:#FF8A3D"></span><div class="txt"><p class="t">Draper found the gap he was denied at 12'</p><p class="s">Northgate's agent, from twin search</p></div></div>
+      <div class="story"><svg viewBox="0 0 24 24" width="22" height="22" style="flex:none" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#0B2A20"/><path d="M6.5 12.5l3.6 3.6 7.4-8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="txt"><p class="t">Same move as 12'. One difference</p><p class="s">The director takes both, checked against the record</p></div><span class="chip st-air">On air</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>How it works</h2>
+  <p class="sub">Each player has a ledger kept in code: his card, his running against his own usual, when he last looked. One agent for each team proposes what is at stake and why a moment happened, and a director chooses. A model only writes the sentence, and a checker rejects any number the record does not hold. The commentator's voice only decides when something shows</p>
+
+  <div class="panel flow">
+    <svg viewBox="0 0 1100 260" role="img" aria-label="Five steps from match events to each screen version">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#4E5F56"/>
+        </marker>
+      </defs>
+
+      <!-- box 1 -->
+      <rect x="10" y="50" width="190" height="150" rx="16" fill="#F1F4EC"/>
+      <text x="105" y="110" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">Events and voice</text>
+      <text x="105" y="136" text-anchor="middle" font-size="14" fill="#4E5F56">1,862 events, names heard</text>
+
+      <!-- box 2 -->
+      <rect x="235" y="50" width="190" height="150" rx="16" fill="#F1F4EC"/>
+      <text x="330" y="110" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">Facts computed</text>
+      <text x="330" y="136" text-anchor="middle" font-size="14" fill="#4E5F56">In code, no AI</text>
+
+      <!-- box 3 -->
+      <rect x="460" y="50" width="190" height="150" rx="16" fill="#FFE44D" stroke="#0B2A20" stroke-width="3"/>
+      <text x="555" y="110" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">Worth showing</text>
+      <text x="555" y="136" text-anchor="middle" font-size="14" fill="#4E5F56">14 passed, the rest</text>
+      <text x="555" y="156" text-anchor="middle" font-size="14" fill="#4E5F56">stop here</text>
+
+      <!-- box 4 -->
+      <rect x="685" y="50" width="190" height="150" rx="16" fill="#F1F4EC"/>
+      <text x="780" y="96" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">Sentence written</text>
+      <text x="780" y="118" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">and checked</text>
+      <text x="780" y="146" text-anchor="middle" font-size="14" fill="#4E5F56">Every number traced</text>
+      <text x="780" y="166" text-anchor="middle" font-size="14" fill="#4E5F56">to an event</text>
+
+      <!-- box 5 -->
+      <rect x="910" y="50" width="190" height="150" rx="16" fill="#F1F4EC"/>
+      <text x="1005" y="96" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">Each screen picks</text>
+      <text x="1005" y="118" text-anchor="middle" font-size="18" font-weight="700" fill="#0B2A20">its version</text>
+      <text x="1005" y="146" text-anchor="middle" font-size="14" fill="#4E5F56">Mark, label, sentence or replay</text>
+
+      <!-- arrows between boxes -->
+      <line x1="204" y1="125" x2="231" y2="125" stroke="#4E5F56" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="429" y1="125" x2="456" y2="125" stroke="#4E5F56" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="654" y1="125" x2="681" y2="125" stroke="#4E5F56" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="879" y1="125" x2="906" y2="125" stroke="#4E5F56" stroke-width="2" marker-end="url(#ar)"/>
+
+      <!-- drop from box 3 -->
+      <line x1="555" y1="206" x2="555" y2="226" stroke="#4E5F56" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="555" y="250" text-anchor="middle" font-size="14" fill="#4E5F56">1,848 events kept off screen</text>
+    </svg>
+    <div class="svc"><span class="chip">Azure Event Hubs</span><span class="chip">Container Apps</span><span class="chip">Foundry hosted agents</span><span class="chip">Agent Framework</span><span class="chip">Cosmos DB checkpoints</span><span class="chip">Web PubSub</span><span class="chip">AI Speech</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>The architecture</h2>
+  <p class="sub">How the picture above is produced on a real match. Nothing here is built yet</p>
+
+  <div class="arch">
+  <h3>The whole system</h3>
+  <p>Scroll sideways to follow it. The inputs on the left are the feeds a Premier League match has today. In the hackathon our generator writes the same two feeds in the same shapes. Data reaches us before the picture reaches the viewer. Fast things are decided in code within a tenth of a second. Anything written goes through the agents and is ready before the next pause. Each screen shows a cue when its own picture reaches that match time</p>
+<pre class="mermaid wide">
+flowchart LR
+  OPTA["Opta event feed<br/>cards, tackles, shots, subs<br/>with later corrections"]:::src --> AD["Adapter<br/>one model, joined on player ID"]:::code
+  TRK["Genius Sports tracking feed<br/>22 players and ball, each frame<br/>positions, speeds, ball in play"]:::src --> AD
+  AD --> EH[("Event Hubs<br/>events and tracking")]:::store
+  MIC["World feed<br/>commentary audio"]:::src --> SP["AI Speech<br/>hears names"]:::store
+  GAL["Production gallery<br/>replay on air, picture timecode"]:::src --> CUE
+  EH --> RX["Reflex service<br/>22 player ledgers<br/>stake model, windows, duels"]:::code
+  RX --> LED[("Fact ledger<br/>Cosmos DB")]:::store
+  RX -- "goal or turning point" --> TW["Twin search<br/>AI Search and code"]:::code
+  TW --> HA["Home agent"]:::model
+  TW --> AA["Away agent"]:::model
+  LED --> HA
+  LED --> AA
+  HA --> DIR["Director"]:::model
+  AA --> DIR
+  SP -- "name heard" --> DIR
+  DIR --> NAR["Narrator"]:::model
+  NAR --> VER{"Verifier<br/>code first"}:::code
+  VER -- "rejected once" --> NAR
+  VER --> LOC["Localizer"]:::model
+  LOC --> VER2{"Verifier"}:::code
+  RX -- "stake cue, no language model" --> CUE
+  VER2 --> CUE["Cue service<br/>producer rules, veto<br/>stamps match time"]:::code
+  CUE --> PS[("Web PubSub")]:::store
+  PS --> TV["Broadcast view<br/>3D built on the device"]:::screen
+  PS --> PH["Phone"]:::screen
+  PS --> DESK["Producer and<br/>commentator desk"]:::screen
+  classDef src fill:#EEF1EA,stroke:#0B2A20,color:#0B2A20
+  classDef code fill:#FFFFFF,stroke:#0B2A20,color:#0B2A20
+  classDef model fill:#FFF1A8,stroke:#0B2A20,color:#0B2A20
+  classDef store fill:#DDE4D6,stroke:#0B2A20,color:#0B2A20
+  classDef screen fill:#0B2A20,stroke:#0B2A20,color:#FFFFFF
+</pre>
+  <div class="key"><span><i style="background:#fff"></i>Code, no model</span><span><i style="background:#FFF1A8"></i>Language model</span><span><i style="background:#DDE4D6"></i>Azure service or store</span><span><i style="background:#0B2A20"></i>Screen</span></div>
+  </div>
+
+  <div class="arch">
+  <h3>The stake card, frame by frame</h3>
+  <p>Runs 25 times a second. A small model scores each defender near the ball, and the card on a booked player has two levels. Tested on seven real matches: the faint card is on him before 86 in 100 of his challenges</p>
+<pre class="mermaid">
+flowchart TD
+  F["Tracking frame arrives<br/>about 1 to 3 s after the pitch"]:::src --> NEAR(["Is a defender within 12 m<br/>of a live ball?"]):::ask
+  NEAR -- "no" --> NO["Show nothing"]:::quiet
+  NEAR -- "yes" --> FEAT["Build his last 2 seconds:<br/>the ball, his movement, the two opponents<br/>nearest the ball, his nearest team-mate,<br/>who has the ball"]:::code
+  FEAT --> NET["Small network, 1.4 ms for 22 players<br/>Score: chance he makes a challenge<br/>in the next 1.5 s"]:::model
+  NET --> WHO(["Is he carrying something?<br/>booked, or far below his usual running"]):::ask
+  WHO -- "no" --> NO
+  WHO -- "yes" --> LO(["Score above 0.05?"]):::ask
+  LO -- "no" --> NO
+  LO -- "yes" --> FAINT["Faint card on him<br/>held until the score has been low for 2 s<br/>about 3 s each, 73 a match"]:::code
+  FAINT --> HI(["Score above 0.20?"]):::ask
+  HI -- "no" --> RULE
+  HI -- "yes" --> FULL["Full card on him<br/>15 a match"]:::code
+  FULL --> RULE(["Producer's rule on,<br/>and under the cap?"]):::ask
+  RULE -- "no" --> NO
+  RULE -- "yes" --> STAMP["Cue stamped with this match time"]:::code
+  STAMP --> OUT["Each screen shows it when<br/>its own picture gets there"]:::screen
+  GUARD["Guard: the score reads nothing<br/>after this frame, so it cannot know<br/>whether a challenge or a foul follows"]:::model -.-> NET
+  classDef src fill:#EEF1EA,stroke:#0B2A20,color:#0B2A20
+  classDef code fill:#FFFFFF,stroke:#0B2A20,color:#0B2A20
+  classDef model fill:#FFF1A8,stroke:#0B2A20,color:#0B2A20
+  classDef ask fill:#FFFFFF,stroke:#0B2A20,stroke-width:2.5px,color:#0B2A20
+  classDef quiet fill:#EEF1EA,stroke:#93A39A,color:#4E5F56
+  classDef screen fill:#0B2A20,stroke:#0B2A20,color:#FFFFFF
+</pre>
+  </div>
+
+  <div class="arch">
+  <h3>Twin search, from a goal to the replay</h3>
+  <p>Starts when a goal or big chance lands and must finish before the replay airs, usually 20 to 40 seconds later. If any check fails, the plain replay is used and nothing is claimed</p>
+<pre class="mermaid">
+flowchart TD
+  G["Goal or big chance"]:::src --> CUT["Cut the attack<br/>from winning the ball to the shot"]:::code
+  CUT --> NORM["Put it in a common frame<br/>attacking left to right, mirrored if needed<br/>positions relative to ball and goal"]:::code
+  NORM --> VEC["Build the vector<br/>ball, 6 attackers, 6 defenders<br/>at 5 points in the move"]:::code
+  VEC --> S1["Search this match<br/>in memory"]:::code
+  VEC --> S2[("Search the season<br/>Azure AI Search")]:::store
+  S1 --> CAND["Up to 20 nearest attacks<br/>that ended differently"]:::code
+  S2 --> CAND
+  CAND --> NEAR(["Is the nearest one close enough?<br/>closer than 95 in 100 random pairs"]):::ask
+  NEAR -- "no" --> PLAIN["Plain 3D replay"]:::quiet
+  NEAR -- "yes" --> PAIR["Pair up the players in the two attacks<br/>by role and position"]:::code
+  PAIR --> TIME["Line the two attacks up in time<br/>find the point where they part"]:::code
+  TIME --> DIFF(["How many players differ<br/>at the parting point?"]):::ask
+  DIFF -- "none, or more than two" --> PLAIN
+  DIFF -- "one or two" --> REL(["Is the differing player<br/>near the path the ball then took?"]):::ask
+  REL -- "no" --> PLAIN
+  REL -- "yes" --> AG["Both team agents see the twin<br/>Director writes the scene"]:::model
+  AG --> CHK(["Verifier: minutes, names<br/>and the difference match the record"]):::ask
+  CHK -- "fails twice" --> PLAIN
+  CHK -- "passes" --> SCENE["Twin replay cue<br/>positions for both attempts,<br/>camera, who to light"]:::screen
+  classDef src fill:#EEF1EA,stroke:#0B2A20,color:#0B2A20
+  classDef code fill:#FFFFFF,stroke:#0B2A20,color:#0B2A20
+  classDef model fill:#FFF1A8,stroke:#0B2A20,color:#0B2A20
+  classDef store fill:#DDE4D6,stroke:#0B2A20,color:#0B2A20
+  classDef ask fill:#FFFFFF,stroke:#0B2A20,stroke-width:2.5px,color:#0B2A20
+  classDef quiet fill:#EEF1EA,stroke:#93A39A,color:#4E5F56
+  classDef screen fill:#0B2A20,stroke:#0B2A20,color:#FFFFFF
+</pre>
+  </div>
+</section>
+
+<section>
+  <h2>The numbers the video ends on</h2>
+  <p class="sub">Example figures. The real video shows the measured ones</p>
+  <div class="four">
+    <div class="card"><span class="n">1,862</span>events read<span class="sec">14 things shown on the broadcast</span></div>
+    <div class="card"><span class="n">0</span>unverified numbers on air<span class="sec">1 draft rejected and rewritten</span></div>
+    <div class="card"><span class="n">0.4 s</span>fast path, 95 in 100 cues<span class="sec">Explained turn within 40 s</span></div>
+    <div class="card"><span class="n">$0.60</span>cost per match<span class="sec">All screens and languages</span></div>
+  </div>
+</section>
+
+<footer>Illustrative mock-up. Fictional clubs and players. All numbers are examples</footer>
+</div>
+</div>
+
+<script>
+if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:"loose",theme:"base",flowchart:{htmlLabels:true,curve:"basis",nodeSpacing:30,rankSpacing:40},themeVariables:{fontFamily:"Barlow, sans-serif",fontSize:"15px",lineColor:"#4E5F56",primaryColor:"#FFFFFF",primaryBorderColor:"#0B2A20",primaryTextColor:"#0B2A20",edgeLabelBackground:"#FFFFFF"}})}
+</script>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)}, NS="http://www.w3.org/2000/svg";
+var X0=60,W=1480,Y0=56,H=690;
+function px(x){return X0+x*W} function py(y){return Y0+y*H}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function ss(a,b,v){var x=clamp((v-a)/(b-a),0,1);return x*x*(3-2*x)}
+function win(a,b,c,d,v){return ss(a,b,v)*(1-ss(c,d,v))}
+function lerp(a,b,f){return a+(b-a)*f}
+function mix(p,q,f){return [lerp(p[0],q[0],f),lerp(p[1],q[1],f)]}
+
+// ---------- the running order: name, seconds on screen, match clock at its end ----------
+var SEGS=[["pre",8,0],["play1",3,710],["shot",4.5,722],["play2",2.5,1370],["goal1",3.5,1385],["sight",6.5,1385],["play3",2,1840],["corner",2.5,1855],
+["play4",1.5,2090],["voice1",4.5,2112],["play5",1.5,2270],["pass",3.5,2282],["play6",1.5,2450],["sprint",3.5,2462],["play6b",1.5,2700],["ht",6,2700],["play7",2,2810],
+["book",2.5,2840],["stake",4.5,2990],["turn",5,3330],["voice2",4.5,3352],["play8",1.5,3492],["replay",11,3492],["play9",2,3810],["held",4,3840],
+["play10",2,4060],["tired",4,4075],["play11",2,4240],["goal2",2,4250],["replay2",13.5,4250],["play11b",1.5,5030],["race",4.5,5056],["play12",2,5400],["ft",9,5400]];
+var S={},E={},KF=[[0,0]],T=0;
+SEGS.forEach(function(g){S[g[0]]=T;T+=g[1];E[g[0]]=T;KF.push([T,g[2]])});
+var FROZEN=[["sight",S.sight,6.5],["ht",S.ht,6],["replay",S.replay,11],["tired",S.tired+.3,3.7],["replay2",S.replay2,13.5],["ft",S.ft,9]];
+function msec(t){for(var i=1;i<KF.length;i++){if(t<=KF[i][0]){var a=KF[i-1],b=KF[i];return lerp(a[1],b[1],(t-a[0])/(b[0]-a[0]||1))}}return 5400}
+function simT(t){var s=t;FROZEN.forEach(function(f){s-=clamp(t-f[1],0,f[2])});return s}
+function realT(s){var t=s;FROZEN.forEach(function(f){if(t>=f[1])t+=f[2]});return t}
+
+var BEATS=[["Kick-off","pre"],["12' shot speed","shot"],["23' goal","goal1"],["Line of sight","sight"],["35' he names Stahl","voice1"],["38' pass","pass"],["41' sprint","sprint"],["Half time","ht"],["47' booking","book"],["49' card stake","stake"],["The match turns","turn"],["56' he names Stahl again","voice2"],["58' 3D replay","replay"],["64' held back","held"],["68' energy at a pause","tired"],["71' goal","goal2"],["Twin replay","replay2"],["84' the race","race"],["Full time","ft"]];
+var CAPS={pre:"Before kick-off, with the players in position. Three things to watch are drawn on the pitch from both teams' seasons. Each mark comes back if it comes true",
+sight:"The goal again, from the defender's eyes. Brandt was watching the ball, and Lund was behind his shoulder for four seconds. This comes from head position in tracking and says nothing about what he thought",
+ht:"Half time. Three things are still open, so the viewer has something to hold in mind for the second half. Two are marks from kick-off that have not come true yet",
+race:"84 minutes. Okoye has won three of their four duels and now runs at Varga, who has little left, so Varga's mark shows on him as the race starts. The keeper saves",
+play1:"Play, sped up. Every event is read and almost all of it stays off the picture",
+shot:"12 minutes. A shot is unusually fast, so its speed shows for three seconds with what is typical. The phone gets the full scale",
+goal1:"23 minutes. Harbour City score from a poor chance. The tag says how rarely one like that goes in",
+voice1:"35 minutes. The commentator says a player's name. That player is well above his usual today, so a compact picture of his match appears while the viewer is thinking about him",
+pass:"38 minutes. A pass that rarely comes off gets its difficulty",
+sprint:"41 minutes. A sprint record was waiting. It is released the moment the commentator names the player",
+book:"47 minutes. A booking. The producer's desk starts watching Stahl for a change",
+stake:"49 minutes. Stahl is drawn into the play. He is one foul from a red card, so his card shows faintly on him, then fully as a challenge becomes likely. It says what is at stake and never what will happen. He pulls out",
+turn:"The match turns. The cause is worked out, a wrong number is caught and rewritten, and the sentence is held for the next replay",
+voice2:"56 minutes. The commentator names Stahl again. The same picture now shows him below his usual",
+replay:"58 minutes. The replay is rebuilt in 3D from player positions and directed by the system. It drops behind the Northgate midfielder and shows the space, with a ghost where Stahl usually steps in",
+held:"64 minutes. Momentum swings to Harbour City, but no cause is found, so nothing is shown",
+tired:"68 minutes. Play is stopped and the players are spread out, so each one's running against his own usual shows over him. Varga has the least left",
+goal2:"71 minutes. Northgate score from the space that opened",
+replay2:"The goal, laid over the same move from the 12th minute. Back then Stahl stepped in and the shot came from wide. This time he is booked and holds off. Then the goal from over the scorer's shoulder",
+ft:"Full time. The three moments that moved the match most become three cards, each with the mark it had on the pitch"};
+function segAt(t){for(var i=SEGS.length-1;i>=0;i--){if(t>=S[SEGS[i][0]])return SEGS[i][0]}return "pre"}
+
+// ---------- 2D picture ----------
+var st=$("stripes");for(var k=0;k<10;k++){var r=document.createElementNS(NS,"rect");r.setAttribute("x",X0+k*W/10);r.setAttribute("y",Y0);r.setAttribute("width",W/10+0.5);r.setAttribute("height",H);r.setAttribute("fill",k%2?"#207652":"#1C6B48");st.appendChild(r)}
+var A=[[.05,.5],[.2,.82],[.17,.62],[.17,.38],[.2,.18],[.36,.5],[.43,.3],[.43,.7],[.6,.14],[.64,.5],[.6,.86]];
+var B=[[.95,.5],[.8,.18],[.83,.38],[.83,.62],[.8,.82],[.68,.5],[.6,.2],[.58,.4],[.58,.6],[.6,.8],[.42,.5]];
+var CA=[[.06,.5],[.55,.7],[.45,.56],[.45,.4],[.6,.3],[.8,.5],[.9,.41],[.985,.965],[.885,.56],[.925,.5],[.9,.63]];
+var CB=[[.96,.5],[.935,.4],[.91,.47],[.91,.56],[.935,.63],[.87,.5],[.89,.4],[.86,.59],[.84,.45],[.95,.9],[.7,.5]];
+var dots=$("dots"),els={A:[],B:[]};
+[["A","#FF8A3D"],["B","#7FD0F5"]].forEach(function(tm){for(var i=0;i<11;i++){var c=document.createElementNS(NS,"circle");c.setAttribute("r",15);c.setAttribute("fill",tm[1]);c.setAttribute("stroke","#08241B");c.setAttribute("stroke-width","2.5");dots.appendChild(c);els[tm[0]].push(c)}});
+function bump(mm,c,w){var d=(mm-c)/w;return Math.exp(-d*d)}
+function bias(mm){var pre=-0.62+0.16*Math.sin(mm*0.55), post=0.78+0.08*Math.sin(mm*0.9); return lerp(pre,post,ss(47.3,52,mm))-1.25*bump(mm,63.8,1.3)}
+function open(mm){return ss(47.3,51,mm)}
+function pos(team,i,mm,s,live,t){
+  var b=(team==="A"?A:B)[i], x=b[0], y=b[1], p=bias(mm), o=open(mm);
+  if(live){
+    if(i>0)x+=0.11*p;
+    if(team==="B"){ if(i===5)x+=0.035*o; if(i===7)y-=0.075*o; if(i===8)y+=0.075*o; if(i===4)x-=0.1*ss(60,66,mm) }
+    if(team==="A"){ if(i===5)x+=0.05*o; if(i===9)x+=0.03*o }
+    if(i>0){var ph=i*1.7+(team==="A"?0:2.3); x+=0.014*Math.sin(s*1.3+ph)+0.008*Math.sin(s*2.9+ph*2); y+=0.018*Math.cos(s*1.1+ph*1.4)+0.008*Math.sin(s*2.3+ph)}
+    var q=[x,y], w;
+    w=win(S.shot,S.shot+.9,E.shot-1.1,E.shot,t); if(w>0&&team==="A"){ if(i===8)q=mix(q,[.8,.17],w); if(i===9)q=mix(q,[.85,.46],w); if(i===10)q=mix(q,[.8,.74],w) }
+    w=win(S.goal1-.6,S.goal1+.3,E.goal1-.9,E.goal1,t); if(w>0&&team==="B"){ if(i===10)q=mix(q,[.13,.46],w); if(i===7)q=mix(q,[.24,.36],w); if(i===8)q=mix(q,[.26,.62],w) }
+    w=win(S.corner,S.corner+.8,E.corner-.2,E.corner+.7,t); if(w>0)q=mix(q,(team==="A"?CA:CB)[i],w);
+    w=win(S.pass,S.pass+.7,E.pass-.6,E.pass,t); if(w>0&&team==="A"&&i===9)q=mix(q,[.72,.44],w);
+    if(team==="A"&&i===10){ w=win(S.sprint,S.sprint+.4,E.sprint+.1,E.sprint+1.5,t); if(w>0)q=mix(q,[lerp(.5,.8,ss(S.sprint+.3,S.sprint+2.7,t)),.86],w) }
+    w=win(S.stake+.3,S.stake+1.2,S.stake+3.7,S.stake+4.4,t); if(w>0){ var k2=ss(S.stake+2.3,S.stake+4,t);
+      if(team==="A"&&i===9)q=mix(q,[lerp(.585,.7,k2),lerp(.5,.4,k2)],w);
+      if(team==="B"&&i===5)q=mix(q,[lerp(.72,.625,ss(S.stake+.7,S.stake+2.1,t))+.07*ss(S.stake+2.3,S.stake+3.4,t),.5],w) }
+    w=win(S.race+.2,S.race+.9,E.race+.2,E.race+1.2,t); if(w>0){ var rr=ss(S.race+.6,S.race+3.2,t);
+      if(team==="A"&&i===10)q=mix(q,[lerp(.62,.9,rr),lerp(.86,.7,rr)],w);
+      if(team==="B"&&i===4)q=mix(q,[lerp(.7,.83,rr),lerp(.82,.77,rr)],w) }
+    w=win(S.goal2-.9,S.goal2,E.replay2,E.replay2+.6,t); if(w>0&&team==="A"&&i===9)q=mix(q,[.86,.5],w);
+    x=q[0]; y=q[1];
+  }
+  return [clamp(x,.03,.985),clamp(y,.04,.97)];
+}
+function rnd(n){var x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+var STEP=0.85;
+function holder(k){ var mm=msec(realT(k*STEP))/60, p=bias(mm);
+  var team=(rnd(k)<(p<0?0.2:0.14))?(p<0?"A":"B"):(p<0?"B":"A"), i;
+  if(team==="A"&&p>0){i=[5,9,6,9,7,5,9,8,10,9][k%10]} else {i=1+Math.floor(rnd(k+7)*10)}
+  return [team,i];
+}
+function flight(t,t0,t1,from,to){return mix(from,to,ss(t0,t1,t))}
+function ballAt(t,s,live,P){ if(!live||t>=S.ft)return [.5,.5];
+  if(t>=S.shot+.9&&t<E.shot-.3){return t<S.shot+1.15?P.A[8]:flight(t,S.shot+1.15,S.shot+1.6,P.A[8],[.945,.47])}
+  if(t>=S.goal1+.2&&t<E.goal1-.2){return t<S.goal1+.5?P.B[10]:flight(t,S.goal1+.5,S.goal1+.9,P.B[10],[.045,.53])}
+  if(t>=S.corner+.4&&t<E.corner+.5){return flight(t,S.corner+2.05,S.corner+2.6,[.985,.965],[.905,.5])}
+  if(t>=S.pass+.4&&t<E.pass-.4){return t<S.pass+.6?P.A[5]:flight(t,S.pass+.6,S.pass+1.3,P.A[5],P.A[9])}
+  if(t>=S.sprint+.1&&t<E.sprint){return [P.A[10][0]+.012,P.A[10][1]-.012]}
+  if(t>=S.stake+.5&&t<S.stake+4.2){return [P.A[9][0]+.012,P.A[9][1]+.012]}
+  if(t>=S.race+.3&&t<E.race+.4){return t<S.race+3.2?[P.A[10][0]+.012,P.A[10][1]-.012]:flight(t,S.race+3.2,S.race+3.6,P.A[10],[.945,.56])}
+  if(t>=S.goal2+.3&&t<E.replay2){return t<S.goal2+.7?P.A[9]:flight(t,S.goal2+.7,S.goal2+1.05,P.A[9],[.955,.55])}
+  var k=Math.floor(s/STEP), f=(s-k*STEP)/STEP, a=holder(k), b=holder(k+1);
+  return mix(P[a[0]][a[1]],P[b[0]][b[1]],ss(.15,.85,f));
+}
+function mom(mm){var pre=-0.5-0.16*Math.sin(mm*0.5)-0.1*Math.sin(mm*1.3+1), post=0.86+0.06*Math.sin(mm*1.1); return (lerp(pre,post,ss(47,57,mm))-0.95*bump(mm,63.8,1.3)-0.35*ss(74,90,mm))*ss(0,3,mm)}
+function mx(mm){return 250+mm/90*820}
+function momPath(mm){ if(mm<=0)return ""; var d="M250,832"; for(var m=0;m<mm;m+=0.5){d+=" L"+mx(m).toFixed(1)+","+(832-mom(m)*44).toFixed(1)} d+=" L"+mx(mm).toFixed(1)+","+(832-mom(mm)*44).toFixed(1)+" L"+mx(mm).toFixed(1)+",832 Z"; return d}
+function winp(mm,gA,gB){var m=mom(mm), late=ss(60,90,mm), a,b;
+  if(gA===gB){a=.36+.13*m-.12*late; b=.36-.13*m-.12*late}
+  else{b=.60-.14*Math.max(0,m)+.15*late; a=.14+.12*Math.max(0,m)-.06*late}
+  return [clamp(a,.03,.9),clamp(b,.03,.9)];
+}
+// short number tags on the broadcast: [start, end, team, big, small, x, y]
+var TAGS=[[S.shot+1.3,E.shot-.3,"A","104 km/h","Shot speed. A typical shot is 82",960,160],
+[S.goal1+1,E.goal1-.2,"B","7 in 100","Chances like that go in",330,170],
+[S.sight+4,E.sight-.5,"B","4 seconds","Since Brandt last looked at Lund",84,612],
+[S.pass+1,E.pass-.2,"A","9 in 100","Passes like that come off",520,160],
+[S.sprint+1.25,E.sprint-.1,"A","34.1 km/h","Okoye, his fastest sprint today",560,470],
+[S.race+1,S.race+3.3,"A","3 of 4","Duels Okoye has won against Varga",84,612],
+[S.tired+.6,E.tired-.3,"B","3 sprints","Varga since the break. 11 before it",84,612],
+[S.replay2+1.4,S.replay2+7,"B","Same move as 12'","One difference. Stahl holds off",84,612],
+[S.replay2+8.8,E.replay2-.5,"A","31 in 100","Chances like that go in",84,612]];
+var SHOWN_T=[S.shot+1.3,S.goal1+1,S.sight+.6,S.race+.8,S.voice1+1,S.pass+1,S.sprint+1.25,S.ht+.6,S.stake+1.1,S.voice2+1,S.replay+2.3,S.tired+.6,S.replay2+.6,S.ft+.4];
+// what the commentator says: [start, end of speaking, text, name, clear]
+var SAID=[[S.voice1+.2,S.voice1+2,"Stahl has been everywhere for Harbour City today","Stahl",E.voice1+.6],
+[S.sprint+.2,S.sprint+1.4,"Look at the pace of Okoye down this side","Okoye",E.sprint+.6],
+[S.voice2+.2,S.voice2+2,"Stahl has gone very quiet since that booking","Stahl",E.voice2+.4],
+[S.replay+2.6,S.replay+6.6,"Since his booking, Stahl has stopped tackling, and Northgate are coming through the middle","Stahl",E.replay+.6],
+[S.tired+1.6,S.tired+3.4,"Varga has made 3 sprints since the break, after 11 before it","Varga",E.tired+1.2]];
+var SENT="Since his booking at 47', Stahl has stopped tackling, and Northgate are coming through the middle";
+var SENT2="Varga has made 3 sprints since the break, after 11 before it";
+var FORM={up:{v:"Above his usual today",d:[.8,.9,.5,.05],t:["4 so far, usually 2","2 so far, usually 1","7 of 9, usually 5","21 of 24, as usual"]},
+ down:{v:"Below his usual since 47'",d:[-1,-.9,-.65,.05],t:["0 since 47', usually 1","0 since 47', usually 1","1 of 5, usually 3","9 of 10, as usual"]}};
+// form glyph on the broadcast: four marks against his own usual
+var FG=[], fg=$("formg"), FL=["Tackles","Intercepts","Duels","Passes"];
+for(var c=0;c<4;c++){var cx=452+c*92, g=document.createElementNS(NS,"g");
+  g.innerHTML='<line x1="'+cx+'" y1="596" x2="'+cx+'" y2="672" stroke="#F3F6EF" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"/>'+
+   '<line x1="'+(cx-17)+'" y1="634" x2="'+(cx+17)+'" y2="634" stroke="#F3F6EF" stroke-width="3"/>'+
+   '<line class="stem" x1="'+cx+'" y1="634" x2="'+cx+'" y2="634" stroke="#FFE44D" stroke-width="6" stroke-linecap="round"/>'+
+   '<circle class="dot" cx="'+cx+'" cy="634" r="11" fill="#FFE44D"/>'+
+   '<text x="'+cx+'" y="704" text-anchor="middle" font-size="20" fill="#A9C2B4">'+FL[c]+'</text>';
+  fg.appendChild(g); FG.push(g)}
+// energy at a pause: each outfield player's running against his own usual
+var EN=[], eng=document.createElementNS(NS,"g"); dots.parentNode.insertBefore(eng,$("ball"));
+["A","B"].forEach(function(tm){for(var i=1;i<11;i++){var low=tm==="B"&&i===4, v=low?.16:.42+.45*rnd(i*3.1+(tm==="A"?1:9)), g=document.createElementNS(NS,"g");
+  g.innerHTML='<rect x="0" y="0" width="12" height="40" rx="6" fill="#08241B" fill-opacity=".9"/><rect class="lv" x="2.5" y="2" width="7" height="36" rx="3.5" fill="'+(low?"#FFE44D":"#F3F6EF")+'"/>';
+  eng.appendChild(g); EN.push([tm,i,v,g,g.querySelector(".lv")])}});
+function fmt(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",")}
+function txt(el,v){if(el.textContent!==v)el.textContent=v}
+function typed(el,str,t,a,b){var n=Math.round(str.length*ss(a,b,t)); el.className=""; el.innerHTML=""; el.appendChild(document.createTextNode(str.slice(0,n))); if(n<str.length){var c=document.createElement("span");c.className="caret";el.appendChild(c)}}
+var track=$("track");
+
+// ---------- 3D replay ----------
+var G=null;
+function wx(x){return (x-.5)*105} function wz(y){return (y-.5)*68}
+function init3D(){
+  if(!window.THREE)return null;
+  var cv=$("gl"), R;
+  try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true})}catch(e){return null}
+  R.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  var sc=new THREE.Scene(); sc.background=new THREE.Color(0x0A2E22); sc.fog=new THREE.Fog(0x0A2E22,150,340);
+  var cam=new THREE.PerspectiveCamera(38,16/9,.5,500);
+  sc.add(new THREE.HemisphereLight(0xffffff,0x0E3B2C,.95)); var dl=new THREE.DirectionalLight(0xffffff,.55); dl.position.set(-30,60,25); sc.add(dl);
+  // pitch drawn to a texture
+  var tc=document.createElement("canvas"); tc.width=2100; tc.height=1360; var x=tc.getContext("2d"), m=20;
+  for(var i=0;i<10;i++){x.fillStyle=i%2?"#207652":"#1C6B48";x.fillRect(i*210,0,211,1360)}
+  x.strokeStyle="rgba(243,246,239,.8)"; x.lineWidth=3.2; x.strokeRect(2,2,2096,1356);
+  x.beginPath();x.moveTo(1050,0);x.lineTo(1050,1360);x.stroke();
+  x.beginPath();x.arc(1050,680,9.15*m,0,Math.PI*2);x.stroke();
+  [[0,1],[2100,-1]].forEach(function(e){var gx=e[0],d=e[1];
+    x.strokeRect(d>0?gx:gx-16.5*m,680-20.16*m,16.5*m,40.32*m); x.strokeRect(d>0?gx:gx-5.5*m,680-9.16*m,5.5*m,18.32*m);
+    x.beginPath();x.arc(gx+d*11*m,680,4,0,Math.PI*2);x.fillStyle="rgba(243,246,239,.8)";x.fill();
+    x.beginPath();x.arc(gx+d*11*m,680,9.15*m,d>0?-0.93:Math.PI-0.93,d>0?0.93:Math.PI+0.93);x.stroke()});
+  var tex=new THREE.CanvasTexture(tc); tex.anisotropy=R.capabilities.getMaxAnisotropy();
+  var apron=new THREE.Mesh(new THREE.PlaneGeometry(140,100),new THREE.MeshLambertMaterial({color:0x14553B})); apron.rotation.x=-Math.PI/2; apron.position.y=-.02; sc.add(apron);
+  var pitch=new THREE.Mesh(new THREE.PlaneGeometry(105,68),new THREE.MeshLambertMaterial({map:tex})); pitch.rotation.x=-Math.PI/2; sc.add(pitch);
+  // goals
+  var white=new THREE.MeshLambertMaterial({color:0xF3F6EF});
+  [-1,1].forEach(function(d){var gx=d*52.5;
+    [-3.66,3.66].forEach(function(z){var p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,2.44,10),white);p.position.set(gx,1.22,z);sc.add(p)});
+    var bar=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,7.32,10),white);bar.rotation.x=Math.PI/2;bar.position.set(gx,2.44,0);sc.add(bar);
+    var pts=[];for(var z=-3.66;z<=3.67;z+=.61){pts.push(gx+d*2,0,z,gx+d*2,2.44,z,gx,2.44,z,gx+d*2,2.44,z)}
+    for(var y=0;y<=2.45;y+=.61){pts.push(gx+d*2,y,-3.66,gx+d*2,y,3.66)}
+    var ng=new THREE.BufferGeometry();ng.setAttribute("position",new THREE.Float32BufferAttribute(pts,3));
+    sc.add(new THREE.LineSegments(ng,new THREE.LineBasicMaterial({color:0xF3F6EF,transparent:true,opacity:.35})))});
+  // figures
+  var shadowG=new THREE.CircleGeometry(.8,20), shadowM=new THREE.MeshBasicMaterial({color:0x04140E,transparent:true,opacity:.32,depthWrite:false});
+  function figure(col,ghost){var g=new THREE.Group(), mat=ghost?new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.5,depthWrite:false}):new THREE.MeshLambertMaterial({color:col});
+    var low=ghost?mat:new THREE.MeshLambertMaterial({color:0x08241B}), top=ghost?mat:new THREE.MeshLambertMaterial({color:0xF3F6EF});
+    var legs=new THREE.Mesh(new THREE.CylinderGeometry(.34,.44,.62,18),low);legs.position.y=.31;g.add(legs);
+    var body=new THREE.Mesh(new THREE.CylinderGeometry(.42,.36,.86,18),mat);body.position.y=1.05;g.add(body);
+    var sh=new THREE.Mesh(new THREE.SphereGeometry(.42,16,10),mat);sh.position.y=1.48;sh.scale.y=.42;g.add(sh);
+    var head=new THREE.Mesh(new THREE.SphereGeometry(.27,16,12),top);head.position.y=1.86;g.add(head);
+    if(!ghost){var s2=new THREE.Mesh(shadowG,shadowM);s2.rotation.x=-Math.PI/2;s2.position.y=.03;g.add(s2)}
+    g.scale.setScalar(1.55);sc.add(g);return g}
+  var fig={A:[],B:[]};for(var i=0;i<11;i++){fig.A.push(figure(0xFF8A3D));fig.B.push(figure(0x7FD0F5))}
+  var ghost=figure(0xFFE44D,true);
+  var ball=new THREE.Mesh(new THREE.SphereGeometry(.26,16,12),new THREE.MeshLambertMaterial({color:0xffffff}));sc.add(ball);
+  var yel=new THREE.MeshBasicMaterial({color:0xFFE44D,transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide});
+  var lane=new THREE.Mesh(new THREE.PlaneGeometry(1,1),yel);lane.rotation.x=-Math.PI/2;lane.position.y=.05;sc.add(lane);
+  var solid=new THREE.MeshBasicMaterial({color:0xFFE44D});
+  var reach=new THREE.Mesh(new THREE.PlaneGeometry(4.6,2.3),yel.clone());reach.rotation.y=Math.PI/2;sc.add(reach);
+  function sprite(text,w){var c=document.createElement("canvas");c.width=768;c.height=128;var k=c.getContext("2d");
+    k.font="600 64px 'Barlow Condensed', 'Barlow', sans-serif";var tw=Math.min(740,k.measureText(text).width+56);
+    k.fillStyle="rgba(8,36,27,.92)";var x0=(768-tw)/2;k.beginPath();if(k.roundRect){k.roundRect(x0,14,tw,100,16)}else{k.rect(x0,14,tw,100)}k.fill();
+    k.fillStyle="#F3F6EF";k.textAlign="center";k.textBaseline="middle";k.fillText(text,384,66,720);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));sp.scale.set(w,w/6,1);sp.renderOrder=10;sc.add(sp);return sp}
+  var lab={stahl:sprite("Stahl 6",7),ghost:sprite("Where he usually steps in",8.5),draper:sprite("Draper 10",5),speed:sprite("97 km/h",5),reach:sprite("Out of the keeper's reach",8)};
+  var card3=new THREE.Mesh(new THREE.BoxGeometry(.85,1.2,.06),new THREE.MeshBasicMaterial({color:0xFFD21F}));sc.add(card3);
+  lab.s1=sprite("Where Brandt is looking",8); lab.s2=sprite("Lund 9, unseen",5); lab.s3=sprite("Where he last saw him",6.5);
+  lab.tw1=sprite("12' Stahl steps in",7.5); lab.tw2=sprite("71' he holds off",6.5);
+  var pale=new THREE.MeshBasicMaterial({color:0xF3F6EF,transparent:true,opacity:.55,depthWrite:false});
+  return {card3:card3,pale:pale,wide:null,R:R,sc:sc,cam:cam,fig:fig,ghost:ghost,ball:ball,lane:lane,reach:reach,lab:lab,solid:solid,arrows:null,trail:null,cv:cv,w:0,h:0};
+}
+function tube(curve,rad,mat){return new THREE.Mesh(new THREE.TubeGeometry(curve,48,rad,8,false),mat)}
+function v3(a){return new THREE.Vector3(a[0],a[1],a[2])}
+function draw3D(mode,u,P){
+  var g=G, i; if(!g)return;
+  var w=g.cv.clientWidth,h=g.cv.clientHeight; if(w!==g.w||h!==g.h){g.R.setSize(w,h,false);g.cam.aspect=w/h;g.cam.updateProjectionMatrix();g.w=w;g.h=h}
+  ["A","B"].forEach(function(tm){for(i=0;i<11;i++){g.fig[tm][i].position.set(wx(P[tm][i][0]),0,wz(P[tm][i][1]));g.fig[tm][i].rotation.set(0,0,0)}});
+  Object.keys(g.lab).forEach(function(k){g.lab[k].visible=false});
+  g.ghost.visible=false;g.lane.visible=false;g.reach.visible=false;g.card3.visible=false;if(g.wide)g.wide.visible=false;
+  if(g.arrows){g.arrows.forEach(function(a){a.visible=false})} if(g.trail)g.trail.visible=false;
+  var eye,look,up=new THREE.Vector3(0,1,0);
+  if(mode===1){
+    var sx=wx(P.B[5][0]), sz=wz(P.B[5][1]), ax=wx(P.A[5][0]), az=wz(P.A[5][1]);
+    var k=ss(1.1,4,u), orbit=ss(4,11,u);
+    var e0=[0,92.7,3.48], l0=[0,0,3.47], e1=[sx-31+3*orbit,10.5-1.5*orbit,sz+9+3*orbit], l1=[sx-7,1.2,sz-0.5];
+    eye=[lerp(e0[0],e1[0],k),lerp(e0[1],e1[1],k),lerp(e0[2],e1[2],k)]; look=[lerp(l0[0],l1[0],k),lerp(l0[1],l1[1],k),lerp(l0[2],l1[2],k)];
+    up.set(0,k,-(1-k)).normalize();
+    var lo=ss(3.4,4.4,u); g.lane.visible=lo>0; g.lane.material.opacity=.26*lo; g.lane.scale.set(17,20,1); g.lane.position.set(sx-11.5,.05,sz);
+    if(!g.arrows){g.arrows=[-1,1].map(function(d){var a=P.A[d<0?6:7];
+      return tube(new THREE.QuadraticBezierCurve3(new THREE.Vector3(wx(a[0])+1.5,.15,wz(a[1])),new THREE.Vector3(sx-18,.15,sz+d*8),new THREE.Vector3(sx-3.5,.15,sz+d*5)),.14,g.solid)});
+      g.arrows.forEach(function(a){g.sc.add(a)})}
+    var ap=ss(4.6,6.2,u); g.arrows.forEach(function(a){a.visible=ap>0;a.geometry.setDrawRange(0,Math.floor(48*8*6*ap))});
+    var gp=ss(5.2,7.4,u); g.ghost.visible=u>5.2; g.ghost.position.set(lerp(sx,sx-13,gp),0,sz);
+    g.lab.stahl.visible=u>3.2; g.lab.stahl.position.set(sx,5,sz);
+    g.lab.ghost.visible=u>7.2; g.lab.ghost.position.set(sx-13,4.8,sz);
+    g.ball.position.set(ax+1,.3,az+.4);
+  } else if(mode===3){
+    var bx=wx(P.A[3][0]), bz=wz(P.A[3][1]), tn=ss(2.1,3.9,u);
+    g.fig.B[7].position.set(bx+17,0,bz-9); g.ball.position.set(bx+16.2,.3,bz-8.5); g.fig.B[10].position.set(bx-7,0,bz+15);
+    g.ghost.visible=u>3.7; g.ghost.position.set(bx+6,0,bz+19);
+    eye=[bx,2.9,bz]; look=[lerp(bx+17,bx-.5,tn),lerp(1.4,2.2,tn),lerp(bz-9,bz+17,tn)];
+    g.lab.s1.visible=u>.7&&u<2.3; g.lab.s1.position.set(bx+17,4.7,bz-9);
+    g.lab.s2.visible=u>3.7; g.lab.s2.position.set(bx-7,4.3,bz+15);
+    g.lab.s3.visible=u>4.2; g.lab.s3.position.set(bx+6,4.3,bz+19);
+  } else {
+    var dx=wx(P.A[9][0]), dz=wz(P.A[9][1]), tx=wx(P.B[5][0]), tz=wz(P.B[5][1]), v=Math.max(0,u-6);
+    var from=new THREE.Vector3(dx+.8,.28,dz+.2), to=new THREE.Vector3(53.2,.6,-3.0), mid=new THREE.Vector3((dx+53)/2,2.3,-1.2);
+    var curve=new THREE.QuadraticBezierCurve3(from,mid,to);
+    if(!g.trail){g.trail=tube(curve,.12,g.solid);g.sc.add(g.trail)}
+    // the earlier attempt, laid over this one
+    var gp=ss(.9,2.6,u); g.ghost.visible=u>.9&&u<5.7; g.ghost.position.set(lerp(tx,dx-1.5,gp),0,lerp(tz,dz+.6,gp));
+    if(!g.wide){g.wide=tube(new THREE.QuadraticBezierCurve3(new THREE.Vector3(dx+.6,.15,dz-.4),new THREE.Vector3(dx-1,.15,dz-11),new THREE.Vector3(wx(.8),.15,wz(.17))),.13,g.pale);g.sc.add(g.wide)}
+    var wp=ss(2.4,3.8,u); g.wide.visible=wp>0&&u<5.7; g.wide.geometry.setDrawRange(0,Math.floor(48*8*6*wp));
+    g.card3.visible=u>3.2&&u<5.7; g.card3.position.set(tx,4.3,tz);
+    g.lab.tw1.visible=u>1.7&&u<5.6; g.lab.tw1.position.set(dx-1.5,4.7,dz+.6);
+    g.lab.tw2.visible=u>3.4&&u<5.6; g.lab.tw2.position.set(tx,6.1,tz);
+    var bp=ss(1.2,3.6,v), push=ss(3.4,7.5,v), kk=ss(5.6,7.2,u), cx=(tx+dx)/2;
+    g.trail.visible=bp>0; g.trail.geometry.setDrawRange(0,Math.floor(48*8*6*bp));
+    g.ball.position.copy(curve.getPoint(bp));
+    var kp=g.fig.B[0]; kp.position.set(51.4,0,lerp(.4,-1.5,ss(1.6,3.2,v))); kp.rotation.x=-1.05*ss(1.8,3.2,v);
+    var eA=[cx-1,10.5,dz+25], lA=[cx+1.5,2.4,dz-1], eB=[dx-10+4*push,4.9-.5*push,dz+4.2-.8*push], lB=[52.5,-1.2,-1.4];
+    eye=[lerp(eA[0],eB[0],kk),lerp(eA[1],eB[1],kk),lerp(eA[2],eB[2],kk)]; look=[lerp(lA[0],lB[0],kk),lerp(lA[1],lB[1],kk),lerp(lA[2],lB[2],kk)];
+    g.reach.visible=v>3.9; g.reach.material.opacity=.22*ss(3.9,4.7,v); g.reach.position.set(52.4,1.15,.2);
+    g.lab.draper.visible=v>.6&&v<1.8; g.lab.draper.position.set(dx,4.6,dz);
+    g.lab.speed.visible=v>2.2; var mp=curve.getPoint(.42); g.lab.speed.position.set(mp.x,mp.y+2.2,mp.z);
+    g.lab.reach.visible=v>4.6; g.lab.reach.position.set(52.4,3.5,1.6);
+  }
+  g.cam.up.copy(up); g.cam.position.set(eye[0],eye[1],eye[2]); g.cam.lookAt(look[0],look[1],look[2]);
+  var keep=mode===2?g.fig.A[9]:null;
+  ["A","B"].forEach(function(tm){for(i=0;i<11;i++){var f=g.fig[tm][i];f.visible=f===keep||f.position.distanceTo(g.cam.position)>(mode===1?14:mode===3?3.2:9)}});
+  g.R.render(g.sc,g.cam);
+}
+
+// ---------- one frame ----------
+function render(t){
+  var ms=msec(t), mm=ms/60, s=simT(t), live=t>=S.play1, seg=segAt(t);
+  var P={A:[],B:[]};
+  ["A","B"].forEach(function(tm){for(var i=0;i<11;i++){var p=pos(tm,i,mm,s,live,t);P[tm].push(p);els[tm][i].setAttribute("cx",px(p[0]).toFixed(1));els[tm][i].setAttribute("cy",py(p[1]).toFixed(1))}});
+  var bl=ballAt(t,s,live,P); $("ball").setAttribute("cx",px(bl[0]).toFixed(1)); $("ball").setAttribute("cy",py(bl[1]).toFixed(1));
+  var gB=t>=S.goal1+.9?1:0, gA=t>=S.goal2+1.05?1:0;
+  var m=Math.floor(ms/60), sc=Math.floor(ms%60); txt($("clock"),(m<10?"0":"")+m+":"+(sc<10?"0":"")+sc);
+  txt($("sA"),""+gA); txt($("sB"),""+gB);
+  var shown=SHOWN_T.filter(function(x){return t>=x}).length;
+  txt($("seen"),fmt(Math.round(mm*20.69))+" seen"); txt($("shown"),shown+" shown");
+  var kOut=1-ss(S.play1-.9,S.play1-.3,t), st0=P.B[5], vg=P.B[4], rc=win(S.race+.7,S.race+1,S.race+3.2,S.race+3.6,t);
+  $("km0").setAttribute("opacity",(ss(.3,.9,t)*kOut).toFixed(3));
+  $("km1").setAttribute("opacity",Math.max(ss(.9,1.5,t)*kOut,win(S.shot+.3,S.shot+.7,E.shot-.6,E.shot-.1,t)).toFixed(3));
+  $("km2").setAttribute("opacity",Math.max(ss(3,3.6,t)*kOut,win(S.book+1.2,S.book+1.6,E.book+.3,E.book+.9,t)).toFixed(3)); $("km2").setAttribute("transform","translate("+px(st0[0]).toFixed(1)+","+py(st0[1]).toFixed(1)+")");
+  $("km3").setAttribute("opacity",Math.max(ss(5.1,5.7,t)*kOut,win(S.tired+.4,S.tired+.9,E.tired-.6,E.tired-.1,t),rc).toFixed(3)); $("km3").setAttribute("transform","translate("+px(vg[0]).toFixed(1)+","+py(vg[1]).toFixed(1)+")"); ["km1l","km2l","km3l"].forEach(function(id){$(id).setAttribute("opacity",t<S.play1?1:0)});
+  $("ft").setAttribute("opacity",ss(S.ft+.2,S.ft+1,t).toFixed(3));
+  $("ht").setAttribute("opacity",win(S.ht+.2,S.ht+.8,E.ht-.6,E.ht,t).toFixed(3));
+  for(var hc=1;hc<=3;hc++){var ho=ss(S.ht+.3+hc*.6,S.ht+.9+hc*.6,t); $("hc"+hc).setAttribute("opacity",ho.toFixed(3)); $("hc"+hc).setAttribute("transform","translate(0,"+((1-ho)*30).toFixed(1)+")")}
+  var inWin=mm>=60; $("dwin").setAttribute("stroke",inWin?"#FFE44D":"#A9C2B4"); $("dwin").setAttribute("stroke-dasharray",inWin?"none":"7 6"); $("dwin").setAttribute("opacity",t>=5.1?1:0);
+  $("winlab").setAttribute("opacity",Math.max(win(5.1,5.7,S.play1-.9,S.play1-.3,t),win(S.play9+.7,S.play9+1.1,S.held+1.2,S.held+1.8,t)).toFixed(3));
+  for(var fc=1;fc<=3;fc++){var fo3=ss(S.ft+.5+fc*.7,S.ft+1.1+fc*.7,t); $("fc"+fc).setAttribute("opacity",fo3.toFixed(3)); $("fc"+fc).setAttribute("transform","translate(0,"+((1-fo3)*30).toFixed(1)+")")}
+  // 3D replays
+  var a0=win(S.sight+.3,S.sight+.9,E.sight-.6,E.sight,t), a1=win(S.replay+.3,S.replay+1,E.replay-.6,E.replay,t), a2=win(S.replay2+.2,S.replay2+.8,E.replay2-.6,E.replay2,t), a3=G?Math.max(a0,a1,a2):0;
+  $("gl").style.opacity=a3.toFixed(3);
+  if(G&&a0>0)draw3D(3,t-S.sight,P); else if(G&&a1>0)draw3D(1,t-S.replay,P); else if(G&&a2>0)draw3D(2,t-S.replay2,P);
+  // goal and replay flag
+  var rt=Math.max(win(S.goal1+.9,S.goal1+1.1,S.goal1+2.6,S.goal1+3,t),win(S.goal2+1.05,S.goal2+1.25,E.goal2-.1,E.goal2+.1,t));
+  var rp=Math.max(win(S.sight+.1,S.sight+.5,E.sight,E.sight+.4,t),win(S.replay+.1,S.replay+.5,E.replay,E.replay+.4,t),win(S.replay2+.1,S.replay2+.5,E.replay2,E.replay2+.4,t));
+  txt($("rtxt"),rp>0?"3D replay":"Goal"); $("replayTag").setAttribute("opacity",Math.max(rt,rp).toFixed(3));
+  // booking
+  var st5=P.B[5], sx=px(st5[0]), sy=py(st5[1]);
+  var yc=win(S.book+.8,S.book+1.1,E.book+.4,E.book+.9,t); var ycF=win(S.stake+.5,S.stake+.9,S.stake+3.3,S.stake+3.8,t), ycU=ss(S.stake+1.8,S.stake+2.1,t), yc2=ycF*(.4+.6*ycU), cs=1+.2*ycF+.7*ycF*ycU; var card=$("ycard"); card.setAttribute("opacity",Math.max(yc,yc2).toFixed(3)); card.setAttribute("width",(20*cs).toFixed(1)); card.setAttribute("height",(28*cs).toFixed(1)); card.setAttribute("x",(sx+18).toFixed(1)); card.setAttribute("y",(sy-48-8*yc-26*yc2).toFixed(1));
+  $("mcard").setAttribute("opacity",ss(S.book+.9,S.book+1.4,t).toFixed(3));
+  var d=momPath(mm); $("mUp").setAttribute("d",d); $("mDn").setAttribute("d",d);
+  var wp=winp(mm,gA,gB), wa=Math.round(wp[0]*100), wb=Math.round(wp[1]*100), full=366;
+  $("wA").setAttribute("width",(full*wa/100).toFixed(1)); $("wD").setAttribute("x",(1150+full*wa/100).toFixed(1)); $("wD").setAttribute("width",(full*(100-wa-wb)/100).toFixed(1)); $("wB").setAttribute("x",(1150+full*(100-wb)/100).toFixed(1)); $("wB").setAttribute("width",(full*wb/100).toFixed(1));
+  txt($("wAt"),"NOR "+wa); txt($("wBt"),"HAR "+wb);
+  // number tags
+  var tg=$("tag"), on=0, act=null;
+  for(var i=0;i<TAGS.length;i++){var g=TAGS[i], o=win(g[0],g[0]+.35,g[1]-.35,g[1],t); if(o>0){on=o; txt($("tagbig"),g[3]); txt($("tagsm"),g[4]); $("tagbar").setAttribute("fill",g[2]==="A"?"#FF8A3D":"#7FD0F5"); tg.setAttribute("transform","translate("+g[5]+","+(g[6]+(1-ss(g[0],g[0]+.35,t))*16).toFixed(1)+")")} if(t>=g[0]&&t<g[1]+.6)act=g}
+  tg.setAttribute("opacity",on.toFixed(3));
+  // player form card, released by the commentator's voice
+  var fs=(t>=S.voice1+1&&t<E.voice1)?"up":(t>=S.voice2+1&&t<E.voice2+.2)?"down":null, f0=fs==="up"?S.voice1+1:S.voice2+1, f1=fs==="up"?E.voice1:E.voice2+.2;
+  var fo=fs?win(f0,f0+.35,f1-.35,f1,t):0; $("form").setAttribute("opacity",fo.toFixed(3));
+  if(fs){txt($("formv"),FORM[fs].v); var pr=ss(f0+.15,f0+1,t); for(var c=0;c<4;c++){var yy=(634-FORM[fs].d[c]*32*pr).toFixed(1); FG[c].querySelector(".dot").setAttribute("cy",yy); FG[c].querySelector(".stem").setAttribute("y2",yy)}}
+  // pass line, sprint trail, slowing full back
+  var pl=$("passln"), po=win(S.pass+.7,S.pass+1,E.pass-.6,E.pass-.2,t); pl.setAttribute("opacity",po.toFixed(3)); if(po>0){pl.setAttribute("x1",px(P.A[5][0]));pl.setAttribute("y1",py(P.A[5][1]));pl.setAttribute("x2",px(P.A[9][0]));pl.setAttribute("y2",py(P.A[9][1]))}
+  var tr=$("trail"), to=win(S.sprint+.4,S.sprint+.7,E.sprint-.3,E.sprint+.3,t); tr.setAttribute("opacity",to.toFixed(3)); if(to>0){tr.setAttribute("x1",px(.5));tr.setAttribute("y1",py(P.A[10][1]));tr.setAttribute("x2",(px(P.A[10][0])-20).toFixed(1));tr.setAttribute("y2",py(P.A[10][1]))}
+  var r2=$("ring2"); r2.setAttribute("opacity",Math.max(win(S.tired+.6,S.tired+1,E.tired-.6,E.tired-.2,t),fo*.9,yc2*(.55+.45*Math.sin(t*9))).toFixed(3)); var rb=(fo>0||yc2>0)?P.B[5]:P.B[4]; r2.setAttribute("cx",px(rb[0]).toFixed(1)); r2.setAttribute("cy",py(rb[1]).toFixed(1));
+  var eo=win(S.tired+.3,S.tired+.8,E.tired-.6,E.tired-.1,t), eg=ss(S.tired+.5,S.tired+1.5,t); eng.setAttribute("opacity",Math.max(eo,rc).toFixed(3));
+  if(eo>0||rc>0)EN.forEach(function(e){var p=P[e[0]][e[1]], lowp=e[0]==="B"&&e[1]===4, big=(rc>0&&lowp)?1.7:1, hh=36*e[2]*(rc>0?1:eg); e[3].setAttribute("opacity",(eo>0||lowp)?1:0); e[3].setAttribute("transform","translate("+(px(p[0])+21).toFixed(1)+","+(py(p[1])-20*big).toFixed(1)+") scale("+big+")"); e[4].setAttribute("y",(38-hh).toFixed(1)); e[4].setAttribute("height",hh.toFixed(1))});
+  // flat drawing under the 3D replay, also the fallback when 3D is not available
+  var R0=S.replay, out=1-ss(E.replay-.2,E.replay+.5,t), inR=t>=R0&&t<E.replay+.6;
+  var ring=$("ring"); ring.setAttribute("cx",sx.toFixed(1)); ring.setAttribute("cy",sy.toFixed(1)); ring.setAttribute("opacity",(inR&&t>=R0+.5?out:0).toFixed(3)); ring.setAttribute("stroke-dashoffset",(1-ss(R0+.6,R0+1.5,t)).toFixed(3));
+  var nameO=Math.max(yc,(inR?ss(R0+1.2,R0+1.7,t)*out:0)); var nm=$("stahl"); nm.setAttribute("opacity",nameO.toFixed(3)); nm.setAttribute("x",(sx+44).toFixed(1)); nm.setAttribute("y",(sy+10+(t<S.turn+2?34*yc:0)).toFixed(1));
+  $("tele").setAttribute("opacity",(inR&&t>=R0+1?out:0).toFixed(3));
+  var lane=$("lane"), lx=sx-0.2*W, lw=0.165*W; lane.setAttribute("x",lx.toFixed(1)); lane.setAttribute("y",(sy-0.15*H).toFixed(1)); lane.setAttribute("width",lw.toFixed(1)); lane.setAttribute("height",(0.3*H).toFixed(1)); lane.setAttribute("fill-opacity",(0.24*ss(R0+1.1,R0+1.9,t)).toFixed(3));
+  var q1=P.A[6],q2=P.A[7];
+  $("ar1").setAttribute("d","M"+(px(q1[0])+24).toFixed(0)+","+py(q1[1]).toFixed(0)+" Q"+lx.toFixed(0)+","+(sy-0.12*H).toFixed(0)+" "+(lx+lw-10).toFixed(0)+","+(sy-0.075*H).toFixed(0));
+  $("ar2").setAttribute("d","M"+(px(q2[0])+24).toFixed(0)+","+py(q2[1]).toFixed(0)+" Q"+lx.toFixed(0)+","+(sy+0.12*H).toFixed(0)+" "+(lx+lw-10).toFixed(0)+","+(sy+0.075*H).toFixed(0));
+  var ap=ss(R0+1.8,R0+2.8,t); ["ar1","ar2"].forEach(function(id){$(id).setAttribute("stroke-dashoffset",(1-ap).toFixed(3)); $(id).setAttribute("opacity",ap>0.02?1:0)});
+  var lb=(inR?ss(R0+2.3,R0+2.9,t)*out:0); var L=$("label"); L.setAttribute("opacity",lb.toFixed(3)); L.setAttribute("transform","translate(0,"+((1-ss(R0+2.3,R0+2.9,t))*26).toFixed(1)+")");
+  $("fade").setAttribute("opacity",Math.max(ss(T-.6,T,t),1-ss(0,.4,t)).toFixed(3));
+  // phone
+  var pst="quiet";
+  if(t>=S.race+.9&&t<E.race)pst="num"; else if(t>=S.shot+1.4&&t<E.shot)pst="num"; else if(t>=S.voice1+1&&t<E.voice1+.3)pst="form"; else if(t>=S.pass+1.1&&t<E.pass)pst="num"; else if(t>=S.sprint+1.3&&t<E.sprint+.3)pst="num"; else if(t>=S.stake+1.2&&t<E.stake)pst="num";
+  else if(t>=S.turn+.6&&t<E.turn)pst="metric"; else if(t>=S.voice2+1&&t<E.voice2+1.2)pst="form";
+  else if(t>=R0+2.6&&t<R0+5.6)pst="casual"; else if(t>=R0+5.6&&t<R0+8.6)pst="analyst"; else if(t>=R0+8.6&&t<E.replay+.6)pst="ar";
+  else if(t>=E.replay+.6&&t<S.tired)pst="focus"; else if(t>=S.goal2+1.2&&t<S.ft+.4)pst="focus"; else if(t>=S.ft+.4)pst="recap";
+  var ph=$("ph"); if(ph.getAttribute("data-state")!==pst)ph.setAttribute("data-state",pst);
+  txt($("pmode"),pst==="analyst"?"Analyst":pst==="ar"?"العربية":pst==="focus"?"Following Draper":pst==="metric"?"One metric":"Casual");
+  txt($("psc"),!live?"Before kick-off":t>=S.ft?"Full time, NOR 1, HAR 1":("NOR "+gA+", HAR "+gB+", "+m+" min"));
+  if(pst==="num"){
+    if(t<E.shot){txt($("nt"),"Shot speed");txt($("nb"),"104 km/h");txt($("ns"),"Faster than 97 in 100 shots this season");txt($("ntl"),"typical 82");$("nscale").className="pscale";$("nmk").style.setProperty("--x","80%")}
+    else if(t<E.pass){txt($("nt"),"Pass difficulty");txt($("nb"),"9 in 100");txt($("ns"),"Kessler found Draper through a gap that is usually closed");$("nscale").className="pscale off"}
+    else if(t>=S.race){txt($("nt"),"At stake");txt($("nb"),"Nothing left");txt($("ns"),"Varga has made 3 sprints since the break. Okoye has won 3 of their 4 duels and is running at him");$("nscale").className="pscale off"}
+    else if(t>=S.stake){txt($("nt"),"At stake");txt($("nb"),"One foul from red");txt($("ns"),"Stahl was booked at 47' and is closing on the ball");$("nscale").className="pscale off"}
+    else{txt($("nt"),"Player speed");txt($("nb"),"34.1 km/h");txt($("ns"),"Okoye's fastest sprint today, and faster than 9 in 10 sprints this season");txt($("ntl"),"typical 29");$("nscale").className="pscale";$("nmk").style.setProperty("--x","86%")}
+  }
+  if(pst==="form"){var F=FORM[t<S.pass?"up":"down"]; txt($("fv"),F.v); for(var j=0;j<4;j++){txt($("f"+(j+1)),F.t[j]); $("d"+(j+1)).style.setProperty("--x",(50+F.d[j]*42)+"%")}}
+  var w1=mm>=12, w2=t>=R0+.6, w3=t>=S.tired+.8;
+  $("wf1").className="wf"+(w1?" done":""); txt($("wf1s"),w1?"Happened at 12'":"Not yet");
+  $("wf2").className="wf"+(w2?" done":""); txt($("wf2s"),w2?"Happened after 47'":"Not yet");
+  $("wf3").className="wf"+(w3?" done":""); txt($("wf3s"),w3?"Happened by 68'":"Not yet");
+  txt($("qnote"),!live?"The match has not started":"Nothing to explain right now");
+  $("fgoal").className="frow late"+(t>=S.goal2+1.3?" in":"");
+  var bOn=on>0||lb>0||fo>0||a3>0||win(.3,.5,S.play1-.4,S.play1,t)>0||t>=S.ft+.4;
+  $("lampB").className="lamp"+(bOn?" on":""); $("lampP").className="lamp"+(pst!=="quiet"?" on":"");
+  // what the system hears
+  var hd=$("heard"), spk=false, said=null; for(var v=0;v<SAID.length;v++){if(t>=SAID[v][0]&&t<SAID[v][4])said=SAID[v]}
+  if(said){var n=Math.round(said[2].length*ss(said[0],said[1],t)), part=said[2].slice(0,n), ix=said[2].indexOf(said[3]); spk=t<said[1];
+    var html=(n>=ix+said[3].length)?part.slice(0,ix)+"<mark>"+said[3]+"</mark>"+part.slice(ix+said[3].length):part;
+    if(hd.getAttribute("data-h")!==html){hd.className="";hd.innerHTML=html;hd.setAttribute("data-h",html)}}
+  else if(hd.getAttribute("data-h")!=="idle"){hd.className="idle";hd.textContent=live?"Listening":"Waiting for kick-off";hd.setAttribute("data-h","idle")}
+  $("wave").className="wave"+(spk?" on":"");
+  // the line offered to the commentator
+  var cl=$("commline");
+  if(t>=S.turn+3.6&&t<E.replay+2)typed(cl,SENT,t,S.turn+3.6,S.turn+5.6);
+  else if(t>=S.tired&&t<E.tired+1.5)typed(cl,SENT2,t,S.tired,S.tired+1.4);
+  else{cl.className="idle"; txt(cl,t>=S.ft?"Recap ready to read":t>=E.replay+2?"Nothing new to say":"Nothing to say yet")}
+  // producer
+  function desk(a,b,c,cls){txt($("pt"),a);txt($("ps"),b);txt($("pc"),c);$("pc").className="pchip"+(cls?" "+cls:"")}
+  if(t>=S.ft+.4)desk("Three cards from the 3 biggest swings","Every number checked. Spoken version ready in Arabic","Ready","hold");
+  else if(t>=S.ht+.5&&t<E.ht-.3)desk("Half-time card: three things still open","Two marks from kick-off have not come true yet. Northgate's agent adds the closed middle","On air","air");
+  else if(a0>0)desk("Lund scored unseen","Brandt's head was turned to the ball for 4 seconds. From head position, with no claim about what he thought","On air","air");
+  else if(t>=S.race+.8&&t<E.race-.2)desk("Okoye is running at Varga","Okoye has won 3 of their 4 duels and Varga is far below his usual running. His mark shows on him by rule","On air","air");
+  else if(a2>0&&t<S.replay2+7)desk("Twin found: the same move at 12'","Harbour City's agent says Stahl held off. Northgate's says Draper found the gap. Both checked","On air","air");
+  else if(a2>0)desk("Goal replay rebuilt in 3D","Camera over the scorer's shoulder. Path, speed and keeper's reach drawn in","On air","air");
+  else if(t>=S.held+.4&&t<E.held-.4)desk("Swing to Harbour City at 64'","No clear cause found. Nothing shown","Held back","");
+  else if(t>=R0+.6&&t<E.replay+.4)desk("Stahl stopped tackling after his booking","Replay rebuilt in 3D from the midfielder's side. 3 events, numbers checked","On air","air");
+  else if(fs==="down")desk("The commentator named Stahl","He is below his usual since 47'. His card is released on the cue","On cue","air");
+  else if(t>=S.turn+3.6&&t<R0+.6)desk("Stahl stopped tackling after his booking","Rewritten with the right number. Checked","Held for the next replay","hold");
+  else if(t>=S.turn+2&&t<S.turn+3.6)desk("Draft says 52 entries through the centre","52 is not in the match record. The record says 25","Rejected","rej");
+  else if(t>=S.stake+1.1&&t<E.stake-.3)desk("Stahl is in the play, booked","Chance of a challenge has passed 1 in 5, so the faint card goes full. No words on the picture","On air","air");
+  else if(t>=S.book+1.1&&t<S.turn+2)desk("Stahl booked at 47'","Watching for a change in his play","Watching","");
+  else if(fs==="up")desk("The commentator named Stahl","He is above his usual today. His card is released on the cue","On cue","air");
+  else if(act&&act[3]==="34.1 km/h")desk("The commentator named Okoye","His fastest sprint was waiting. Released on the cue","On cue","air");
+  else if(act&&act[3]==="3 sprints")desk("Play stopped. Energy shown over the players","Each against his own usual. Varga is lowest: 3 sprints since the break, 11 before it","On air","air");
+  else if(act)desk(act[3]+". "+act[4],"Unusual enough to pass the rule","Aired by rule","air");
+  else desk(live?"Nothing worth showing":"No stories yet",live?"Reading every event":"Three marks are set, from both teams' agents","Quiet","");
+  // caption and beats
+  txt($("cap"),CAPS[seg]||"Play. Ordinary numbers are not shown");
+  for(var q=0;q<BEATS.length;q++){var b0=S[BEATS[q][1]], b1=q+1<BEATS.length?S[BEATS[q+1][1]]:T, btn=track.children[q], f=clamp((t-b0)/(b1-b0),0,1); btn.firstChild.style.width=(f*100).toFixed(1)+"%"; btn.className=(t>=b0&&t<b1)?"cur":""}
+}
+BEATS.forEach(function(b){var bt=document.createElement("button");bt.type="button";var fl=document.createElement("i");fl.className="fill";var sp=document.createElement("span");sp.textContent=b[0];bt.appendChild(fl);bt.appendChild(sp);bt.setAttribute("aria-label","Jump to: "+b[0]);bt.addEventListener("click",function(){t0=S[b[1]]+0.05;render(t0)});track.appendChild(bt)});
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var q=/[?&]t=([\d.]+)/.exec(location.search), qs=/[?&]seg=(\w+)(?:\+([\d.]+))?/.exec(location.search);
+var t0=qs?S[qs[1]]+parseFloat(qs[2]||"0"):q?parseFloat(q[1]):(reduce?S.replay+7:0), playing=!(reduce||q||qs), prev=null;
+function icon(){ $("ppi").setAttribute("d",playing?"M3 2h4v14H3zM11 2h4v14h-4z":"M4 2l11 7-11 7z"); $("pp").setAttribute("aria-label",playing?"Pause":"Play") }
+$("pp").addEventListener("click",function(){playing=!playing;prev=null;icon()});
+function frame(now){ if(playing){ if(prev!==null){t0+=Math.min(.1,(now-prev)/1000); if(t0>=T)t0-=T} prev=now; render(t0) } else {prev=null} requestAnimationFrame(frame) }
+function start(){ try{G=init3D()}catch(e){G=null} icon(); render(t0); requestAnimationFrame(frame) }
+if(document.fonts&&document.fonts.ready){var done=false,go=function(){if(!done){done=true;start()}};document.fonts.ready.then(go);setTimeout(go,1500)}else{start()}
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "cause_type": "substitution",
+  "team": "A",
+  "player_id": "A14",
+  "onset_minute": 56,
+  "one_sentence": "Northgate brought on Cruz Quill (A14) for Hale Lund at minute 56, and from then on Northgate pressed high and won the ball in Harbour City's half, which stopped Harbour City's attacks and let Northgate take over the match.",
+  "evidence": [
+    "Team A won-ball actions in Harbour City's half (x>=60) rose from 3 in minutes 40-57 to 16 in 58-75; A14 made 6 of them and A9 made 5.",
+    "Harbour City shots fell from 10 (xG 0.96) in minutes 40-57 to 1 (xG 0.07) in 58-75.",
+    "Net threat (A minus B) went from -1.98 before the shift to +0.80 after it; the rolling 10-minute net turned positive at minute 63 after reaching -1.38 at minute 56.",
+    "A14 had 18 events in 58-75, with 6 won-ball actions and 11 under pressure; A10, the player he replaced, had 2 events in 40-55."
+  ],
+  "alternatives_ruled_out": [
+    "Player fatigue: B7 speed was 11.38 km/h in 44-57 and 11.84 km/h in 58-75, and B11 was flat at 11.30 km/h; A10 slowed only in the minute before his replacement.",
+    "Harbour City substitution: B13 came on at minute 63, five minutes after the shift began.",
+    "Shape change: player positions relative to the ball are unchanged for both teams; the shift is in where the ball was (mean x 39 to 65), not in a change of shape.",
+    "Harbour City defensive drop-off: their won-ball actions were 31 before and 30 after.",
+    "Chance: Harbour City's 10 shots in 40-57 were within the normal range for an 18-minute window (median 6, max 11), but the drop to 1 shot after the change is not explained by noise.",
+    "Pressure on the ball alone: Harbour City's under-pressure share rose from 18 of 137 to 26 of 124, but the pressing started with A14 and A9, not from a Harbour City change."
+  ],
+  "confidence": 0.45
+}

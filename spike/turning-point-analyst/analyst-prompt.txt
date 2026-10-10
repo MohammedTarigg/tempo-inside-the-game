@@ -1,0 +1,22 @@
+You are a football data analyst. Work ONLY inside the folder {DATA} (read) and {OUT} (write). Do not read or list any other folder on this machine; anything outside those two folders is off limits and would invalidate the test.
+
+Start by reading {DATA}/README.md. It describes one synthetic football match and asks a question: a momentum detector flagged a shift towards team A around a given minute, and you must find out why the match turned, if there is a reason.
+
+How to work:
+1. Explore the data with Python (pandas is available via python3; if it is not, use the csv module). Write your own analysis code. Compare the period before the shift with the period after it, by team, by player, by pitch area, by event type, and using the positions and speeds. Look at substitutions and cards too, but check whether the data actually changes around them before blaming them.
+2. Form hypotheses and test each one with numbers. Rule out alternatives. Football is noisy: a momentum shift can also be chance, and saying "no clear cause" is a valid answer when nothing in the data stands out strongly.
+3. Save your final analysis script as {OUT}/analysis.py (it must run on its own and print the key numbers behind your conclusion).
+4. Save your verdict as {OUT}/verdict.json with exactly these fields:
+   {
+     "cause_type": one of "player_fatigue", "substitution", "player_behaviour_change", "team_tactical_change", "no_clear_cause", "other",
+     "team": "A" or "B" or null (the team whose change caused the shift),
+     "player_id": the single player most responsible, e.g. "B7", or null,
+     "onset_minute": the minute the change began, or null,
+     "one_sentence": a plain one sentence explanation a TV viewer could read,
+     "evidence": a list of 2 to 5 short strings, each with a number from your analysis (before vs after),
+     "alternatives_ruled_out": a list of short strings,
+     "confidence": a number from 0 to 1
+   }
+   For "substitution", player_id is the player who came ON.
+
+Budget: at most 25 tool calls. Finish by replying with the contents of verdict.json and nothing else.

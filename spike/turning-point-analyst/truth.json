@@ -1,0 +1,72 @@
+{
+ "1": {
+  "kind": "booked",
+  "seed": 10,
+  "T": 50,
+  "truth": {
+   "cause_type": "player_behaviour_change",
+   "player_id": "B6",
+   "onset_minute": 47
+  },
+  "score": {
+   "A": 0,
+   "B": 2
+  }
+ },
+ "2": {
+  "kind": "control",
+  "seed": 7,
+  "T": 53,
+  "truth": {
+   "cause_type": "no_clear_cause",
+   "player_id": null,
+   "onset_minute": null
+  },
+  "score": {
+   "A": 0,
+   "B": 2
+  }
+ },
+ "3": {
+  "kind": "fatigue",
+  "seed": 9,
+  "T": 57,
+  "truth": {
+   "cause_type": "player_fatigue",
+   "player_id": "B2",
+   "onset_minute": 50
+  },
+  "score": {
+   "A": 1,
+   "B": 1
+  }
+ },
+ "4": {
+  "kind": "sub",
+  "seed": 2,
+  "T": 58,
+  "truth": {
+   "cause_type": "substitution",
+   "player_id": "A14",
+   "onset_minute": 56
+  },
+  "score": {
+   "A": 0,
+   "B": 1
+  }
+ },
+ "5": {
+  "kind": "control",
+  "seed": 1,
+  "T": 52,
+  "truth": {
+   "cause_type": "no_clear_cause",
+   "player_id": null,
+   "onset_minute": null
+  },
+  "score": {
+   "A": 3,
+   "B": 1
+  }
+ }
+}

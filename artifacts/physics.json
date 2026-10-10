@@ -1,0 +1,21 @@
+{
+ "ball jumps over 2 m in one frame": 0,
+ "stoppages": 102,
+ "median ball jump in the first second of a stoppage (m)": 0.6093214968377343,
+ "fastest fall (m/s)": 10.329443612630994,
+ "highest ball (m)": 5.905880898358532,
+ "ground balls over half a second": 732,
+ "their median speed, start then end (m/s)": [
+  12.542328887905615,
+  7.196109769167508
+ ],
+ "share that lost pace": 0.9740437158469946,
+ "player jumps over 1 m in one frame": 0,
+ "player acceleration p99.9 (m/s2)": 4.799999980923238,
+ "ball in play": 0.5584184397163121,
+ "restarts that had to be forced": 0,
+ "stoppage length, median and longest (s)": [
+  20.24,
+  71.32
+ ]
+}

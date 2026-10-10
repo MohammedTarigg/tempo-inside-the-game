@@ -1,0 +1,23 @@
+{
+  "cause_type": "no_clear_cause",
+  "team": null,
+  "player_id": null,
+  "onset_minute": null,
+  "one_sentence": "Harbour City did not play worse after minute 53: their passing, shape and attacking tempo stayed the same, and the swing to Northgate came from a short run of their own carries and two blocked shots, which is within normal match noise.",
+  "evidence": [
+    "Team B pass completion 76.8% before minute 53 vs 77.4% after; passes per minute 4.40 vs 4.19",
+    "Team B threat per minute 0.073 before vs 0.067 after; team A rose from 0.042 to 0.063",
+    "Net momentum over minutes 53-60 (+0.216) ranks 21st of 87 eight-minute windows, so the swing is not unusual",
+    "Team B mean position when the ball is in its own half 49.5 before vs 48.8 after, so no defensive shape change",
+    "B7 passes fell from 10.7% of B's passes before 53 to 9.5% in minutes 53-60, and the bigger drop only starts after minute 61"
+  ],
+  "alternatives_ruled_out": [
+    "Substitution: B13 came on for B7 at minute 63 and A15 for A11 at minute 71, both after the shift began; the data changes only after them",
+    "Cards: A4 yellow at minute 33 and B8 yellow at minute 69, with no change in play around minute 53",
+    "Player fatigue: B7 speed fell from 11.76 to 11.23 km/h, the same pattern as B3 (11.11 to 10.38) and most of the squad, so it is a match-wide effect and not specific to one player",
+    "Player behaviour change: B7 still made 4 of 42 team passes in minutes 53-60 (9.5% share vs 10.7% before); the larger drop-off comes after minute 61 and coincides with his substitution",
+    "Team tactical change: B shape and ball-location-adjusted position unchanged; B pass completion unchanged",
+    "Chance: A's gain came from two blocked shots (xG 0.09 and 0.05) and carries into the box; B xG in minutes 53-60 was 0.12 (0.014 per minute) vs 0.027 per minute in minutes 0-45"
+  ],
+  "confidence": 0.7
+}

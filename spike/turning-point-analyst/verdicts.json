@@ -1,0 +1,102 @@
+[
+ {
+  "run": "m1r1",
+  "planted": "booked",
+  "verdict": "player_behaviour_change",
+  "player": "B6",
+  "onset": 47,
+  "conf": 0.35,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m1r2",
+  "planted": "booked",
+  "verdict": "no_clear_cause",
+  "player": null,
+  "onset": 50,
+  "conf": 0.35,
+  "correct": false,
+  "has_script": true
+ },
+ {
+  "run": "m2r1",
+  "planted": "control",
+  "verdict": "no_clear_cause",
+  "player": null,
+  "onset": null,
+  "conf": 0.7,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m2r2",
+  "planted": "control",
+  "verdict": "no_clear_cause",
+  "player": null,
+  "onset": null,
+  "conf": 0.7,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m3r1",
+  "planted": "fatigue",
+  "verdict": "player_fatigue",
+  "player": "B2",
+  "onset": 50,
+  "conf": 0.6,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m3r2",
+  "planted": "fatigue",
+  "verdict": "player_fatigue",
+  "player": "B2",
+  "onset": 55,
+  "conf": 0.6,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m4r1",
+  "planted": "sub",
+  "verdict": "substitution",
+  "player": "A14",
+  "onset": 56,
+  "conf": 0.45,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m4r2",
+  "planted": "sub",
+  "verdict": "substitution",
+  "player": "A14",
+  "onset": 57,
+  "conf": 0.6,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m5r1",
+  "planted": "control",
+  "verdict": "no_clear_cause",
+  "player": null,
+  "onset": null,
+  "conf": 0.65,
+  "correct": true,
+  "has_script": true
+ },
+ {
+  "run": "m5r2",
+  "planted": "control",
+  "verdict": "no_clear_cause",
+  "player": null,
+  "onset": null,
+  "conf": 0.7,
+  "correct": true,
+  "has_script": true
+ }
+]

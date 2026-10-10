@@ -1,0 +1,24 @@
+{
+  "cause_type": "substitution",
+  "team": "A",
+  "player_id": "A14",
+  "onset_minute": 57,
+  "one_sentence": "Northgate brought striker Cruz Quill on in the 56th minute and immediately pushed the whole team up to press Harbour City high, winning the ball in their half and shutting down their attacks.",
+  "evidence": [
+    "A14 came on at minute 56; his first actions were an interception at x=79.5 in minute 57 and tackles at x=93 in minute 59.",
+    "Team A defensive actions moved up the pitch: mean x 34.2 in minutes 40-57 versus 59.6 in 58-75; share in Harbour City's half 0.14 versus 0.59.",
+    "Harbour City actions in their own attacking third fell from 36.5% (40-57) to 4.0% (58-75); shots per minute 0.56 versus 0.06.",
+    "Net momentum per minute went from -0.110 to +0.045 (Welch t=5.04); the best changepoint is minute 59 (t=4.53).",
+    "Harbour City progressive passes per minute fell from 2.00 to 0.89, while Northgate passes into the final third rose from 0.17 to 0.94 per minute."
+  ],
+  "alternatives_ruled_out": [
+    "Fatigue: mean speed barely changed (team A 10.9 to 10.7 km/h, team B 10.6 to 10.6; share above 20 km/h unchanged).",
+    "Later substitutions (B13 at 63, A15 at 71, B12 at 78) all came after the shift began.",
+    "Cards: A4 yellow at 33 came before the window; B8 yellow at 69 came after the shift.",
+    "Pressure alone: Harbour City pass completion fell in unpressured passes too (0.86 to 0.76), and their on-ball distance to the nearest opponent did not shrink (9.7 to 9.5 m).",
+    "Losing A10: he had only 2 events in minutes 40-55, so his departure removed little output.",
+    "Individual Harbour City collapse: B9 and B11 faded together in the same minutes and their average positions barely changed.",
+    "Chance: Harbour City had 9 shots in minutes 40-57 and 1 in 58-75, and the shift in the attacking-third share is too large to be noise."
+  ],
+  "confidence": 0.6
+}

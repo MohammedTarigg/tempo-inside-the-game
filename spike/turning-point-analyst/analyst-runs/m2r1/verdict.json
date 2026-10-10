@@ -1,0 +1,23 @@
+{
+  "cause_type": "no_clear_cause",
+  "team": null,
+  "player_id": null,
+  "onset_minute": null,
+  "one_sentence": "Northgate's late-game surge around minute 53 came from two blocked shots and a handful of final-third passes in a seven-minute spell, and the swing faded by minute 60 with no substitution, injury, or tactical change behind it.",
+  "evidence": [
+    "Net momentum (A minus B) averaged -0.066 per minute over 40-52 and +0.072 over 53-59, but a random 7-minute window matches or beats the +0.072 swing about 10% of the time (permutation, 20,000 draws).",
+    "Team A had 0 shots (xG 0.00) in minutes 40-52 and 3 shots (xG 0.24) in 53-65, two of them blocked from close range at x of about 100; Team B's threat fell from 0.077 to 0.009 per minute over 53-59 but recovered to 0.065 over 53-65.",
+    "Pass completion moved 82.6% (69 passes) to 72.4% (58 passes) for A and 77.2% to 82.5% for B, small-sample swings in opposite directions.",
+    "Player speeds stayed flat: A4 averaged 11.9 km/h in 42-48 and 10.9 in 54-60, and no player shows a sustained drop after minute 53.",
+    "The only substitution near the swing (B13 on for B7) came at minute 63, and the first card after 33 was B8's yellow at minute 69, so neither can have started the shift at 53."
+  ],
+  "alternatives_ruled_out": [
+    "Player fatigue: no outfield player's speed fell persistently after minute 53, and A4's 1 km/h drop sits within normal block-to-block variation.",
+    "Substitution: the only changes on the pitch in this window happened at minutes 63 and 71, after the shift had begun, and the B7 change came when B's threat had already recovered.",
+    "Cards: A4's yellow at minute 33 precedes the shift, and B8's yellow at minute 69 follows it.",
+    "Single-player behaviour change: A4's pass completion fell from 100% to 40% but on only 5 passes, and B7's from 92% to 67% on 6 passes, neither significant.",
+    "Team tactical change: mean x moved about 7 m forward for both teams together (A 33.6 to 40.7, B 56.3 to 63.0), which reads as territorial drift rather than a change by one side.",
+    "Chance: the swing is driven by two blocked shots and one saved shot, and it reverses by minute 60 with no sustained change in either team's threat."
+  ],
+  "confidence": 0.7
+}

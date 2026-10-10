@@ -1,0 +1,22 @@
+{
+  "cause_type": "no_clear_cause",
+  "team": null,
+  "player_id": null,
+  "onset_minute": null,
+  "one_sentence": "Northgate's surge around minutes 52 to 53 came from one quick counterattack after a Harbour City pass went astray, producing two chances and a goal, and neither team's play changed in a lasting way, so the turn looks like chance rather than a clear cause.",
+  "evidence": [
+    "Net momentum (A minus B) averaged +0.093 per minute over 52-65 versus -0.12 over 38-51, the same size as the largest of 30 random 14-minute windows (+0.093)",
+    "Team A's burst is two shots in 52-53 (xG 0.195 and 0.197, one goal), starting from B5's pass at x=78.9 that was intercepted by A9 at x=73.2",
+    "Pass completion: A 76.9% before vs 74.0% after; B 78.7% before vs 80.4% after",
+    "No substitution before minute 52; the first change is B13 on for B7 at minute 63 and A15 on for A11 at 71",
+    "Team B outfield speed fell from 11.12 to 10.55 km/h (permutation p=0.03) but recovered to 10.68 km/h in 66-79, and team A fell 11.43 to 11.07 km/h (p=0.10)"
+  ],
+  "alternatives_ruled_out": [
+    "Substitutions: the first change came at minute 63 (B13 on for B7), after the shift, and A15 came on at 71",
+    "Cards: only yellows at 33 (A4) and 69 (B8), with no change in play around either",
+    "Individual fatigue: no Harbour City player's speed drop survives correction across 20 players (largest B8, z=-2.5), and A10's drop (z=-3.1) is on the team that gained, so it cannot explain the shift",
+    "Sustained tactical change: all players shift about +4 m in x in both teams, and event rates and pass completion barely move",
+    "Harbour City pressure flags stop after minute 45 (0 of 228 later events vs 6.2% before), which points to recording rather than a behaviour change that favours Northgate"
+  ],
+  "confidence": 0.65
+}

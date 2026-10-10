@@ -1,0 +1,59 @@
+{
+ "match_id": "m_demo",
+ "final_score": [
+  1,
+  0
+ ],
+ "frames": 141000,
+ "events_read": 1527,
+ "cues_by_form": {
+  "kickoff_mark": 3,
+  "danger_window": 1,
+  "label": 6,
+  "sentence": 35,
+  "stake_card": 1005,
+  "form_card": 2,
+  "halftime_card": 1,
+  "duel": 7,
+  "tag": 2,
+  "scene": 1,
+  "fulltime_card": 1
+ },
+ "things_shown": 593,
+ "held_back": 121,
+ "facts": 761,
+ "stake_cards": {
+  "appearances": 471,
+  "full": 101,
+  "players": [
+   "p_har_6",
+   "p_har_7",
+   "p_har_8",
+   "p_har_9",
+   "p_nor_11"
+  ]
+ },
+ "verifier_rejections": 0,
+ "frame_ms": {
+  "p50": 0.029,
+  "p95": 0.634,
+  "p99": 0.726,
+  "max": 11.1
+ },
+ "writer_ms": [
+  0.63,
+  0.49,
+  0.46,
+  0.46,
+  0.44,
+  0.53,
+  1.09
+ ],
+ "wall_seconds": 34.4,
+ "writer_backend": "local-templates",
+ "stake_model": {
+  "provisional": false,
+  "faint": 0.02,
+  "full": 0.19
+ }
+}

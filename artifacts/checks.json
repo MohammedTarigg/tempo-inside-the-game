@@ -1,0 +1,137 @@
+{
+ "ran_at": "2026-10-10 22:35",
+ "stake_model_provisional": false,
+ "passed": 14,
+ "total": 14,
+ "results": [
+  {
+   "check": "no reading ahead, match cut at 35%",
+   "passed": true,
+   "detail": "219 cues with the future removed, 219 in the full run up to minute 33, identical: True"
+  },
+  {
+   "check": "no reading ahead, match cut at 80%",
+   "passed": true,
+   "detail": "832 cues with the future removed, 832 in the full run up to minute 74, identical: True"
+  },
+  {
+   "check": "recovery after a stop at 30%",
+   "passed": true,
+   "detail": "resumed from frame 42,046 of 141,000; 1064 cues against 1064 uninterrupted; same IDs in the same order: True"
+  },
+  {
+   "check": "recovery after a stop at 77%",
+   "passed": true,
+   "detail": "resumed from frame 108,543 of 141,000; 1064 cues against 1064 uninterrupted; same IDs in the same order: True"
+  },
+  {
+   "check": "the planted story is found",
+   "passed": true,
+   "detail": "booking at 46.8' (planted 46.8'); closest earlier attempt at 12.4' (planted 12.2'); first relevant difference p_har_6 by 5.0 m"
+  },
+  {
+   "check": "no stake card before the booking",
+   "passed": true,
+   "detail": "56 card changes for the booked player, the first at 48.9'"
+  },
+  {
+   "check": "verifier accepts what the pipeline wrote",
+   "passed": true,
+   "detail": "28 of 28 sentences pass"
+  },
+  {
+   "check": "verifier rejects planted errors",
+   "passed": true,
+   "detail": "325 of 325 caught ({'number': 86, 'name': 85, 'overclaim': 112, 'arabic digit': 42})"
+  },
+  {
+   "check": "agent tools refuse out-of-scope reads",
+   "passed": true,
+   "detail": "3 of 3 refused (other team's player, one second after the moment, the Director's tool); facts leaked from after the moment: 0"
+  },
+  {
+   "check": "a withdrawn booking withdraws its cards",
+   "passed": true,
+   "detail": "6 cues resting on the card were withdrawn; cards on him afterwards: 0; the goal's sentence no longer says he had been booked: True (2 sentences checked)"
+  },
+  {
+   "check": "tracking survives the feed shape",
+   "passed": true,
+   "detail": "200 random frames written in the Second Spectrum shape and read back"
+  },
+  {
+   "check": "reflex path under 10 ms a frame",
+   "passed": true,
+   "detail": "p50 0.029 ms, p95 0.631 ms, p99 0.725 ms, slowest 11.0 ms, features and network included"
+  },
+  {
+   "check": "writing path well inside the replay window",
+   "passed": true,
+   "detail": "7 moments, slowest 1.1 ms with the local backend (a cloud model will be slower; the limit is 10 s)"
+  },
+  {
+   "check": "full stake cards issued stay within the match cap",
+   "passed": true,
+   "detail": "20 full cards issued against a cap of 20. The model wanted 101 across 5 booked players, with 471 card appearances in all, which is above the real rate (see the realism check)"
+  }
+ ],
+ "demo_summary": {
+  "match_id": "m_demo",
+  "final_score": [
+   1,
+   0
+  ],
+  "frames": 141000,
+  "events_read": 1527,
+  "cues_by_form": {
+   "kickoff_mark": 3,
+   "danger_window": 1,
+   "label": 6,
+   "sentence": 35,
+   "stake_card": 1005,
+   "form_card": 2,
+   "halftime_card": 1,
+   "duel": 7,
+   "tag": 2,
+   "scene": 1,
+   "fulltime_card": 1
+  },
+  "things_shown": 593,
+  "held_back": 121,
+  "facts": 761,
+  "stake_cards": {
+   "appearances": 471,
+   "full": 101,
+   "players": [
+    "p_har_6",
+    "p_har_7",
+    "p_har_8",
+    "p_har_9",
+    "p_nor_11"
+   ]
+  },
+  "verifier_rejections": 0,
+  "frame_ms": {
+   "p50": 0.029,
+   "p95": 0.631,
+   "p99": 0.725,
+   "max": 11.0
+  },
+  "writer_ms": [
+   0.64,
+   0.49,
+   0.46,
+   0.47,
+   0.46,
+   0.5,
+   1.11
+  ],
+  "wall_seconds": 17.6,
+  "writer_backend": "local-templates",
+  "stake_model": {
+   "provisional": false,
+   "faint": 0.02,
+   "full": 0.19
+  }
+ }
+}

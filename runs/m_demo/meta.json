@@ -1,0 +1,283 @@
+{
+ "match_id": "m_demo",
+ "fps": 25,
+ "pitchLength": 105.0,
+ "pitchWidth": 68.0,
+ "home": {
+  "id": "t_nor",
+  "name": "Northgate",
+  "short": "NOR",
+  "names": [
+   "Pell",
+   "Adeyemi",
+   "Brandt",
+   "Soto",
+   "Ferrand",
+   "Hale",
+   "Kessler",
+   "Draper",
+   "Okoye",
+   "Marek",
+   "Ilves"
+  ],
+  "players": [
+   {
+    "playerId": "p_nor_1",
+    "number": 1,
+    "name": "Pell",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_2",
+    "number": 2,
+    "name": "Adeyemi",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_5",
+    "number": 5,
+    "name": "Brandt",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_4",
+    "number": 4,
+    "name": "Soto",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_3",
+    "number": 3,
+    "name": "Ferrand",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_6",
+    "number": 6,
+    "name": "Hale",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_8",
+    "number": 8,
+    "name": "Kessler",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_10",
+    "number": 10,
+    "name": "Draper",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_7",
+    "number": 7,
+    "name": "Okoye",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_9",
+    "number": 9,
+    "name": "Marek",
+    "team": "t_nor"
+   },
+   {
+    "playerId": "p_nor_11",
+    "number": 11,
+    "name": "Ilves",
+    "team": "t_nor"
+   }
+  ]
+ },
+ "away": {
+  "id": "t_har",
+  "name": "Harbour City",
+  "short": "HAR",
+  "names": [
+   "Quist",
+   "Renner",
+   "Baro",
+   "Novak",
+   "Varga",
+   "Stahl",
+   "Dorn",
+   "Ashby",
+   "Tully",
+   "Lund",
+   "Maro"
+  ],
+  "players": [
+   {
+    "playerId": "p_har_1",
+    "number": 1,
+    "name": "Quist",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_2",
+    "number": 2,
+    "name": "Renner",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_5",
+    "number": 5,
+    "name": "Baro",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_4",
+    "number": 4,
+    "name": "Novak",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_3",
+    "number": 3,
+    "name": "Varga",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_6",
+    "number": 6,
+    "name": "Stahl",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_8",
+    "number": 8,
+    "name": "Dorn",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_10",
+    "number": 10,
+    "name": "Ashby",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_7",
+    "number": 7,
+    "name": "Tully",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_9",
+    "number": 9,
+    "name": "Lund",
+    "team": "t_har"
+   },
+   {
+    "playerId": "p_har_11",
+    "number": 11,
+    "name": "Maro",
+    "team": "t_har"
+   }
+  ]
+ },
+ "ids": [
+  "p_nor_1",
+  "p_nor_2",
+  "p_nor_5",
+  "p_nor_4",
+  "p_nor_3",
+  "p_nor_6",
+  "p_nor_8",
+  "p_nor_10",
+  "p_nor_7",
+  "p_nor_9",
+  "p_nor_11",
+  "p_har_1",
+  "p_har_2",
+  "p_har_5",
+  "p_har_4",
+  "p_har_3",
+  "p_har_6",
+  "p_har_8",
+  "p_har_10",
+  "p_har_7",
+  "p_har_9",
+  "p_har_11"
+ ],
+ "numbers": [
+  1,
+  2,
+  5,
+  4,
+  3,
+  6,
+  8,
+  10,
+  7,
+  9,
+  11,
+  1,
+  2,
+  5,
+  4,
+  3,
+  6,
+  8,
+  10,
+  7,
+  9,
+  11
+ ],
+ "names": {
+  "p_nor_1": "Pell",
+  "p_nor_2": "Adeyemi",
+  "p_nor_5": "Brandt",
+  "p_nor_4": "Soto",
+  "p_nor_3": "Ferrand",
+  "p_nor_6": "Hale",
+  "p_nor_8": "Kessler",
+  "p_nor_10": "Draper",
+  "p_nor_7": "Okoye",
+  "p_nor_9": "Marek",
+  "p_nor_11": "Ilves",
+  "p_har_1": "Quist",
+  "p_har_2": "Renner",
+  "p_har_5": "Baro",
+  "p_har_4": "Novak",
+  "p_har_3": "Varga",
+  "p_har_6": "Stahl",
+  "p_har_8": "Dorn",
+  "p_har_10": "Ashby",
+  "p_har_7": "Tully",
+  "p_har_9": "Lund",
+  "p_har_11": "Maro"
+ },
+ "team_of": {
+  "p_nor_1": "t_nor",
+  "p_nor_2": "t_nor",
+  "p_nor_5": "t_nor",
+  "p_nor_4": "t_nor",
+  "p_nor_3": "t_nor",
+  "p_nor_6": "t_nor",
+  "p_nor_8": "t_nor",
+  "p_nor_10": "t_nor",
+  "p_nor_7": "t_nor",
+  "p_nor_9": "t_nor",
+  "p_nor_11": "t_nor",
+  "p_har_1": "t_har",
+  "p_har_2": "t_har",
+  "p_har_5": "t_har",
+  "p_har_4": "t_har",
+  "p_har_3": "t_har",
+  "p_har_6": "t_har",
+  "p_har_8": "t_har",
+  "p_har_10": "t_har",
+  "p_har_7": "t_har",
+  "p_har_9": "t_har",
+  "p_har_11": "t_har"
+ },
+ "keepers": [
+  0,
+  11
+ ],
+ "final_score": [
+  1,
+  0
+ ],
+ "events": 1527
+}

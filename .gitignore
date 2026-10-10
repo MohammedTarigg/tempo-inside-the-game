@@ -1,0 +1,10 @@
+# real tracking data used only for training and checks (2.6 GB, CC BY 4.0, fetched separately)
+data/
+__pycache__/
+*.pyc
+.DS_Store
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+.claude/
