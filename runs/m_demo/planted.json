@@ -2,16 +2,16 @@
  {
   "kind": "attack",
   "variant": "step",
-  "restart": 734.3
+  "restart": 734.0
  },
  {
   "kind": "booking",
   "player": "p_har_6",
-  "matchTime": 2808.5
+  "matchTime": 2977.9
  },
  {
   "kind": "attack",
   "variant": "hold",
-  "restart": 4274.0
+  "restart": 4282.1
  }
 ]

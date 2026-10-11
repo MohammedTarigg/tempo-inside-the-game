@@ -52,13 +52,25 @@ python3 -m http.server 8771
 
 Then open `http://localhost:8771/ui/live/index.html` or `http://localhost:8771/ui/replay/index.html`. Both need a connection for three.js and the fonts.
 
-Both draw the same stage (`ui/stage.js`): a dark pitch at a broadcast tilt, 105 by 68 m with markings to the laws of the game, a numbered marker for each player and a lit ball. A marker shows only what the tracking feed knows: where the player is, which way he is going (a wedge; standing still, he watches the ball) and how fast (a streak once he sprints). A ring opens where someone plays the ball, and a stronger one where a challenge is made.
+Both draw the same stage (`ui/stage.js`): a green pitch at a broadcast tilt, 105 by 68 m with markings to the laws of the game, a numbered marker for each player and the ball. Colour appears only where it carries meaning: the green of the pitch, a colour for each team and the yellow of a card. Panels, type and everything the system draws on the pitch are black, white or grey. A marker shows only what the tracking feed knows: where the player is, which way his body faces (a wedge that watches the ball and turns towards his run as he speeds up) and how fast he is going (a streak once he sprints).
 
-The live view plays three minutes around a booking from `runs/m_demo/live.json`. The picture stays clear until a booked player is drawn into the play. Then his marker gets a yellow ring and a card on a pin: faint at the lower threshold, solid and lit at the higher one. Around the picture are the scoreboard and clock, the list of booked players, a label at the next stoppage ("Stahl booked"), and a phone panel that says the same moment in words: who is at stake, why, and the chance of a challenge. The page decides nothing. It shows each cue when the match clock reaches it.
+The Tempo mark, the app icon and the two club crests are drawn by `ui/brand/make.py`; `ui/brand/preview.html` shows them. `ui/brand/intro.html` plays the intro, which also runs over the match view when it loads (`?intro=0` skips it).
 
-The replay plays the closest-earlier-attempt scene from `runs/m_demo/scenes.json`: the goal, back to the start, both attempts laid over each other (the earlier one as outlined markers), slow motion where they part with the gap between the differing player's two positions measured, and the finish.
+The match view (`ui/live/`) plays the whole match. Positions come from `runs/m_demo/match.bin` (25 frames a second, whole centimetres) and everything else from `runs/m_demo/match.json`, where each cue carries the frame it was issued on. The page decides nothing. It draws:
 
-Add `?t=20` to open paused at a moment, or `?run=<match_id>` for another run. Add `?bench=1` to time the drawing itself; the result is in `window.__tempo.bench`. On the development laptop the live view drew a frame in 5.5 ms at the median.
+- **Before kick-off:** the three marks from the season so far, one after another, on a wide view of the pitch: the channels a team shoots from with arrows, the space one player guards with the outline of a card, and the late window on the strip.
+- **The stake mark:** a yellow ring round a booked player and a small card above his shoulder. Faint, the ring is thin and the card an outline. Lit, the ring is whole, the card solid, and his name appears.
+- **A tag** over a player for an unusual number, with what is normal beneath it, and **a duel count** between two players.
+- **The label** at the next stoppage, **the form card** when the commentator names a player, and **the half-time and full-time cards.**
+- **At a goal,** a Replay tag, with a link to the replay view when a close earlier attempt exists.
+- **The strip under the picture:** momentum for each side, bookings, goals, the danger window and the playhead. Click or drag it to move through the match. Next moment and Back jump between the things worth seeing; the speed button plays at 1, 4 or 16 times.
+- **The phone** says the same moment in words, in casual, analyst or Arabic.
+
+The replay view (`ui/replay/`) plays the closest-earlier-attempt scene from `runs/m_demo/scenes.json`: the goal, back to the start, both attempts laid over each other (the earlier one as outlined markers), slow motion where they part with the gap between the differing player's two positions measured, and the finish.
+
+In the match view add `?m=49` to open paused at a minute, `?f=` for a frame, or `?run=<match_id>` for another run. In the replay add `?t=20`. Add `?bench=1` to either to time the drawing itself; the result is in `window.__tempo.bench`. On the development laptop the match view drew a frame in 4.6 ms at the median.
+
+**The product film** is at `http://localhost:8771/ui/tour/`. It runs for 100 seconds on its own: the intro, the logo settling into a corner, the pitch drawing itself, then eight features one at a time, each with a number, a sentence and small chips saying what powers it. It is the match view above driven by a director script (`ui/tour/tour.js`), playing the real run. A dashed chip marks something that is planned and not built. Add `?at=42` to start at a second and `?hold=1` to stay on that feature.
 
 An earlier 3D version with figures built in code is on the `3d-figures` branch.
 

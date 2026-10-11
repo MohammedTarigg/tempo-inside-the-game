@@ -789,40 +789,43 @@ The pipeline is written and runs end to end on one machine, in `tempo/` (about 2
 | A withdrawn booking | A card taken back 40 seconds later: 6 cues withdrawn, no card on him afterwards, and the later sentence no longer cites a booking |
 | Tracking survives the feed shape | 200 frames written in the Second Spectrum shape and read back |
 | Speed | 0.63 ms a frame at the 95th percentile and 0.73 ms at the 99th, features and network included. Slowest single frame 11 ms. A match runs in about 30 seconds |
-| Full cards within the cap | 20 issued against a cap of 20. The model wanted 101 |
+| Full cards within the cap | 20 issued against a cap of 20. The model wanted 42 |
 
 **Generated football against real football (`python3 -m tempo.eval.realism`, `artifacts/realism.json`): 10 of 14 measures within 25%**
 
 | Measure | Real | Generated |
 |---|---|---|
-| Metres a minute in play, outfield | 151.1 | 165.7 |
-| Share of in-play time above 5.5 m/s | 4.4 in 100 | 5.1 in 100 |
-| Share above 7 m/s | 0.84 in 100 | 0.52 in 100 (outside) |
-| Ball to nearest defender: p25, median, p75 | 2.8, 5.1, 8.7 m | 2.9, 5.0, 7.7 m |
-| Ball in play, minutes a match | 52.7 | 54.3 |
-| Logged defending challenges a match | 157 | 125 |
-| Share of defender-moments followed by a challenge | 1.45 in 100 | 1.47 in 100 |
-| Stake score above the faint threshold | 8.1 in 100 | 8.4 in 100 |
-| Stake score above the full threshold | 1.0 in 100 | 1.8 in 100 (outside) |
-| Stake model ROC AUC | 0.913 | 0.816 |
-| Faint cards per 100 player-minutes, if everyone carried a card | 108 | 156 (outside) |
-| Full cards per 100 player-minutes, if everyone carried a card | 22 | 36 (outside) |
+| Metres a minute in play, outfield | 151.1 | 133.8 |
+| Share of in-play time above 5.5 m/s | 4.4 in 100 | 4.4 in 100 |
+| Share above 7 m/s | 0.84 in 100 | 0.42 in 100 (outside) |
+| Ball to nearest defender: p25, median, p75 | 2.8, 5.1, 8.7 m | 1.7, 2.7, 6.0 m (outside) |
+| Ball in play, minutes a match | 52.7 | 63.9 |
+| Logged defending challenges a match | 157 | 126 |
+| Share of defender-moments followed by a challenge | 1.45 in 100 | 1.42 in 100 |
+| Stake score above the faint threshold | 8.1 in 100 | 6.0 in 100 (outside) |
+| Stake score above the full threshold | 1.0 in 100 | 1.3 in 100 (outside) |
+| Stake model ROC AUC | 0.913 | 0.847 |
+| Faint cards per 100 player-minutes, if everyone carried a card | 108 | 96 |
+| Full cards per 100 player-minutes, if everyone carried a card | 22 | 22.5 |
 
-The stake model was trained on real tracking only and never saw a generated match. It still ranks well on generated football. Both cards fire too often on it, the faint card about 1.4 times and the full card about 1.6 times, and generated players sprint less than real ones.
+The stake model was trained on real tracking only and never saw a generated match. It still ranks well on generated football, and both cards now fire at close to the real rate. Generated players sprint half as often as real ones, and defenders stand closer to the ball than real ones do. The comparison uses two generated matches, and the figures move between runs: the same code scored 7 of 14 on one pair of matches and 10 of 14 on another.
 
 **Does the generated match move like a real one (`python3 -m tempo.eval.physics demo`, `artifacts/physics.json`)**
 
-The ball is a physical object: it rolls and slows on the turf, flies and bounces under gravity, and is never moved by hand. At a stoppage it keeps rolling, the nearest player knocks it back if it is far away, and the taker carries it to the spot. Players run to their marks before a staged attack. Under pressure a player may clear the ball up the line, which is where most throw-ins come from.
+The ball is a physical object: it rolls and slows on the turf, flies and bounces under gravity, and is never moved by hand. It changes pace only at someone's feet. A dribbler keeps it just ahead of him with small touches, a pass or shot is struck from within reach, and a receiver has to get to the ball before he controls it. At a stoppage the ball keeps rolling, the nearest player knocks it back if it is far away, and the taker carries it to the spot. Players run to their marks before a staged attack. Under pressure a player may clear the ball up the line, which is where most throw-ins come from.
 
 | Measure, demo match | Value |
 |---|---|
 | Ball jumps over 2 m in one frame | 0 |
 | Player jumps over 1 m in one frame | 0 |
-| Ground balls over half a second that lost pace | 97 in 100, median 12.5 m/s down to 7.2 m/s |
-| Fastest fall | 10.3 m/s |
-| Stoppages | 102, median 20 s |
+| Dribbling: ball to the man on it | 0.57 m at the median, 0.84 m at the 99th percentile |
+| At the kick: ball to the passer | 0.60 m at the median, 0.68 m at the furthest |
+| At the first touch: ball to the receiver | 0.67 m at the median |
+| Ball changes pace by over 3 m/s on the turf with nobody within 1.5 m | 1 frame in the match |
+| Ground balls over half a second that lost pace | 99 in 100, median 13.0 m/s down to 6.9 m/s |
+| Passes that reach a team-mate's feet | 77 in 100 |
+| Stoppages | 130, median 16 s |
 | Restarts that had to be forced | 0 |
-| Player acceleration, 99.9th percentile | 4.8 m/s2 |
 
 **What is not done, stated plainly**
 - **The stake model is the final one.** The nested training finished on 10 October and the pipeline loads it (thresholds 0.02 and 0.19). All 14 checks were rerun on it and pass.
@@ -830,9 +833,9 @@ The ball is a physical object: it rolls and slows on the turf, flies and bounces
 - **No language model writes anything.** Sentences come from templates, which is the designed fallback. So "the Verifier rejects a model's wrong number" is proven against planted errors and has not been seen against a real model.
 - **The decision model is rules.**
 - **The season is six generated matches,** where the design says 380. Percentiles and habits rest on that sample.
-- **The demo match's stake cards are too many:** 471 appearances for five booked players, where real football gives about 20 a booked player. The model wanted 101 full cards and the cap holds them to 20. This is the generator's realism gap showing in the product, plus booked players who happen to play near the ball.
+- **The demo match's stake cards:** 146 appearances for two booked players (the demo story lets chance book at most one player besides Stahl), where real football gives about 20 a booked player. The model wanted 42 full cards and the cap holds them to 20.
 - **Sections 16 and 17 list more pass marks and adversarial cases than the 14 checks cover.** Not yet run: the booked player standing still, the header, the wall, the late-arriving booking event, the tracking drop, the breaker under a failing model, and the cost caps.
-- **The front end:** two views exist in `ui/` on a shared marker stage (a live stretch with the two-level card, and a replay of the closest earlier attempt). They are working slices. An earlier 3D version with built figures is on the `3d-figures` branch. The mock-up in `visuals/` is older and shows forms the build no longer has.
+- **The front end:** two views in `ui/` on a shared stage (green pitch, a colour for each team, yellow only for a card, everything else black, white or grey). The match view plays the whole match from `match.bin` and `match.json` and draws every cue form the pipeline writes; the replay view lays the closest earlier attempt over the goal. Not drawn: nothing in the build produces a win chance over time, so the mock-up's win-chance bar is left out. An earlier 3D version with built figures is on the `3d-figures` branch. The mock-up in `visuals/` is older and shows forms the build no longer has.
 
 ## Sources
 

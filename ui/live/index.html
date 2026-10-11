@@ -3,57 +3,172 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tempo live</title>
+<title>Tempo match</title>
+<link rel="icon" href="../brand/tempo-small.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@500&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#04121A; --paper:#F3F1E7; --mute:#93B4BC; --card:#FFD21F; --home:#F27A2C; --away:#6FBCEB; }
-  * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; background:#05121A; color:var(--paper); font-family:Barlow, system-ui, sans-serif; overflow:hidden; }
-  #stage { position:fixed; inset:0; }
+  :root { --font:"Hanken Grotesk", system-ui, sans-serif; --ink:#000; --inkd:#000; --panel:#161616; --paper:#fff; --mist:#9A9A9A; --sig:#FFD21F; --card:#FFD21F; --red:#fff; --home:#FF8A3D; --away:#7FD0F5; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:#000; color:var(--paper); font-family:var(--font); overflow:hidden; }
+  #app { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:18px; height:100%; padding:18px; }
+  #screen { position:relative; display:grid; grid-template-rows:minmax(0,1fr) 124px; background:#0A0A0A; border-radius:14px; overflow:hidden; min-height:0; }
+  #stagewrap { position:relative; min-height:0; overflow:hidden; }
+  #stage { position:absolute; inset:0; }
   canvas { display:block; }
-  #board { position:fixed; left:24px; top:20px; display:flex; align-items:stretch; font-family:"Barlow Condensed"; font-weight:700; font-size:22px; border-radius:10px; overflow:hidden; background:rgba(4,16,24,.82); }
-  #board span { padding:7px 12px; display:flex; align-items:center; gap:8px; }
-  #board i { width:6px; height:18px; border-radius:2px; display:inline-block; }
-  #board .clock { background:var(--paper); color:var(--ink); font-size:20px; }
-  #booked { position:fixed; left:24px; top:66px; display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600; }
-  #booked div { display:flex; align-items:center; gap:7px; background:rgba(4,16,24,.7); padding:4px 9px 4px 7px; border-radius:7px; width:max-content; }
-  #booked b { width:9px; height:13px; border-radius:2px; background:var(--card); display:inline-block; }
-  #lower { position:fixed; left:24px; bottom:92px; font-family:"Barlow Condensed"; font-weight:700; font-size:clamp(26px, 4vw, 40px); background:rgba(4,16,24,.86); padding:8px 16px 9px; border-radius:12px; border-left:8px solid var(--card); opacity:0; transform:translateY(8px); transition:opacity .3s, transform .3s; pointer-events:none; }
-  #lower.on { opacity:1; transform:none; }
-  .tag { position:fixed; pointer-events:none; transform:translate(-50%,-100%); opacity:0; transition:opacity .2s; white-space:nowrap; font-family:"Barlow Condensed"; font-weight:700; font-size:20px; background:rgba(4,16,24,.86); padding:3px 10px 4px; border-radius:8px; }
-  #phone { position:fixed; right:24px; top:20px; width:min(300px, 34vw); background:#071C27; border-radius:26px; padding:18px 18px 20px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
-  #phone h2 { font:600 13px Barlow, sans-serif; color:var(--mute); margin:0 0 10px; }
-  #phone h3 { font-family:"Barlow Condensed"; font-weight:700; font-size:30px; line-height:1; margin:0 0 6px; }
-  #phone p { margin:0; font-size:15px; line-height:1.4; color:#D3E3E6; }
-  #meter { height:8px; border-radius:4px; background:rgba(243,241,231,.14); margin-top:12px; overflow:hidden; }
+  .cond { font-family:var(--font); }
+  .plate { background:rgba(0,0,0,.88); border-radius:8px; }
+
+  /* score and counter */
+  #board { position:absolute; left:20px; top:18px; display:flex; font:600 19px var(--font); letter-spacing:-.02em; border-radius:8px; overflow:hidden; background:rgba(0,0,0,.9); }
+  #board span { padding:8px 12px; display:flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums; }
+  #board i { width:7px; height:19px; border-radius:2px; }
+  #board img { display:block; margin:-3px 0; }
+  #board [hidden] { display:none; }
+  #board .clock { background:var(--paper); color:var(--ink); min-width:84px; justify-content:center; }
+  #replaytag { position:absolute; left:20px; top:70px; display:none; align-items:center; gap:12px; }
+  #replaytag b { background:#fff; color:#000; font:600 18px var(--font); letter-spacing:-.02em; padding:6px 14px; border-radius:8px; }
+  #replaytag a { color:#fff; background:rgba(0,0,0,.88); outline:1.5px solid #fff; outline-offset:-1.5px; font:600 16px var(--font); padding:8px 14px; border-radius:8px; text-decoration:none; }
+  #counter { position:absolute; right:20px; top:18px; display:flex; gap:18px; padding:9px 16px; font:500 16px var(--font); letter-spacing:-.02em; color:var(--mist); font-variant-numeric:tabular-nums; }
+  #counter b { color:var(--paper); font-weight:500; }
+
+  /* things pinned to the pitch */
+  .pin { position:absolute; left:0; top:0; pointer-events:none; opacity:0; white-space:nowrap; will-change:transform; }
+  .name { font:600 15px var(--font); letter-spacing:-.02em; text-shadow:0 1px 4px rgba(6,26,20,.9); }
+  .chip { font:600 15px var(--font); letter-spacing:-.02em; padding:5px 12px 6px; }
+  #duel small { display:block; font:500 14px var(--font); letter-spacing:-.02em; color:var(--mist); margin-top:3px; }
+  #duel { padding:8px 16px 9px; text-align:center; }
+  #duel b { font:700 24px/1 var(--font); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+
+  /* How rare was that: a short line under the player. Two marks on it, the season's usual and where rare begins, and a dot
+     in his team's colour that runs out to what he just did. It lies flat; the stake's bar stands up and is yellow. */
+  #tag { width:132px; height:40px; }
+  #tag .line { position:absolute; left:0; right:0; top:8px; height:4px; border-radius:2px; background:rgba(0,0,0,.8); outline:1.500px solid rgba(255,255,255,.8); }
+  #tag u { position:absolute; top:2px; width:2.500px; height:16px; margin-left:-1.250px; border-radius:1.500px; background:#fff; }
+  #tag .usual { left:var(--usual); opacity:.75; } #tag .rare { left:var(--rare); }
+  #tag .dot { position:absolute; top:3px; left:var(--at); width:14px; height:14px; margin-left:-7px; border-radius:50%; background:var(--team); outline:2px solid #000; transition:transform .25s; }
+  #tag.past .dot { transform:scale(1.25); }
+  #tag b { position:absolute; left:var(--at); top:22px; transform:translateX(-50%); font:600 14px var(--font); white-space:nowrap; text-shadow:0 1px 6px #000; opacity:0; transition:opacity .3s; }
+  #tag.past b { opacity:1; }
+
+  /* lower left: the label, the form card, the kick-off heading */
+  #lower { position:absolute; left:20px; bottom:18px; display:flex; flex-direction:column; gap:10px; align-items:flex-start; pointer-events:none; }
+  #lower > div { opacity:0; transform:translateY(8px); transition:opacity .3s, transform .3s; display:none; }
+  #lower > div.on { opacity:1; transform:none; }
+  #label { font:600 clamp(21px, 2.6vw, 32px)/1.05 var(--font); letter-spacing:-.03em; padding:12px 22px 13px 24px; }
+  #kmhead { font:600 18px var(--font); letter-spacing:-.02em; padding:7px 14px 8px; }
+  #form { padding:14px 22px 14px 24px; min-width:340px; }
+  #form h3 { font:700 27px/1 var(--font); letter-spacing:-.02em; margin:0 0 4px; }
+  #form p { color:var(--paper); margin:0; font:500 17px var(--font); letter-spacing:-.02em; }
+  #form .scale { position:relative; height:22px; margin:14px 0 6px; }
+  #form .scale::before { content:""; position:absolute; left:0; right:0; top:10px; height:3px; border-radius:2px; background:rgba(255,255,255,.25); }
+  #form .mid { position:absolute; left:50%; top:3px; width:3px; height:17px; background:var(--paper); border-radius:2px; }
+  #form .dot { position:absolute; top:3px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:var(--paper); transition:left .8s; }
+  #form small { display:block; font-size:14px; color:var(--mist); }
+  #form q { display:block; margin-top:8px; font-size:14px; color:var(--mist); quotes:none; }
+
+  /* The cards that sit on the picture share one shape: soft, with one sharp corner pointing at what the card is about, and
+     a small dot at the start, which takes a colour only when the card belongs to a team or a booking. No logo on them. */
+  #label, #form { --spot:#fff; border-radius:22px 22px 22px 5px; display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:13px; align-items:center; background:rgba(0,0,0,.9); }
+  #label::before, #form::before { content:""; width:9px; height:9px; border-radius:50%; background:var(--spot); opacity:.75; }
+  #label.booking::before { width:9px; height:13px; border-radius:2px; opacity:1; }
+
+  #form::before { align-self:start; margin-top:6px; }
+  #form > * { grid-column:2; }
+  #form::before { grid-row:1; } #form h3 { grid-row:1; }
+  #label.booking { --spot:var(--card); }
+
+  /* half time and full time */
+  #interval { position:absolute; inset:0; background:rgba(0,0,0,.93); display:none; flex-direction:column; justify-content:center; padding:0 7%; }
+  #interval h2 { font:700 clamp(32px, 4.0vw, 54px)/1 var(--font); letter-spacing:-.03em; margin:0 0 6px; }
+  #interval > p { margin:0 0 26px; font:500 19px var(--font); letter-spacing:-.02em; color:var(--mist); display:flex; align-items:center; gap:12px; }
+  #cards { display:flex; gap:22px; flex-wrap:wrap; }
+  #cards article { background:var(--panel); border-radius:16px; padding:22px 24px 24px; width:min(340px, 100%); }
+  #cards svg { display:block; margin-bottom:16px; }
+  #cards h3 { font:700 26px/1 var(--font); letter-spacing:-.02em; margin:0 0 8px; }
+  #cards p { margin:0; font:500 17px/1.25 var(--font); letter-spacing:-.02em; color:var(--mist); }
+
+  /* the strip under the picture: momentum, bookings, goals, the danger window, and where we are */
+  #strip { position:relative; background:#0A0A0A; padding:10px 20px 12px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 18px; align-items:center; }
+  #controls { display:flex; gap:8px; align-items:center; grid-row:1 / span 2; }
+  button { font:600 15px var(--font); color:var(--ink); background:var(--paper); border:0; border-radius:9px; padding:9px 13px; cursor:pointer; min-height:38px; }
+  button.quiet { background:rgba(255,255,255,.12); color:var(--paper); }
+  button:focus-visible, #track:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  #play { min-width:70px; }
+  #moment { font:500 14px var(--font); letter-spacing:-.02em; color:var(--mist); height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #track { position:relative; height:74px; cursor:pointer; touch-action:none; }
+  #track canvas { position:absolute; left:0; top:12px; width:100%; height:44px; }
+  #track .min { position:absolute; bottom:-2px; transform:translateX(-50%); font:500 11px var(--font); letter-spacing:-.02em; color:var(--mist); }
+  #track .book { position:absolute; top:6px; width:9px; height:13px; margin-left:-4px; border-radius:2px; background:var(--card); }
+  #track .goal { position:absolute; top:27px; width:13px; height:13px; margin:0 0 0 -6px; border-radius:50%; border:2px solid #fff; }
+  #track .goal.home { background:var(--home); border-color:#000; } #track .goal.away { background:var(--away); border-color:#000; }
+  #dwin { position:absolute; top:0; height:9px; border:2px dashed var(--mist); border-bottom:0; border-radius:3px 3px 0 0; transition:border-color .3s; }
+  #dwin.on { border-color:var(--paper); }
+  #head { position:absolute; top:4px; bottom:14px; width:2px; margin-left:-1px; background:var(--paper); }
+
+  /* the phone: the same moment in words */
+  #phone { background:#0A0A0A; border-radius:30px; padding:22px 20px; align-self:start; display:flex; flex-direction:column; gap:14px; min-height:420px; }
+  #brand { display:flex; align-items:center; gap:8px; font:600 26px var(--font); letter-spacing:-.045em; }
+  #eye { transition:cx .35s; }
+  #brand img { border-radius:8px; }
+  #modes { display:flex; gap:6px; }
+  #modes button { background:rgba(255,255,255,.1); color:var(--mist); padding:5px 12px; min-height:32px; border-radius:999px; font:600 12px var(--font); letter-spacing:-.02em; }
+  #modes button[aria-pressed=true] { background:var(--paper); color:var(--ink); }
+  #psc { margin:0; font-size:14px; color:var(--mist); font-variant-numeric:tabular-nums; }
+  #pstake { display:none; background:var(--panel); border-radius:16px; padding:14px 16px 16px; }
+  #pstake h3 { font:700 22px/1 var(--font); letter-spacing:-.02em; margin:0 0 6px; display:flex; align-items:center; gap:9px; }
+  #pstake h3 i { width:13px; height:18px; border-radius:2.5px; border:2.5px solid var(--card); }
+  #pstake h3 i.full { background:var(--card); }
+  #pstake p { margin:0; font-size:15px; line-height:1.4; color:#D9D9D9; }
+  #meter { height:7px; border-radius:4px; background:rgba(255,255,255,.14); margin-top:12px; overflow:hidden; }
   #meter i { display:block; height:100%; width:0; background:var(--card); border-radius:4px; transition:width .25s; }
-  #said { margin-top:18px; font-size:14px; line-height:1.4; color:#BFD3D8; }
-  #bar { position:fixed; left:24px; right:24px; bottom:24px; display:flex; gap:14px; align-items:center; }
-  button { font:600 15px Barlow, sans-serif; color:var(--ink); background:var(--paper); border:0; border-radius:10px; padding:10px 16px; cursor:pointer; min-width:74px; }
-  button:focus-visible, input:focus-visible { outline:3px solid var(--card); outline-offset:2px; }
-  input[type=range] { flex:1; accent-color:var(--card); height:28px; }
-  #note { font-size:13px; color:var(--mute); min-width:150px; text-align:right; }
-  #err { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:40px; font-size:17px; text-align:center; }
-  @media (max-width: 760px) {
-    #phone { left:16px; right:16px; top:auto; bottom:84px; width:auto; border-radius:18px; padding:12px 14px 14px; }
-    #phone h3 { font-size:24px; } #phone p { font-size:14px; } #said { display:none; }
-    #lower { bottom:auto; top:120px; left:16px; } #board { left:16px; } #booked { left:16px; } #bar { left:16px; right:16px; } #note { display:none; }
+  #pbig { margin:0; font-size:20px; font-weight:600; line-height:1.32; }
+  #pbig[dir=rtl] { font-family:"Noto Sans Arabic", sans-serif; font-weight:500; }
+  #pquiet { margin:0; font-size:15px; line-height:1.4; color:var(--mist); }
+  #note { margin-top:auto; font-size:13px; color:var(--mist); }
+  #intro { position:fixed; inset:0; z-index:5; background:#000; color:#fff; display:grid; place-items:center; transition:opacity .55s; }
+  #err { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:40px; font-size:17px; text-align:center; background:#000; }
+  @media (max-width: 900px) {
+    #app { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; padding:10px; gap:10px; }
+    #phone { min-height:0; border-radius:18px; padding:14px 16px; } #note, #counter { display:none; }
+    #strip { grid-template-columns:1fr; } #controls { grid-row:auto; }
   }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 </style>
 </head>
 <body>
-<div id="stage"></div>
-<div id="board"><span><i style="background:var(--home)"></i><b id="hs"></b><b id="hg"></b></span><span><b id="ag"></b><b id="as"></b><i style="background:var(--away)"></i></span><span class="clock" id="clock"></span></div>
-<div id="booked"></div>
-<div id="lower"></div>
-<div class="tag" id="tag"></div>
-<aside id="phone" aria-live="polite"><h2 id="ph0"></h2><h3 id="ph1"></h3><p id="ph2"></p><div id="meter"><i></i></div><div id="said"></div></aside>
-<div id="bar"><button id="play">Pause</button><input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Match position"><span id="note"></span></div>
+<div id="app">
+  <main id="screen">
+    <div id="stagewrap">
+      <div id="stage"></div>
+      <div id="pins"></div>
+      <div id="board"><span><i style="background:var(--home)"></i><img id="hc" hidden width="28" height="28"><b id="hs"></b><b id="hg">0</b></span><span><i style="background:var(--away)"></i><img id="ac" hidden width="28" height="28"><b id="as"></b><b id="ag">0</b></span><span class="clock" id="clock">00:00</span></div>
+      <div id="replaytag"><b>Replay</b><a id="replaylink" href="../replay/index.html">Watch the earlier attempt</a></div>
+      <div id="counter" class="plate"><span><b id="seen">0</b> events seen</span><span><b id="shown">0</b> things shown</span></div>
+      <div id="lower"><div id="kmhead" class="plate">Three things to watch, from the season so far</div><div id="form" class="plate"><h3 id="fname"></h3><p id="fval"></p><div class="scale"><i class="mid"></i><i class="dot" id="fdot"></i></div><small>Middle mark is his usual distance a minute</small><q id="fheard"></q></div><div id="label" class="plate"></div></div>
+      <div id="interval"><h2 id="ih"></h2><p id="ip"></p><div id="cards"></div></div>
+    </div>
+    <div id="strip">
+      <div id="controls"><button id="play">Pause</button><button id="speed" class="quiet" aria-label="Playback speed">1x</button><button id="prev" class="quiet" aria-label="Previous moment">Back</button><button id="next" class="quiet" aria-label="Next moment">Next moment</button></div>
+      <div id="moment"></div>
+      <div id="track" tabindex="0" role="slider" aria-label="Match position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><canvas id="mom"></canvas><div id="dwin"></div><div id="head"></div></div>
+    </div>
+  </main>
+  <aside id="phone" aria-live="polite">
+    <div id="brand"><svg viewBox="0 0 120 120" width="34" height="34" aria-hidden="true"><circle cx="60" cy="60" r="27.5" fill="none" stroke="#fff" stroke-width="13"/><rect x="54.9" y="6" width="10.1" height="26.5" fill="#fff"/><rect x="54.9" y="87.5" width="10.1" height="26.5" fill="#fff"/><circle id="eye" cx="60" cy="60" r="11" fill="#fff"/></svg><b>tempo</b></div>
+    <div id="modes"><button data-m="casual" aria-pressed="true">Casual</button><button data-m="analyst" aria-pressed="false">Analyst</button><button data-m="ar" aria-pressed="false">عربي</button></div>
+    <p id="psc"></p>
+    <div id="pstake"><h3><i id="pcard"></i><span id="pname"></span></h3><p id="ptext"></p><div id="meter"><i></i></div></div>
+    <p id="pbig"></p>
+    <p id="pquiet"></p>
+    <div id="note"></div>
+  </aside>
+</div>
+<div id="intro"></div>
 <div id="err"></div>
 <script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
 </script>
-<script type="module" src="./main.js"></script>
+<script type="module">import(`./main.js?v=${Date.now()}`);</script>
 </body>
 </html>

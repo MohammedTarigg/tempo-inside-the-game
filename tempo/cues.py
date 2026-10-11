@@ -21,6 +21,7 @@ class CueService:
         self.rules = {**DEFAULT_RULES, **(rules or {})}
         self.slot_busy_until, self.last_tag, self.full_cards, self.faint_live = {}, -1e9, 0, set()
         self.shown, self.held = 0, 0
+        self.frame, self.frame_of = 0, {}                # the tracking frame each cue was issued on, for a front end
 
     def state(self):
         return dict(slot_busy_until=self.slot_busy_until, last_tag=self.last_tag, full_cards=self.full_cards, faint_live=sorted(self.faint_live), shown=self.shown, held=self.held)
@@ -56,6 +57,7 @@ class CueService:
         c = cue(self.match_id, t, form, screen, payload, fact_ids, valid_for, priority, when)
         if not self.ledger.put_cue(c):
             return None
+        self.frame_of[c["cue_id"]] = self.frame
         if form in ("tag", "duel"):
             self.last_tag = t
         if SLOT.get(form, "").startswith("tv"):

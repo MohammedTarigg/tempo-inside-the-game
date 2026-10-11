@@ -2,10 +2,11 @@
 // Everything on screen comes from runs/<match>/scenes.json, which the pipeline writes. Nothing here invents a number.
 // Solid markers are the goal. Outlined markers are the earlier attempt.
 import * as THREE from 'three';
-import { renderer, scene, camera, KITS, CARD, Marker, makeBall, makePulses } from '../stage.js';
+import { renderer, scene, camera, KITS, Marker, makeBall, makePulses, facing, CRESTS, FONT } from '../stage.js';
 
 const Q = new URLSearchParams(location.search);
-const RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t');
+const RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t'), FROM = Q.get('from');      // ?t= opens paused at a moment, ?from= starts playing from one
+if (Q.get('bare')) document.documentElement.classList.add('bare');                       // no controls or caption, for showing inside the product film
 const $ = (id) => document.getElementById(id);
 const fail = (m) => { $('err').style.display = 'flex'; $('err').textContent = m; };
 
@@ -30,9 +31,9 @@ function place(fig, clip, f, i, dt, rate) {
   const a = sample(clip, f - 3, i) || p, b = sample(clip, f + 3, i) || p;
   const vx = (b[0] - a[0]) * 25 / 6, vy = (b[1] - a[1]) * 25 / 6, sp = Math.hypot(vx, vy);
   fig.group.position.set(p[0], 0, -p[1]);
-  // he points where he is going; standing or walking slowly, he watches the ball
-  const bl = sampleBall(clip, f), want = sp > 0.9 ? Math.atan2(vx, -vy) : Math.atan2(bl[0] - p[0], -(bl[1] - p[1]));
-  let d = want - fig.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? (sp > 0.9 ? 0.25 : 0.08) : 1);
+  const bl = sampleBall(clip, f);                     // he watches the ball; his streak shows where he is running
+  let d = facing(p[0], p[1], vx, vy, bl[0], bl[1]) - fig.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? 0.2 : 1);
+  if (sp > 0.5) fig.motion.rotation.y = Math.atan2(vx, -vy);
   fig.turn.rotation.y = fig.yaw;
   fig.update(dt, sp, rate);
   return p;
@@ -40,12 +41,14 @@ function place(fig, clip, f, i, dt, rate) {
 
 // ---------- the show ----------
 async function main() {
+  await Promise.all([document.fonts.load(`700 20px ${FONT}`), document.fonts.load(`600 20px ${FONT}`)]).catch(() => {});      // the numbers on the markers are drawn once, so the face must be in
   const scenes = await fetch(`../../runs/${RUN}/scenes.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }).catch(() => null);
   if (!scenes) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
   if (!scenes.length) return fail('This run has no replay scene: no goal had a close enough earlier attempt.');
   const S = scenes[0], G = S.clips.goal, E = S.clips.earlier, N = S.ids.length;
   const who = S.ids.indexOf(S.differing_player), scorer = S.ids.indexOf(S.scorer), nm = (i) => S.names[S.ids[i]];
   $('sh').textContent = S.home; $('sa').textContent = S.away;
+  for (const [id, short] of [['hc', S.home], ['ac', S.away]]) { const f = CRESTS[short.toLowerCase()]; if (f) { $(id).src = `../brand/${f}`; $(id).hidden = false; $(id).previousElementSibling.hidden = true; } }
 
   const live = [], ghosts = [];
   for (let i = 0; i < N; i++) {
@@ -56,17 +59,10 @@ async function main() {
   }
   const ball = makeBall(), ghostBall = makeBall(0), pulses = makePulses(); scene.add(ball.group, ghostBall.group);
 
-  // the booking: a referee's card on a pin, standing on the booked player's marker
-  const card = new THREE.Group();
-  const face = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.48, 0.025), new THREE.MeshStandardMaterial({ color: CARD, roughness: 0.35, emissive: 0x6A5000, emissiveIntensity: 0.85 }));
-  face.position.y = 2.42; card.add(face);
-  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 8), new THREE.MeshStandardMaterial({ color: CARD, roughness: 0.4 })); pin.position.y = 2.02; card.add(pin);
-  card.scale.setScalar(1.7); card.visible = false; scene.add(card);
-
   // the measured gap between where he stood then and where he stands now
   const gapGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-  const gapLine = new THREE.Line(gapGeo, new THREE.LineBasicMaterial({ color: CARD, transparent: true, opacity: 0, depthTest: false })); gapLine.renderOrder = 6; scene.add(gapLine);
-  const ringMat = new THREE.MeshBasicMaterial({ color: CARD, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
+  const gapLine = new THREE.Line(gapGeo, new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0, depthTest: false })); gapLine.renderOrder = 6; scene.add(gapLine);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
   const rings = [0, 1].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 48), ringMat); r.rotation.x = -Math.PI / 2; r.position.y = 0.03; r.renderOrder = 6; scene.add(r); return r; });
 
   // timeline, in seconds of show time. Clip positions are in frames.
@@ -93,7 +89,7 @@ async function main() {
   const PHASE = { goal: 'The goal', rewind: 'Back to the start', together: 'Both attempts', part: 'Where they part', finish: 'To the finish', hold: 'The reason' };
 
   const camPos = new THREE.Vector3(0, 40, 80), camAim = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantAim = new THREE.Vector3(), v = new THREE.Vector3();
-  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), firstFrame = true;
+  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : FROM !== null ? Math.min(parseFloat(FROM), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), firstFrame = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function frame(now, once) {
@@ -113,11 +109,8 @@ async function main() {
     }
     const b = sampleBall(G, s.fg); ball.set(b[0], b[2], -b[1]);
     if (s.fe !== null) { const e = sampleBall(E, s.fe); ghostBall.set(e[0], e[2], -e[1]); ghostBall.setOpacity(0.45 * s.ghost * sat(Math.hypot(e[0] - b[0], e[1] - b[1]) - 0.5)); } else ghostBall.setOpacity(0);
-    live[who].setStake(S.booked_minute !== null ? 1 : 0, 0);
+    live[who].setStake(S.booked_minute !== null ? 1 : 0, S.booked_minute !== null ? 1 : 0);          // he was booked before this goal
     pulses((G.actions || []).filter((a) => s.fg >= a.frame && s.fg < a.frame + 11).map((a) => { const q = sample(G, a.frame, a.player); return q && { x: q[0], z: -q[1], age: (s.fg - a.frame) / 25, strong: a.kind !== 'pass' }; }).filter(Boolean));
-    // the card rides on the booked player for the whole goal clip: he was booked before it
-    card.visible = !!pw && S.booked_minute !== null;
-    if (pw) { const k = Math.max(1, camera.position.distanceTo(v.set(pw[0], 0, -pw[1])) / 30); card.scale.setScalar(1.7 * k); card.position.set(pw[0], -2.98 * k, -pw[1]); card.rotation.y = Math.atan2(camera.position.x - pw[0], camera.position.z + pw[1]); }
     // the gap
     const showGap = pw && pg && (s.ph === 'part' || s.ph === 'finish' || s.ph === 'hold');
     const d = pw && pg ? Math.hypot(pw[0] - pg[0], pw[1] - pg[1]) : 0, on = showGap && d > 1.2 ? sat((d - 1.2) / 1.2) * s.ghost : 0;
@@ -147,7 +140,7 @@ async function main() {
       el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`; el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`; el.style.opacity = show; if (txt !== null) el.textContent = txt;
     };
     if (pw && pg) {
-      proj((pw[0] + pg[0]) / 2, 0.1, -(pw[1] + pg[1]) / 2 - 2.4, $('gap'), `${d.toFixed(1)} m`, on);
+      proj((pw[0] + pg[0]) / 2, 0.1, -(pw[1] + pg[1]) / 2 - 2.4, $('gap'), `${(s.fg >= c0 + part + 50 ? S.differing_by_m : d).toFixed(1)} m`, on);      // once measured, two seconds after they part, the number holds
       proj(pg[0], 0.1, -pg[1] + 2.6, $('tagA'), `Minute ${E.minute}`, on); proj(pw[0], 0.1, -pw[1] + 2.6, $('tagB'), `Minute ${G.minute}`, on);
     } else { $('gap').style.opacity = 0; $('tagA').style.opacity = 0; $('tagB').style.opacity = 0; }
     if (document.activeElement !== $('scrub')) $('scrub').value = Math.round(T / TOTAL * 1000);

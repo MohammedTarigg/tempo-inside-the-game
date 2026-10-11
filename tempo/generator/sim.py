@@ -46,6 +46,8 @@ class Sim:
         self.stun = np.zeros(22)                         # seconds a beaten defender is slow to react
         self.script = None
         self.bvz = 0.0                                   # the ball's vertical speed
+        self.controlled = False                          # the man on the ball has it at his feet
+        self.ctl = []                                    # per frame: (state, player on the ball or about to receive it)
         self.force_presser = None                        # a defender the storyline sends into the next challenge
 
     # ---------- geometry ----------
@@ -277,7 +279,7 @@ class Sim:
             elif forced is None:
                 if self.booked[dfn]:
                     card = Q_SECOND_YELLOW if self.rng.random() < 0.10 else None
-                elif self.rng.random() < 0.18:
+                elif self.rng.random() < 0.18 and (self.story is None or self.story.allow_booking(self, dfn)):
                     card = Q_YELLOW
             if card:
                 self.log("card", dfn, qualifiers={card: 1}, related=e["id"])
@@ -285,7 +287,7 @@ class Sim:
                     self.booked[dfn] = True
                 else:
                     self.off[dfn] = True; self.pos[dfn] = np.nan
-            self.dead("free_kick", self.pos[car].copy(), int(self.team[car]), self.rng.uniform(22, 46) + (25 if card else 0), taker=car)
+            self.dead("free_kick", self.pos[car].copy(), int(self.team[car]), self.rng.uniform(16, 36) + (20 if card else 0), taker=car)
         elif out == "won":
             self.log("tackle", dfn, outcome=1); self.log("take_on", car, outcome=0)
             self.give(dfn, timer=self.rng.uniform(0.4, 1.0))
@@ -359,11 +361,23 @@ class Sim:
                     self.script.on_restart(self, taker)
         elif self.state == "carried":
             p = self.carrier; t = self.team[p]
-            tgt[p] = self.ball[:2] + self.bvel * 0.25; urgent[p] = True      # a dribbler always runs at the ball and knocks it on
-            # the ball is pushed ahead and caught up with
-            if np.linalg.norm(self.ball[:2] - self.pos[p]) < 0.6:
-                self.bvel = self.heading * (np.linalg.norm(self.vel[p]) + rng.uniform(1.0, 2.2))      # a touch, kept close
-            self.roll()
+            # The ball only changes pace when it is at someone's feet. Within a metre he has it under control and keeps it
+            # just ahead of him, the way a dribbler does with small touches. Further away he has to run to it first.
+            reach = float(np.linalg.norm(self.ball[:2] - self.pos[p]))
+            self.controlled = reach <= 1.0 and self.ball[2] < 0.6
+            if self.controlled:
+                corr = (self.pos[p] + self.heading * 0.6 - self.ball[:2]) * 7.0
+                n = float(np.linalg.norm(corr))
+                if n > 5.0:
+                    corr *= 5.0 / n
+                self.bvel = self.vel[p] + corr; self.bvz = 0.0
+                self.ball[:2] += self.bvel * DT; self.ball[2] = 0.11
+                tgt[p] = self.pos[p] + self.heading * 8.0
+            else:
+                self.roll()
+                tgt[p] = self.ball[:2] + self.bvel * 0.2; urgent[p] = True
+                if reach > 4.0:                                               # it has got away from him
+                    self.state = "loose"
             # pressing: the nearest outfield defender closes to a jockeying distance, and sometimes goes in
             dfn, dist = self.nearest(self.pos[p], team=1 - t, exclude=[0, 11])
             forced_presser = self.script.presser if self.script and self.script.presser is not None else self.force_presser
@@ -389,7 +403,7 @@ class Sim:
                         self.committed = dfn
             if self.committed is not None and np.linalg.norm(self.pos[self.committed] - self.pos[p]) < 1.0:
                 self.duel(self.committed, p)
-            elif self.state == "carried":
+            elif self.state == "carried" and self.controlled:
                 second, d2 = self.nearest(self.pos[p], team=1 - t, exclude=[0, 11, dfn])
                 if abs(self.pos[p, 0] - self.own_goal(1 - t)[0]) < 38 and d2 < 14:
                     tgt[second] = self.pos[p] + og * 5.0
@@ -401,6 +415,8 @@ class Sim:
             if self.state == "pass":
                 q = self.interceptor if self.interceptor is not None else self.receiver
                 tgt[q] = self.intercept_at if self.interceptor is not None else self.ball[:2] + self.bvel * max(self.arrive_at - self.clock, 0)
+                if np.linalg.norm(self.ball[:2] - self.pos[q]) < 4.0:           # the last few metres: he goes to the ball itself
+                    tgt[q] = self.ball[:2] + self.bvel * 0.12
                 urgent[q] = True
                 if self.interceptor is None:                              # the nearest defender closes on the receiver
                     dfn, dist = self.nearest(self.pos[q], team=1 - self.team[q], exclude=[0, 11])
@@ -413,7 +429,7 @@ class Sim:
                         og = self.own_goal(self.team[dfn]) - self.pos[q]; og /= np.linalg.norm(og) + 1e-9
                         tgt[dfn] = self.pos[q] + og * 1.6; urgent[dfn] = True
                 near, dn = self.nearest(self.ball[:2])
-                if np.linalg.norm(self.ball[:2] - self.pos[q]) < 1.3 and self.ball[2] < 1.4:
+                if np.linalg.norm(self.ball[:2] - self.pos[q]) < 0.9 and self.ball[2] < 1.4:
                     if self.interceptor is not None:
                         self.log("interception", q)
                     else:
@@ -433,7 +449,7 @@ class Sim:
             for q in order[:2]:
                 tgt[q] = self.ball[:2]; urgent[q] = True
             a, b = int(order[0]), int(order[1])
-            if np.linalg.norm(self.pos[a] - self.ball[:2]) < 1.0 and self.ball[2] < 1.4:
+            if np.linalg.norm(self.pos[a] - self.ball[:2]) < 0.9 and self.ball[2] < 1.4:
                 if self.team[a] != self.team[b] and np.linalg.norm(self.pos[b] - self.ball[:2]) < 1.6 and rng.random() < 0.6:
                     self.give(a, timer=0.8); self.log("ball_recovery", a); self.duel(b, a)
                 else:
@@ -442,21 +458,21 @@ class Sim:
         if self.state not in ("dead", "shot") and (abs(self.ball[0]) > PX or abs(self.ball[1]) > PY):
             last = self.poss
             if abs(self.ball[1]) > PY and abs(self.ball[0]) <= PX:
-                self.dead("throw_in", self.ball[:2].copy(), 1 - last, self.rng.uniform(12, 26))
+                self.dead("throw_in", self.ball[:2].copy(), 1 - last, self.rng.uniform(9, 20))
             else:
                 end_team = 0 if np.sign(self.ball[0]) == -self.dir[0] else 1              # whose goal line it crossed
                 if last == end_team:
                     self.log("corner", self.nearest(self.ball[:2], team=1 - end_team)[0])
-                    self.dead("corner", np.array([np.sign(self.ball[0]) * PX, np.sign(self.ball[1] or 1) * PY]), 1 - end_team, self.rng.uniform(28, 50))
+                    self.dead("corner", np.array([np.sign(self.ball[0]) * PX, np.sign(self.ball[1] or 1) * PY]), 1 - end_team, self.rng.uniform(22, 40))
                 else:
-                    self.dead("goal_kick", np.array([np.sign(self.ball[0]) * (PX - 5.5), 0.0]), end_team, self.rng.uniform(24, 42), taker=11 * end_team)
+                    self.dead("goal_kick", np.array([np.sign(self.ball[0]) * (PX - 5.5), 0.0]), end_team, self.rng.uniform(17, 32), taker=11 * end_team)
         # move
         self.stun = np.maximum(self.stun - DT, 0)
         d = tgt - self.pos; dist = np.linalg.norm(d, axis=1) + 1e-9
         far = dist > 9                                                    # out of shape after a turnover: run back into it
         want = np.where(urgent, np.minimum(self.vmax, dist * 2.2), np.where(far, np.minimum(self.vmax * 0.66, dist * 0.45), np.minimum(self.vmax * 0.29, dist * 0.7)))
-        if self.state == "carried" and np.linalg.norm(self.ball[:2] - self.pos[self.carrier]) <= 1.8:
-            want[self.carrier] = max(self.dribble_speed, float(np.linalg.norm(self.bvel)) * 0.9)
+        if self.state == "carried" and self.controlled:
+            want[self.carrier] = self.dribble_speed
         want = np.where(self.stun > 0, want * 0.35, want)
         dv = d / dist[:, None] * want[:, None] - self.vel
         n = np.linalg.norm(dv, axis=1) + 1e-9
@@ -465,6 +481,7 @@ class Sim:
         self.pos[on] += self.vel[on] * DT
         self.pos[on] = np.clip(self.pos[on], [-PX - 4, -PY - 3.5], [PX + 4, PY + 3.5])
         self.frames.append((self.period, self.clock, self.state != "dead", self.poss, *self.ball, self.pos.copy()))
+        self.ctl.append((self.state, getattr(self, "carrier", -1) if self.state == "carried" else getattr(self, "receiver", -1) if self.state == "pass" else -1))
 
     def finish_shot(self):
         """The shot has reached the goal, the keeper or a defender. Nothing is moved by hand: the ball keeps its own motion."""
@@ -473,7 +490,7 @@ class Sim:
         if out == "goal":
             self.score[t] += 1
             self.bvel *= 0.05; self.bvz = min(self.bvz, 0.0)                # it hits the net and drops
-            self.dead("kick_off", np.zeros(2), 1 - t, self.rng.uniform(55, 80))
+            self.dead("kick_off", np.zeros(2), 1 - t, self.rng.uniform(48, 68))
         elif out == "saved":
             self.log("save", gk)
             if self.rng.random() < 0.35:                                  # pushed round the post: it runs out for a corner
@@ -482,7 +499,7 @@ class Sim:
                 self.bvel = np.array([self.dir[t] * self.rng.uniform(5, 8), (np.sign(self.ball[1]) or 1.0) * self.rng.uniform(6, 9)]); self.bvz = self.rng.uniform(1, 3)
             else:                                                         # held
                 self.bvel[:] = 0; self.bvz = 0.0
-                self.dead("keeper", self.pos[gk].copy(), 1 - t, self.rng.uniform(8, 18), taker=gk)
+                self.dead("keeper", self.pos[gk].copy(), 1 - t, self.rng.uniform(6, 12), taker=gk)
         elif out == "wide":
             self.poss = t; self.state = "loose"                             # it flies on and out; the goal kick follows from that
         else:                                                             # blocked: it comes off the defender

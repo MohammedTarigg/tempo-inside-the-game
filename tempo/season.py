@@ -75,3 +75,7 @@ def load(n=6):
         vec = {k: (np.array(v) if k in ("ball", "A", "D") else v) for k, v in a["vec"].items()}
         search.add(vec, a["team"], a["match_id"], a["t"], a["outcome"])
     return s, search
+
+
+if __name__ == "__main__":
+    build()

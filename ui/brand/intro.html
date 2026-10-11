@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tempo</title>
+<link rel="icon" href="tempo-small.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600&display=swap" rel="stylesheet">
+<style>html, body { margin:0; height:100%; background:#000; color:#fff; } #host { height:100%; display:grid; place-items:center; cursor:pointer; }</style>
+<div id="host" role="button" tabindex="0" aria-label="Play the Tempo intro again"></div>
+<script type="module">
+import { playIntro } from './intro.js';
+const host = document.getElementById('host'), q = new URLSearchParams(location.search), at = q.get('at');
+let busy = false;
+async function run() { if (busy) return; busy = true; host.replaceChildren(); await playIntro(host, { at: at === null ? null : +at, hold: 0.4 }); busy = false; }
+host.onclick = run; addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); run(); } });
+run();
+</script></html>

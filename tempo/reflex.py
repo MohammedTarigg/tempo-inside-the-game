@@ -153,7 +153,7 @@ class Reflex:
                 pct = self._percentile("shot_speed", speed)
                 f = self.ledger.put_fact(fact(self.match_id, t, "shot_speed", pid, speed, "km/h", percentile=pct, sources=[e["id"]])); ids.append(f["fact_id"])
                 if pct is not None and pct >= 95:
-                    self.cues.propose(t + 1.0, "tag", "tv", dict(player=pid, text=f"{speed:.0f} km/h", note=f"faster than {min(pct, 99):.0f} in 100 shots this season"), [f["fact_id"]], valid_for=3.0, priority=4)
+                    self.cues.propose(t + 1.0, "tag", "tv", dict(player=pid, text=f"{speed:.0f} km/h", note=f"faster than {min(pct, 99):.0f} in 100 shots this season", value=round(float(speed), 1), unit="km/h", **self._scale("shot_speed", 95)), [f["fact_id"]], valid_for=3.0, priority=4)
             outcome = "goal" if typ == TYPE["goal"] else "no_goal"
             tw = None
             if frames_view is not None and shot_frame is not None:
@@ -183,7 +183,7 @@ class Reflex:
                 pct = self._percentile("pass_distance", d)
                 if pct is not None and pct >= 99.5:
                     f = self.ledger.put_fact(fact(self.match_id, t, "pass_distance", pid, d, "m", percentile=pct, sources=[e["id"]]))
-                    self.cues.propose(t + 1.0, "tag", "tv", dict(player=pid, text=f"{d:.0f} m pass", note=f"longer than {min(pct, 99):.0f} in 100 completed passes"), [f["fact_id"]], valid_for=3.0, priority=3)
+                    self.cues.propose(t + 1.0, "tag", "tv", dict(player=pid, text=f"{d:.0f} m pass", note=f"longer than {min(pct, 99):.0f} in 100 completed passes", value=round(float(d), 1), unit="m", **self._scale("pass_distance", 99.5)), [f["fact_id"]], valid_for=3.0, priority=3)
         elif typ in (TYPE["tackle"], TYPE["challenge"]):
             self.pending_duel = (t, p, typ == TYPE["tackle"] and e["outcome"] == 1, e["id"])
         elif typ == TYPE["take_on"] and self.pending_duel and abs(self.pending_duel[0] - t) < 0.05 and p is not None:
@@ -197,6 +197,12 @@ class Reflex:
     def _percentile(self, kind, value):
         ref = self.base.get(kind)
         return None if ref is None else float(np.mean(np.asarray(ref) <= value) * 100)
+
+    def _scale(self, kind, rare_pct):
+        """What is usual for this measure in the season so far, and the value at which it counts as rare. A front end draws
+        the new value against these two marks, so nobody has to read a percentile."""
+        ref = np.asarray(self.base[kind], float)
+        return dict(usual=round(float(np.median(ref)), 1), rare=round(float(np.percentile(ref, rare_pct)), 1))
 
     def running_facts(self, t):
         """Each player's running so far, against the season's usual for his position. Plain numbers, no claim about tiredness."""

@@ -82,6 +82,10 @@ class DemoStory:
             sim.dead("free_kick", sim.script.spot(KESSLER), 0, 14.0, taker=KESSLER)
             self.planted.append(dict(kind="attack", variant=arg, restart=round(sim.clock + 14.0, 1)))
 
+    def allow_booking(self, sim, dfn):
+        """The demo match is about one booked player. Chance gives at most one other yellow, so the card on screen means something."""
+        return dfn != STAHL and int(sim.booked.sum()) - int(sim.booked[STAHL]) < 1
+
     def duel_override(self, sim, dfn, car):
         """Stahl's cards are the story's to give: none before 47 minutes, one then, and never a second."""
         if dfn != STAHL:

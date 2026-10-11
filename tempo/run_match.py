@@ -77,6 +77,7 @@ class Pipeline:
             if stop_at is not None and i >= stop_at:
                 return False                                                    # a simulated crash: nothing after the last checkpoint is saved
             t, period = float(md["clock"][i]), int(md["period"][i])
+            self.cues.frame = i
             if period == 2 and not self.halftime_done:
                 self.halftime(45 * 60.0); self.halftime_done = True
             t0 = time.perf_counter()
@@ -178,38 +179,43 @@ class Pipeline:
                             home=self.meta["home"]["short"], away=self.meta["away"]["short"], clips=clips))
         return out
 
-    def live_window(self, cues, before=20.0, after=170.0):
-        """A stretch of live play for a front end: positions at 12.5 frames a second, with every cue and ball strike inside it.
-        It is the three minutes that follow the booking the match's replay scene turns on, or failing that the first booking."""
+    def match_view(self, cues):
+        """The whole match for a front end. Positions go to match.bin at full rate: one row a frame, 22 players' x and y then the
+        ball's x, y and height, as whole centimetres (-32768 where a player is off). Everything else is returned for match.json:
+        every cue with the frame it was issued on, who plays the ball and when, goals, bookings and the momentum record."""
         md, mid = self.md, self.meta["match_id"]
-        cards = [f for f in self.ledger.facts(mid, 1e9, kind="card") if f["value"] == "yellow"]
-        ca = self.ledger.facts(mid, 1e9, kind="closest_attempt")
-        focus = next((c for c in cards if ca and c["subject"] == ca[0]["differing_player"]), cards[0] if cards else None)
-        if focus is None:
-            return dict(frames=0)
-        t_card = focus["match_time"]
-        per = 2 if t_card >= 45 * 60 else 1
-        idx = np.flatnonzero((md["period"] == per) & (md["clock"] >= t_card - before) & (md["clock"] <= t_card + after))[::2]
-        t0, t1 = float(md["clock"][idx[0]]), float(md["clock"][idx[-1]])
-        pos = np.round(md["pos"][idx], 2)
-        kinds = {TYPE["pass"]: "pass", TYPE["goal"]: "shot", TYPE["attempt_saved"]: "shot", TYPE["miss"]: "shot", TYPE["tackle"]: "tackle", TYPE["challenge"]: "tackle", TYPE["foul"]: "foul"}
-        acts = [dict(kind=kinds[e["typeId"]], player=self.meta["ids"].index(e["playerId"]), t=round(e["matchTime"] - t0, 2), outcome=e["outcome"])
-                for e in md["events"] if e["periodId"] == per and t0 <= e["matchTime"] <= t1 and e["typeId"] in kinds]
-        inside = [c for c in cues if t0 <= c["match_time"] <= t1 and c["form"] in ("stake_card", "label", "tag", "duel", "form_card", "sentence")]
-        goals = [f for f in self.ledger.facts(mid, 1e9, kind="goal")]
-        score0 = [0, 0]
-        for f in goals:
-            if f["match_time"] < t0:
-                score0 = f["value"]
-        booked0 = [dict(player=c["subject"], minute=int(c["match_time"] // 60) + 1) for c in cards if c["match_time"] < t0]
-        return dict(fps=12.5, t0=t0, t1=t1, period=per, frames=len(idx), clock=np.round(md["clock"][idx], 2).tolist(), live=md["live"][idx].tolist(),
-                    pos=np.where(np.isnan(pos), None, pos).tolist(), ball=np.round(md["ball"][idx], 2).tolist(), actions=acts,
-                    cues=[dict(t=round(c["match_time"] - t0, 2), form=c["form"], screen=c["screen"], when=c["when"], valid_for=c["valid_for"], payload=c["payload"], status=c["status"]) for c in inside],
-                    goals=[dict(t=round(f["match_time"] - t0, 2), score=f["value"], player=f["subject"]) for f in goals if t0 <= f["match_time"] <= t1],
-                    score_at_start=score0, booked_before=booked0, focus=focus["subject"], focus_booked_at=round(t_card - t0, 2),
+        n = len(md["clock"]); period, clock = md["period"], md["clock"]
+        q = np.full((n, 47), -32768, np.int16)
+        xy = np.round(md["pos"].reshape(n, 44) * 100); ok = ~np.isnan(xy); q[:, :44][ok] = xy[ok].astype(np.int16)
+        q[:, 44:] = np.round(md["ball"] * 100).astype(np.int16)
+        q.tofile(os.path.join(self.out, "match.bin"))
+        spans = []
+        for p in sorted(set(period.tolist())):
+            idx = np.flatnonzero(period == p)
+            spans.append(dict(period=int(p), first=int(idx[0]), last=int(idx[-1]), clock0=float(clock[idx[0]]), home_attacks=float(md["home_dir"][idx[0]])))
+
+        def frame_of(per, t):
+            sp = next(x for x in spans if x["period"] == per)
+            return int(np.clip(sp["first"] + round((t - sp["clock0"]) * 25), sp["first"], sp["last"]))
+
+        def guess(t):                                                           # only for cues issued before a restart from a checkpoint
+            return frame_of(2 if t >= 45 * 60 and len(spans) > 1 else 1, t)
+        kinds = {TYPE["pass"]: "pass", TYPE["goal"]: "shot", TYPE["attempt_saved"]: "shot", TYPE["miss"]: "shot", TYPE["tackle"]: "tackle", TYPE["challenge"]: "tackle",
+                 TYPE["foul"]: "foul", TYPE["interception"]: "interception", TYPE["clearance"]: "clearance", TYPE["save"]: "save"}
+        acts = [dict(kind=kinds[e["typeId"]], player=self.meta["ids"].index(e["playerId"]), frame=frame_of(e["periodId"], e["matchTime"]), outcome=e["outcome"])
+                for e in md["events"] if e["typeId"] in kinds and not (e["typeId"] == TYPE["foul"] and e["outcome"] == 1)]
+        live = md["live"].astype(bool)
+        flips = (np.flatnonzero(live[1:] != live[:-1]) + 1).tolist()
+        out_cues = [dict(id=c["cue_id"], frame=self.cues.frame_of.get(c["cue_id"], guess(c["match_time"])), t=c["match_time"], form=c["form"], screen=c["screen"], when=c["when"],
+                         valid_for=c["valid_for"], priority=c["priority"], payload=c["payload"], status=c["status"]) for c in cues]
+        goals = [dict(frame=guess(f["match_time"]), score=f["value"], player=f["subject"], minute=int(f["match_time"] // 60) + 1) for f in self.ledger.facts(mid, 1e9, kind="goal")]
+        cards = [dict(frame=guess(f["match_time"]), player=f["subject"], colour=f["value"], minute=int(f["match_time"] // 60) + 1) for f in self.ledger.facts(mid, 1e9, kind="card")]
+        return dict(match_id=mid, fps=25, frames=n, row=47, unit="cm", periods=spans, live0=bool(live[0]), live_flips=flips, actions=acts, cues=out_cues, goals=goals, cards=cards,
+                    momentum=[[guess(float(t)), float(v)] for t, v in self.reflex.mom_hist], event_frames=[frame_of(e["periodId"], e["matchTime"]) for e in md["events"]],
+                    shown=self.cues.shown, held=self.cues.held,
                     ids=self.meta["ids"], numbers=self.meta["numbers"], names=self.meta["names"], team=md["team"].tolist(),
                     home=dict(short=self.meta["home"]["short"], name=self.meta["home"]["name"]), away=dict(short=self.meta["away"]["short"], name=self.meta["away"]["name"]),
-                    home_attacks=float(md["home_dir"][idx[0]]), stake=dict(faint=self.reflex.model.faint, full=self.reflex.model.full, provisional=bool(self.reflex.model.meta.get("provisional"))))
+                    stake=dict(faint=self.reflex.model.faint, full=self.reflex.model.full, provisional=bool(self.reflex.model.meta.get("provisional"))))
 
     @staticmethod
     def stake_counts(log):
@@ -241,7 +247,7 @@ class Pipeline:
                             period=md["period"][::5], live=md["live"][::5], momentum=np.array(self.reflex.mom_hist))
         json.dump(dict(self.meta, events=len(md["events"])), open(os.path.join(self.out, "meta.json"), "w"), default=float, indent=1)
         json.dump(self.scenes(cues), open(os.path.join(self.out, "scenes.json"), "w"), default=float)
-        json.dump(self.live_window(cues), open(os.path.join(self.out, "live.json"), "w"), default=float)
+        json.dump(self.match_view(cues), open(os.path.join(self.out, "match.json"), "w"), default=float)
         forms = {}
         for c in cues:
             forms[c["form"]] = forms.get(c["form"], 0) + 1

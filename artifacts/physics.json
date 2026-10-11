@@ -1,21 +1,38 @@
 {
  "ball jumps over 2 m in one frame": 0,
- "stoppages": 102,
- "median ball jump in the first second of a stoppage (m)": 0.6093214968377343,
- "fastest fall (m/s)": 10.329443612630994,
- "highest ball (m)": 5.905880898358532,
- "ground balls over half a second": 732,
+ "stoppages": 130,
+ "median ball jump in the first second of a stoppage (m)": 0.6407024112867578,
+ "fastest fall (m/s)": 11.920972383452998,
+ "highest ball (m)": 5.547520593013813,
+ "ground balls over half a second": 622,
  "their median speed, start then end (m/s)": [
-  12.542328887905615,
-  7.196109769167508
+  13.042341249146945,
+  6.92668506050925
  ],
- "share that lost pace": 0.9740437158469946,
+ "share that lost pace": 0.9919614147909968,
  "player jumps over 1 m in one frame": 0,
- "player acceleration p99.9 (m/s2)": 4.799999980923238,
- "ball in play": 0.5584184397163121,
+ "player acceleration p99.9 (m/s2)": 4.799999996675853,
+ "ball in play": 0.5632794074159556,
+ "dribbling: ball to the man on it, median, p90, p99 (m)": [
+  0.5744417740305567,
+  0.5999989096207539,
+  0.8370923797960158
+ ],
+ "at the kick: ball to the passer, median, p90, furthest (m)": [
+  0.596599492964331,
+  0.5999981028300841,
+  0.6761312663759782
+ ],
+ "at the first touch: ball to the receiver, median, furthest (m)": [
+  0.6696687775316065,
+  1.8955195900407518
+ ],
+ "ball changes pace by over 3 m/s on the turf with nobody within 1.5 m": 1,
+ "passes": 755,
+ "passes that reach a team-mate's feet": 0.7748344370860927,
  "restarts that had to be forced": 0,
  "stoppage length, median and longest (s)": [
-  20.24,
-  71.32
+  16.22,
+  58.2
  ]
 }

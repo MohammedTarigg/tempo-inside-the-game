@@ -37,6 +37,20 @@ def scan(s):
     pv = pstep / DT; pa = np.abs(np.diff(pv, axis=0)) / DT
     out["player acceleration p99.9 (m/s2)"] = float(np.nanpercentile(pa, 99.9))
     out["ball in play"] = float(live.mean())
+    # Is the ball with the player who has it? A kick or a touch can only happen at someone's feet.
+    st = np.array([c[0] for c in s.ctl]); who = np.array([c[1] for c in s.ctl])
+    k = np.where(st == "carried")[0]; dc = np.linalg.norm(ball[k, :2] - pos[k, who[k]], axis=1)
+    out["dribbling: ball to the man on it, median, p90, p99 (m)"] = [float(x) for x in np.nanpercentile(dc, [50, 90, 99])]
+    kick = np.where((st[1:] == "pass") & (st[:-1] == "carried"))[0]
+    out["at the kick: ball to the passer, median, p90, furthest (m)"] = [float(x) for x in np.percentile(np.linalg.norm(ball[kick, :2] - pos[kick, who[kick]], axis=1), [50, 90, 100])]
+    rec = np.where((st[1:] == "carried") & (st[:-1] == "pass"))[0] + 1
+    out["at the first touch: ball to the receiver, median, furthest (m)"] = [float(x) for x in np.percentile(np.linalg.norm(ball[rec, :2] - pos[rec, who[rec]], axis=1), [50, 100])]
+    vel = d[:, :2] / DT; jump = np.linalg.norm(np.diff(vel, axis=0), axis=1)                 # change of velocity in one frame, m/s
+    near = np.nanmin(np.linalg.norm(pos[1:-1] - ball[1:-1, None, :2], axis=2), axis=1)
+    vz = d[:, 2] / DT; flat = (ball[1:-1, 2] < 0.3) & (np.abs(vz[:-1]) < 1.2) & (np.abs(vz[1:]) < 1.2)        # a bounce is allowed to slow it
+    onpitch = (np.abs(ball[1:-1, 0]) < PX) & (np.abs(ball[1:-1, 1]) < PY)                                  # so are the boards
+    out["ball changes pace by over 3 m/s on the turf with nobody within 1.5 m"] = int(((jump > 3) & (near > 1.5) & flat & onpitch & same[1:] & same[:-1]).sum())
+    out["passes"] = int(len(kick)); out["passes that reach a team-mate's feet"] = float(len(rec) / max(len(kick), 1))
     out["restarts that had to be forced"] = int(getattr(s, "timeouts", 0))
     dead = np.diff(np.concatenate([[0], (~live).astype(int), [0]])); spells = (np.where(dead == -1)[0] - np.where(dead == 1)[0]) / 25
     out["stoppage length, median and longest (s)"] = [float(np.median(spells)), float(spells.max())]

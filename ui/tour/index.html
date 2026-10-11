@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Tempo</title>
+<link rel="icon" href="../brand/tempo-small.svg">
+<style>html { background:#000; }</style>
+<script>
+// The film is the match view, directed. This page only sends you there, keeping anything after the question mark.
+const q = new URLSearchParams(location.search); q.set('tour', '1'); q.set('v', Date.now()); location.replace('../live/index.html?' + q);
+</script></html>
