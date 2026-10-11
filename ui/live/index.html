@@ -7,28 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#06150F; --paper:#F3F1E7; --mute:#9DB3A8; --card:#FFD21F; --home:#F27A2C; --away:#6FBCEB; }
+  :root { --ink:#04121A; --paper:#F3F1E7; --mute:#93B4BC; --card:#FFD21F; --home:#F27A2C; --away:#6FBCEB; }
   * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; background:#0B1220; color:var(--paper); font-family:Barlow, system-ui, sans-serif; overflow:hidden; }
+  html, body { margin:0; height:100%; background:#05121A; color:var(--paper); font-family:Barlow, system-ui, sans-serif; overflow:hidden; }
   #stage { position:fixed; inset:0; }
   canvas { display:block; }
-  #board { position:fixed; left:24px; top:20px; display:flex; align-items:stretch; font-family:"Barlow Condensed"; font-weight:700; font-size:22px; border-radius:10px; overflow:hidden; background:rgba(6,21,15,.82); }
+  #board { position:fixed; left:24px; top:20px; display:flex; align-items:stretch; font-family:"Barlow Condensed"; font-weight:700; font-size:22px; border-radius:10px; overflow:hidden; background:rgba(4,16,24,.82); }
   #board span { padding:7px 12px; display:flex; align-items:center; gap:8px; }
   #board i { width:6px; height:18px; border-radius:2px; display:inline-block; }
   #board .clock { background:var(--paper); color:var(--ink); font-size:20px; }
   #booked { position:fixed; left:24px; top:66px; display:flex; flex-direction:column; gap:5px; font-size:13px; font-weight:600; }
-  #booked div { display:flex; align-items:center; gap:7px; background:rgba(6,21,15,.7); padding:4px 9px 4px 7px; border-radius:7px; width:max-content; }
+  #booked div { display:flex; align-items:center; gap:7px; background:rgba(4,16,24,.7); padding:4px 9px 4px 7px; border-radius:7px; width:max-content; }
   #booked b { width:9px; height:13px; border-radius:2px; background:var(--card); display:inline-block; }
-  #lower { position:fixed; left:24px; bottom:92px; font-family:"Barlow Condensed"; font-weight:700; font-size:clamp(26px, 4vw, 40px); background:rgba(6,21,15,.86); padding:8px 16px 9px; border-radius:12px; border-left:8px solid var(--card); opacity:0; transform:translateY(8px); transition:opacity .3s, transform .3s; pointer-events:none; }
+  #lower { position:fixed; left:24px; bottom:92px; font-family:"Barlow Condensed"; font-weight:700; font-size:clamp(26px, 4vw, 40px); background:rgba(4,16,24,.86); padding:8px 16px 9px; border-radius:12px; border-left:8px solid var(--card); opacity:0; transform:translateY(8px); transition:opacity .3s, transform .3s; pointer-events:none; }
   #lower.on { opacity:1; transform:none; }
-  .tag { position:fixed; pointer-events:none; transform:translate(-50%,-100%); opacity:0; transition:opacity .2s; white-space:nowrap; font-family:"Barlow Condensed"; font-weight:700; font-size:20px; background:rgba(6,21,15,.86); padding:3px 10px 4px; border-radius:8px; }
-  #phone { position:fixed; right:24px; top:20px; width:min(300px, 34vw); background:#07180F; border-radius:26px; padding:18px 18px 20px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
+  .tag { position:fixed; pointer-events:none; transform:translate(-50%,-100%); opacity:0; transition:opacity .2s; white-space:nowrap; font-family:"Barlow Condensed"; font-weight:700; font-size:20px; background:rgba(4,16,24,.86); padding:3px 10px 4px; border-radius:8px; }
+  #phone { position:fixed; right:24px; top:20px; width:min(300px, 34vw); background:#071C27; border-radius:26px; padding:18px 18px 20px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
   #phone h2 { font:600 13px Barlow, sans-serif; color:var(--mute); margin:0 0 10px; }
   #phone h3 { font-family:"Barlow Condensed"; font-weight:700; font-size:30px; line-height:1; margin:0 0 6px; }
-  #phone p { margin:0; font-size:15px; line-height:1.4; color:#D6E2DB; }
+  #phone p { margin:0; font-size:15px; line-height:1.4; color:#D3E3E6; }
   #meter { height:8px; border-radius:4px; background:rgba(243,241,231,.14); margin-top:12px; overflow:hidden; }
   #meter i { display:block; height:100%; width:0; background:var(--card); border-radius:4px; transition:width .25s; }
-  #said { margin-top:14px; padding-top:12px; border-top:1px solid rgba(243,241,231,.12); font-size:14px; line-height:1.4; color:#C5D3CB; }
+  #said { margin-top:18px; font-size:14px; line-height:1.4; color:#BFD3D8; }
   #bar { position:fixed; left:24px; right:24px; bottom:24px; display:flex; gap:14px; align-items:center; }
   button { font:600 15px Barlow, sans-serif; color:var(--ink); background:var(--paper); border:0; border-radius:10px; padding:10px 16px; cursor:pointer; min-width:74px; }
   button:focus-visible, input:focus-visible { outline:3px solid var(--card); outline-offset:2px; }

@@ -832,7 +832,7 @@ The ball is a physical object: it rolls and slows on the turf, flies and bounces
 - **The season is six generated matches,** where the design says 380. Percentiles and habits rest on that sample.
 - **The demo match's stake cards are too many:** 471 appearances for five booked players, where real football gives about 20 a booked player. The model wanted 101 full cards and the cap holds them to 20. This is the generator's realism gap showing in the product, plus booked players who happen to play near the ball.
 - **Sections 16 and 17 list more pass marks and adversarial cases than the 14 checks cover.** Not yet run: the booked player standing still, the header, the wall, the late-arriving booking event, the tracking drop, the breaker under a failing model, and the cost caps.
-- **The front end:** two 3D views exist in `ui/` (a replay of the closest earlier attempt, and a live stretch with the two-level card). They are working slices. The mock-up in `visuals/` is older and shows forms the build no longer has.
+- **The front end:** two views exist in `ui/` on a shared marker stage (a live stretch with the two-level card, and a replay of the closest earlier attempt). They are working slices. An earlier 3D version with built figures is on the `3d-figures` branch. The mock-up in `visuals/` is older and shows forms the build no longer has.
 
 ## Sources
 

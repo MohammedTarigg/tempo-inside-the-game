@@ -42,37 +42,25 @@ Trains the stake model with the fair (nested) evaluation and writes the artefact
 
 Needs Python 3 with numpy and torch. Nothing else is installed.
 
-## The live view
+## The views
 
-Serve the project folder (`python3 -m http.server 8770`) and open `http://localhost:8770/ui/live/index.html`. It plays three minutes of the match around the booking the replay scene turns on, as the television picture, from `runs/m_demo/live.json`.
-
-- **The two-level card.** A booked player gets a faint card (an outline with a pale fill) while the model has him in the play, and a full card (solid and lit) when it puts a challenge at about one in five or more. The card is a television graphic, so it keeps a readable size and is never larger than the player.
-- **The picture's other graphics:** scoreboard and clock, the list of booked players, a label at the next stoppage ("Stahl booked"), and number tags.
-- **The phone panel** says the same moment in words: who is at stake, why, and the chance of a challenge.
-
-The page decides nothing. It shows each cue when the match clock reaches it. Add `?t=65` to open paused at a moment and `?bench=1` to time the drawing. Both views share the pitch, stands and lights in `ui/replay/world.js`.
-
-## The 3D replay
-
-Serve the project folder and open the replay page:
+Serve the project folder:
 
 ```bash
-python3 -m http.server 8770
+python3 -m http.server 8771
 ```
 
-Then go to `http://localhost:8770/ui/replay/index.html`. It plays the closest-earlier-attempt scene from `runs/m_demo/scenes.json`: the goal, back to the start, both attempts laid over each other, slow motion where they part, and the finish. Add `?t=20` to open paused at a moment, or `?run=<match_id>` for another run. It needs a connection for three.js and the fonts.
+Then open `http://localhost:8771/ui/live/index.html` or `http://localhost:8771/ui/replay/index.html`. Both need a connection for three.js and the fonts.
 
-The figures and the ball are ours, built in code in `ui/replay/figure.js`. No model or animation file is loaded or shipped. Each player is one continuous skinned body shaped ring by ring (torso, neck and head, arms to the fingertips, legs, boots, shorts) with a kit, hems and trim, a hairline, a nose and ears. Their proportions, the way their limbs swing when walking, jogging and sprinting, and four football actions (pass, shot, slide tackle, header) come from `ui/replay/figure_data.json`, a file of measurements only: joint heights, limb lengths and limb angles over time. The measurements were taken from reference figures with `ui/tools/measure_reference.py` and `ui/tools/measure_action.py`, and every reference file was deleted afterwards. The pass and the shot are played when the pipeline says a player strikes the ball. Sizes are true: players 1.8 m, ball 22 cm, pitch 105 by 68 m.
+Both draw the same stage (`ui/stage.js`): a dark pitch at a broadcast tilt, 105 by 68 m with markings to the laws of the game, a numbered marker for each player and a lit ball. A marker shows only what the tracking feed knows: where the player is, which way he is going (a wedge; standing still, he watches the ball) and how fast (a streak once he sprints). A ring opens where someone plays the ball, and a stronger one where a challenge is made.
 
-The grass is drawn per pixel by a shader in `ui/replay/main.js`: mown bands whose light and dark sides swap with the viewing angle, patchy growth, blade grain that fades with distance, worn goalmouths, and painted lines that sit on the blades. Around the pitch are stands with a crowd, perimeter boards in plain colours with no brands, and four floodlights.
+The live view plays three minutes around a booking from `runs/m_demo/live.json`. The picture stays clear until a booked player is drawn into the play. Then his marker gets a yellow ring and a card on a pin: faint at the lower threshold, solid and lit at the higher one. Around the picture are the scoreboard and clock, the list of booked players, a label at the next stoppage ("Stahl booked"), and a phone panel that says the same moment in words: who is at stake, why, and the chance of a challenge. The page decides nothing. It shows each cue when the match clock reaches it.
 
-Players have a nose and ears and hair as a separate cap with a clean hairline, and no drawn face: eyes, brows and a mouth were tried and removed because simple ones looked wrong up close. Add `?face=1` for a close look at one player (`?face=35&dist=3.4` turns the camera 35 degrees and stands 3.4 m back).
+The replay plays the closest-earlier-attempt scene from `runs/m_demo/scenes.json`: the goal, back to the start, both attempts laid over each other (the earlier one as outlined markers), slow motion where they part with the gap between the differing player's two positions measured, and the finish.
 
-The stands follow a measured cross-section: seating starts 6 m beyond the touchline and 9.5 m behind the goal line, rises at about 25 degrees to 20 m on the long sides and 16 m at the ends, under a roof at 25 m with a strip of lights along its front edge.
+Add `?t=20` to open paused at a moment, or `?run=<match_id>` for another run. Add `?bench=1` to time the drawing itself; the result is in `window.__tempo.bench`. On the development laptop the live view drew a frame in 5.5 ms at the median.
 
-Three reference files were measured for this and are not in the project: two player figures (Sketchfab, CC BY 4.0, by "Bendy y Boris Gamers" and "iszadine") and a stadium (Sketchfab Standard licence, by "Razny"). The player figures depict real footballers, so nothing of their faces was used; they only confirmed general head proportions. The stadium's licence does not allow redistribution, so only the outline of its stands, in metres, was taken (`ui/tools/measure_head.py`, `ui/tools/measure_stand.py`).
-
-Add `?bench=1` to time the drawing itself; the result is in `window.__tempo.bench`. On the development laptop it drew a frame in 16 ms at the median and 22 ms at the 95th percentile, at 1046 by 1700 pixels with 76 draw calls.
+An earlier 3D version with figures built in code is on the `3d-figures` branch.
 
 ## What a run leaves in `runs/<match_id>/`
 

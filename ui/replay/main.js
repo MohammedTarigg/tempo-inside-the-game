@@ -1,9 +1,8 @@
-// Tempo replay: the closest earlier attempt, laid over the goal, in 3D.
+// Tempo replay: the closest earlier attempt, laid over the goal, on the same dark pitch as the live view.
 // Everything on screen comes from runs/<match>/scenes.json, which the pipeline writes. Nothing here invents a number.
-// Figures and ball are our own, built in code (figure.js). Sizes are true: players 1.8 m, ball 22 cm, pitch 105 by 68 m.
+// Solid markers are the goal. Outlined markers are the earlier attempt.
 import * as THREE from 'three';
-import { Figure, makeBall, prepare } from './figure.js';
-import { renderer, scene, camera, KITS } from './world.js';
+import { renderer, scene, camera, KITS, CARD, Marker, makeBall, makePulses } from '../stage.js';
 
 const Q = new URLSearchParams(location.search);
 const RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t');
@@ -24,43 +23,25 @@ function sampleBall(clip, f) {
   const n = clip.ball.length - 1, a = Math.min(n, Math.max(0, Math.floor(f))), b = Math.min(n, a + 1), t = Math.min(1, Math.max(0, f - a));
   return [lerp(clip.ball[a][0], clip.ball[b][0], t), lerp(clip.ball[a][1], clip.ball[b][1], t), lerp(clip.ball[a][2], clip.ball[b][2], t)];
 }
-// Is this player striking the ball around this frame? The pipeline says who passes and shoots and when; the measured action is
-// laid over his run so that its moment of contact falls on that frame.
-const LEAD = 0.55, AFTER = 0.5;
-function actionFor(data, clip, f, i) {
-  for (const a of clip.actions || []) {
-    if (a.player !== i || (a.kind !== 'pass' && a.kind !== 'shot')) continue;
-    const m = data.actions && data.actions[a.kind];
-    if (!m) continue;
-    const dt = (f - a.frame) / 25;
-    if (dt < -LEAD || dt > AFTER) continue;
-    return { name: a.kind, t: Math.max(0, m.contact + dt), w: Math.min(1, (dt + LEAD) / 0.18, (AFTER - dt) / 0.25) };
-  }
-  return null;
-}
-function place(fig, clip, f, i, dt, rate, data) {
+function place(fig, clip, f, i, dt, rate) {
   const p = sample(clip, f, i);
   if (!p) { fig.group.visible = false; return null; }
   if (!fig.ghost) fig.group.visible = true;
   const a = sample(clip, f - 3, i) || p, b = sample(clip, f + 3, i) || p;
   const vx = (b[0] - a[0]) * 25 / 6, vy = (b[1] - a[1]) * 25 / 6, sp = Math.hypot(vx, vy);
   fig.group.position.set(p[0], 0, -p[1]);
-  if (sp > 0.5) {                                   // turn towards where he is going, without snapping
-    const want = Math.atan2(vx, -vy); let d = want - fig.yaw;
-    d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? 0.25 : 1);
-  }
-  fig.group.rotation.y = fig.yaw;
-  fig.update(dt, sp, rate, data ? actionFor(data, clip, f, i) : null);
+  // he points where he is going; standing or walking slowly, he watches the ball
+  const bl = sampleBall(clip, f), want = sp > 0.9 ? Math.atan2(vx, -vy) : Math.atan2(bl[0] - p[0], -(bl[1] - p[1]));
+  let d = want - fig.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? (sp > 0.9 ? 0.25 : 0.08) : 1);
+  fig.turn.rotation.y = fig.yaw;
+  fig.update(dt, sp, rate);
   return p;
 }
 
 // ---------- the show ----------
 async function main() {
-  const [scenes, data] = await Promise.all([
-    fetch(`../../runs/${RUN}/scenes.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }),
-    fetch('./figure_data.json').then((r) => r.json()).then(prepare),
-  ]).catch(() => [null, null]);
-  if (!scenes || !data) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
+  const scenes = await fetch(`../../runs/${RUN}/scenes.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }).catch(() => null);
+  if (!scenes) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
   if (!scenes.length) return fail('This run has no replay scene: no goal had a close enough earlier attempt.');
   const S = scenes[0], G = S.clips.goal, E = S.clips.earlier, N = S.ids.length;
   const who = S.ids.indexOf(S.differing_player), scorer = S.ids.indexOf(S.scorer), nm = (i) => S.names[S.ids[i]];
@@ -69,26 +50,23 @@ async function main() {
   const live = [], ghosts = [];
   for (let i = 0; i < N; i++) {
     const team = S.team[i], kit = { ...KITS[team] };
-    if (S.numbers[i] === 1) { kit.shirt = kit.keeper; kit.socks = kit.keeper; kit.shorts = kit.keeper; kit.trim = 0x101418; }
-    const opt = { team, number: S.numbers[i], seed: i * 7 + 3, kit };
-    live.push(new Figure(data, { ...opt, ghost: false })); scene.add(live[i].group);
-    ghosts.push(new Figure(data, { ...opt, ghost: true })); scene.add(ghosts[i].group);
+    if (S.numbers[i] === 1) kit.shirt = kit.keeper;
+    live.push(new Marker({ number: S.numbers[i], kit })); scene.add(live[i].group);
+    ghosts.push(new Marker({ number: S.numbers[i], kit, ghost: true })); scene.add(ghosts[i].group);
   }
-  const ball = makeBall(); scene.add(ball);
-  const ghostBall = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0, depthWrite: false })); scene.add(ghostBall);
-  let lastBall = null;
+  const ball = makeBall(), ghostBall = makeBall(0), pulses = makePulses(); scene.add(ball.group, ghostBall.group);
 
-  // the booking, as an object in the world: a referee's card, true size doubled so it reads, standing over the booked player
+  // the booking: a referee's card on a pin, standing on the booked player's marker
   const card = new THREE.Group();
-  const face = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.48, 0.025), new THREE.MeshStandardMaterial({ color: 0xFFD21F, roughness: 0.35, emissive: 0x6A5000, emissiveIntensity: 0.85 }));
-  face.castShadow = true; face.position.y = 2.42; card.add(face);
-  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 8), new THREE.MeshStandardMaterial({ color: 0xFFD21F, roughness: 0.4 })); pin.position.y = 2.02; card.add(pin);      // reaches down to just above his head
-  card.visible = false; scene.add(card);
+  const face = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.48, 0.025), new THREE.MeshStandardMaterial({ color: CARD, roughness: 0.35, emissive: 0x6A5000, emissiveIntensity: 0.85 }));
+  face.position.y = 2.42; card.add(face);
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 8), new THREE.MeshStandardMaterial({ color: CARD, roughness: 0.4 })); pin.position.y = 2.02; card.add(pin);
+  card.scale.setScalar(1.7); card.visible = false; scene.add(card);
 
   // the measured gap between where he stood then and where he stands now
   const gapGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-  const gapLine = new THREE.Line(gapGeo, new THREE.LineBasicMaterial({ color: 0xFFD21F, transparent: true, opacity: 0, depthTest: false })); gapLine.renderOrder = 6; scene.add(gapLine);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xFFD21F, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
+  const gapLine = new THREE.Line(gapGeo, new THREE.LineBasicMaterial({ color: CARD, transparent: true, opacity: 0, depthTest: false })); gapLine.renderOrder = 6; scene.add(gapLine);
+  const ringMat = new THREE.MeshBasicMaterial({ color: CARD, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
   const rings = [0, 1].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 48), ringMat); r.rotation.x = -Math.PI / 2; r.position.y = 0.03; r.renderOrder = 6; scene.add(r); return r; });
 
   // timeline, in seconds of show time. Clip positions are in frames.
@@ -107,7 +85,7 @@ async function main() {
   const COPY = {
     goal: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${S.team[scorer] ? 'Harbour City' : 'Northgate'}`],
     rewind: () => [`Closest earlier attempt, minute ${E.minute}`, `The two attacks start ${S.gap_m} m apart on average`],
-    together: () => [`Closest earlier attempt, minute ${E.minute}`, `Faint figures are minute ${E.minute}, laid over the goal`],
+    together: () => [`Closest earlier attempt, minute ${E.minute}`, `Outlined markers are minute ${E.minute}, laid over the goal`],
     part: () => [`${nm(who)} backs off`, S.booked_minute ? `In minute ${E.minute} he stepped in. Booked in minute ${S.booked_minute}, he does not` : `In minute ${E.minute} he stepped in`],
     finish: () => [`${nm(who)} backs off`, `Two seconds after they part he is ${S.differing_by_m} m from where he was in minute ${E.minute}`],
     hold: () => [`Closest earlier attempt, minute ${E.minute}`, `${nm(scorer)} scores. Two seconds after the attacks part, ${nm(who)}${S.booked_minute ? `, booked in minute ${S.booked_minute},` : ''} is ${S.differing_by_m} m from where he was then`],
@@ -124,22 +102,22 @@ async function main() {
     const s = at(T), run = playing ? s.rate : 0;
     let pw = null, pg = null, ps = null;
     for (let i = 0; i < N; i++) {
-      const p = place(live[i], G, s.fg, i, dt, run, data);
+      const p = place(live[i], G, s.fg, i, dt, run);
       if (i === who) pw = p; if (i === scorer) ps = p;
       const g = ghosts[i];
       if (s.fe === null || s.ghost <= 0.001) { g.setOpacity(0); continue; }
-      const q = place(g, E, s.fe, i, dt, run, data);
+      const q = place(g, E, s.fe, i, dt, run);
       if (i === who) pg = q;
       const near = p && q ? Math.hypot(p[0] - q[0], p[1] - q[1]) : 9;
-      g.setOpacity(q ? s.ghost * (i === who ? 0.6 : 0.3) * sat((near - 0.35) / 0.9) : 0);        // a ghost standing on its own man would only blur him
+      g.setOpacity(q ? s.ghost * (i === who ? 1 : 0.5) * sat((near - 0.6) / 1.2) : 0);        // an outline lying on its own man would only blur him
     }
-    const b = sampleBall(G, s.fg); ball.position.set(b[0], Math.max(b[2], 0.11), -b[1]);
-    if (lastBall) { const dx = b[0] - lastBall[0], dz = -(b[1] - lastBall[1]), dist = Math.hypot(dx, dz); if (dist > 1e-4 && dist < 2) { v.set(dz, 0, -dx).normalize(); ball.rotateOnWorldAxis(v, dist / 0.11); } }
-    lastBall = b;
-    if (s.fe !== null) { const e = sampleBall(E, s.fe); ghostBall.position.set(e[0], Math.max(e[2], 0.11), -e[1]); ghostBall.material.opacity = 0.4 * s.ghost * sat(Math.hypot(e[0] - b[0], e[1] - b[1]) - 0.5); } else ghostBall.material.opacity = 0;
+    const b = sampleBall(G, s.fg); ball.set(b[0], b[2], -b[1]);
+    if (s.fe !== null) { const e = sampleBall(E, s.fe); ghostBall.set(e[0], e[2], -e[1]); ghostBall.setOpacity(0.45 * s.ghost * sat(Math.hypot(e[0] - b[0], e[1] - b[1]) - 0.5)); } else ghostBall.setOpacity(0);
+    live[who].setStake(S.booked_minute !== null ? 1 : 0, 0);
+    pulses((G.actions || []).filter((a) => s.fg >= a.frame && s.fg < a.frame + 11).map((a) => { const q = sample(G, a.frame, a.player); return q && { x: q[0], z: -q[1], age: (s.fg - a.frame) / 25, strong: a.kind !== 'pass' }; }).filter(Boolean));
     // the card rides on the booked player for the whole goal clip: he was booked before it
     card.visible = !!pw && S.booked_minute !== null;
-    if (pw) { card.position.set(pw[0], 0, -pw[1]); card.rotation.y = Math.atan2(camera.position.x - pw[0], camera.position.z + pw[1]); }
+    if (pw) { const k = Math.max(1, camera.position.distanceTo(v.set(pw[0], 0, -pw[1])) / 30); card.scale.setScalar(1.7 * k); card.position.set(pw[0], -2.98 * k, -pw[1]); card.rotation.y = Math.atan2(camera.position.x - pw[0], camera.position.z + pw[1]); }
     // the gap
     const showGap = pw && pg && (s.ph === 'part' || s.ph === 'finish' || s.ph === 'hold');
     const d = pw && pg ? Math.hypot(pw[0] - pg[0], pw[1] - pg[1]) : 0, on = showGap && d > 1.2 ? sat((d - 1.2) / 1.2) * s.ghost : 0;
@@ -149,16 +127,12 @@ async function main() {
       rings[0].position.set(pw[0], 0.03, -pw[1]); rings[1].position.set(pg[0], 0.03, -pg[1]);
     }
     // camera
-    if (s.ph === 'goal') { wantPos.set(b[0] * 0.6 + 2, 17, 46); wantAim.set(b[0] * 0.9 + 3, 0.6, -b[1] * 0.5); }
-    else if (s.ph === 'rewind') { wantPos.set(-22, 15, 36); wantAim.set(2, 0.5, 0); }
-    else if (s.ph === 'together') { const p = ps || [0, 0]; wantPos.set(p[0] - 9.5, 4.6, -p[1] + 5.5); wantAim.set(p[0] + 7, 1.0, -p[1] - 0.5); }
-    else if (s.ph === 'part' && pw && pg) { const mx = (pw[0] + pg[0]) / 2, mz = -(pw[1] + pg[1]) / 2, sp = Math.max(6, d * 0.9); wantPos.set(mx - 2 - sp * 0.6, 3.2 + sp * 0.32, mz + 6 + sp * 0.55); wantAim.set(mx + 0.5, 1.0, mz); }
-    else { wantPos.set(b[0] - 17, 8.5, 19 - b[1] * 0.3); wantAim.set(Math.min(b[0] + 5, 47), 0.9, -b[1] * 0.6); }
-    if (Q.get('face') && pw) {                                                // ?face=1: a close look at one player, for checking the figure
-      const yaw = live[who].yaw, fx = Math.sin(yaw), fz = Math.cos(yaw), side = parseFloat(Q.get('face')) || 0;
-      const ang = side * Math.PI / 180, dx = fx * Math.cos(ang) + fz * Math.sin(ang), dz = fz * Math.cos(ang) - fx * Math.sin(ang), dist = parseFloat(Q.get('dist') || '1.5');
-      wantPos.set(pw[0] + dx * dist, 1.68, -pw[1] + dz * dist); wantAim.set(pw[0], Q.get('dist') ? 1.0 : 1.66, -pw[1]);
-    }
+    // always from the main-stand side and high enough that every marker and number reads
+    if (s.ph === 'goal') { wantPos.set(b[0] * 0.6, 40, 48); wantAim.set(b[0] * 0.85, 0, -b[1] * 0.3 + 8); }
+    else if (s.ph === 'rewind') { const p = ps || [0, 0]; wantPos.set(p[0] * 0.7, 44, 50); wantAim.set(p[0] * 0.8, 0, -p[1] * 0.3 + 8); }
+    else if (s.ph === 'together') { const p = ps || [0, 0]; wantPos.set(p[0] + 2, 30, -p[1] + 30); wantAim.set(p[0] + 4, 0, -p[1] + 5); }
+    else if (s.ph === 'part' && pw && pg) { const mx = (pw[0] + pg[0]) / 2, mz = -(pw[1] + pg[1]) / 2, sp = Math.max(6, d * 0.9); wantPos.set(mx, 24 + sp * 1.2, mz + 22 + sp * 1.2); wantAim.set(mx, 0, mz + 3); }
+    else { wantPos.set(b[0] - 3, 32, 34 - b[1] * 0.3); wantAim.set(Math.min(b[0] + 2, 47), 0, -b[1] * 0.5 + 7); }
     const kk = firstFrame || !playing || reduce ? 1 : 1 - Math.exp(-dt * (s.ph === 'goal' ? 3.2 : 2.1));
     camPos.lerp(wantPos, kk); camAim.lerp(wantAim, kk); firstFrame = false;
     camera.position.copy(camPos); camera.lookAt(camAim);
@@ -173,8 +147,8 @@ async function main() {
       el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`; el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`; el.style.opacity = show; if (txt !== null) el.textContent = txt;
     };
     if (pw && pg) {
-      proj((pw[0] + pg[0]) / 2, 0.3, -(pw[1] + pg[1]) / 2, $('gap'), `${d.toFixed(1)} m`, on);
-      proj(pg[0], 2.15, -pg[1], $('tagA'), `Minute ${E.minute}`, on); proj(pw[0], 2.95, -pw[1], $('tagB'), `Minute ${G.minute}`, on);
+      proj((pw[0] + pg[0]) / 2, 0.1, -(pw[1] + pg[1]) / 2 - 2.4, $('gap'), `${d.toFixed(1)} m`, on);
+      proj(pg[0], 0.1, -pg[1] + 2.6, $('tagA'), `Minute ${E.minute}`, on); proj(pw[0], 0.1, -pw[1] + 2.6, $('tagB'), `Minute ${G.minute}`, on);
     } else { $('gap').style.opacity = 0; $('tagA').style.opacity = 0; $('tagB').style.opacity = 0; }
     if (document.activeElement !== $('scrub')) $('scrub').value = Math.round(T / TOTAL * 1000);
     renderer.render(scene, camera);

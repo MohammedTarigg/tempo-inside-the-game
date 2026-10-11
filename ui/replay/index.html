@@ -7,21 +7,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#06150F; --deep:#0B2A20; --paper:#F3F1E7; --mute:#9DB3A8; --card:#FFD21F; --home:#FF8A3D; --away:#7CC8F2; }
+  :root { --ink:#04121A; --deep:#0B2A20; --paper:#F3F1E7; --mute:#93B4BC; --card:#FFD21F; --home:#FF8A3D; --away:#7CC8F2; }
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; background: var(--ink); color: var(--paper); font-family: Barlow, system-ui, sans-serif; overflow:hidden; }
   #stage { position:fixed; inset:0; }
   canvas { display:block; }
   #top { position:fixed; left:28px; top:22px; right:28px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
-  #score { font-family:"Barlow Condensed"; font-weight:700; font-size:22px; letter-spacing:.01em; background:rgba(6,21,15,.78); padding:8px 14px; border-radius:10px; display:flex; gap:12px; align-items:center; }
+  #score { font-family:"Barlow Condensed"; font-weight:700; font-size:22px; letter-spacing:.01em; background:rgba(4,16,24,.78); padding:8px 14px; border-radius:10px; display:flex; gap:12px; align-items:center; }
   #score i { width:6px; height:18px; border-radius:2px; display:inline-block; }
   #clock { color:var(--mute); font-weight:600; font-family:Barlow; font-size:15px; }
   #label { position:fixed; left:28px; bottom:96px; max-width:min(560px, 80vw); pointer-events:none; transition: opacity .35s; }
   #label h1 { font-family:"Barlow Condensed"; font-weight:700; font-size:clamp(34px, 5vw, 58px); line-height:.98; margin:0 0 8px; }
-  #label p { margin:0; font-size:17px; line-height:1.4; color:#D6E2DB; max-width:58ch; text-shadow:0 1px 8px rgba(6,21,15,.9); }
-  #label h1 { text-shadow:0 2px 14px rgba(6,21,15,.85); }
+  #label p { margin:0; font-size:17px; line-height:1.4; color:#D3E3E6; max-width:58ch; text-shadow:0 1px 8px rgba(4,16,24,.9); }
+  #label h1 { text-shadow:0 2px 14px rgba(4,16,24,.85); }
   #gap { position:fixed; pointer-events:none; font-family:"Barlow Condensed"; font-weight:700; font-size:30px; color:var(--ink); background:var(--card); padding:2px 10px 3px; border-radius:8px; transform:translate(-50%,-50%); opacity:0; white-space:nowrap; }
-  .tag { position:fixed; pointer-events:none; font-size:13px; font-weight:600; background:rgba(6,21,15,.82); padding:3px 8px; border-radius:6px; transform:translate(-50%,-100%); opacity:0; white-space:nowrap; }
+  .tag { position:fixed; pointer-events:none; font-size:13px; font-weight:600; background:rgba(4,16,24,.82); padding:3px 8px; border-radius:6px; transform:translate(-50%,-100%); opacity:0; white-space:nowrap; }
   #bar { position:fixed; left:28px; right:28px; bottom:26px; display:flex; gap:14px; align-items:center; }
   button { font:600 15px Barlow, sans-serif; color:var(--ink); background:var(--paper); border:0; border-radius:10px; padding:10px 16px; cursor:pointer; min-width:74px; }
   button:focus-visible, input:focus-visible { outline:3px solid var(--card); outline-offset:2px; }

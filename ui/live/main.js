@@ -1,9 +1,8 @@
-// Tempo live: a stretch of play as the television picture, with the two-level stake card.
+// Tempo live: a stretch of play on a dark pitch, a marker for each player, with the two-level stake card.
 // Everything shown comes from runs/<match>/live.json, which the pipeline writes: positions, who strikes the ball, and every cue
 // with its match time. This page decides nothing. It shows each cue when the match clock reaches it.
 import * as THREE from 'three';
-import { Figure, makeBall, prepare } from '../replay/figure.js';
-import { renderer, scene, camera, KITS } from '../replay/world.js';
+import { renderer, scene, camera, KITS, CARD, Marker, makeBall, makePulses } from '../stage.js';
 
 const Q = new URLSearchParams(location.search), RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t');
 const $ = (id) => document.getElementById(id);
@@ -11,11 +10,8 @@ const fail = (m) => { $('err').style.display = 'flex'; $('err').textContent = m;
 const lerp = (a, b, t) => a + (b - a) * t, sat = (t) => Math.min(1, Math.max(0, t));
 
 async function main() {
-  const [L, data] = await Promise.all([
-    fetch(`../../runs/${RUN}/live.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }),
-    fetch('../replay/figure_data.json').then((r) => r.json()).then(prepare),
-  ]).catch(() => [null, null]);
-  if (!L || !data) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
+  const L = await fetch(`../../runs/${RUN}/live.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }).catch(() => null);
+  if (!L) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
   if (!L.frames) return fail('This run has no booking, so there is no stake card to show.');
   const N = L.ids.length, FPS = L.fps, TOTAL = (L.frames - 1) / FPS, name = (pid) => L.names[pid], index = (pid) => L.ids.indexOf(pid);
   $('hs').textContent = L.home.short; $('as').textContent = L.away.short;
@@ -44,18 +40,18 @@ async function main() {
   const figs = [];
   for (let i = 0; i < N; i++) {
     const team = L.team[i], kit = { ...KITS[team] };
-    if (L.numbers[i] === 1) { kit.shirt = kit.keeper; kit.socks = kit.keeper; kit.shorts = kit.keeper; kit.trim = 0x101418; }
-    figs.push(new Figure(data, { team, number: L.numbers[i], seed: i * 7 + 3, ghost: false, kit })); scene.add(figs[i].group);
+    if (L.numbers[i] === 1) kit.shirt = kit.keeper;
+    figs.push(new Marker({ number: L.numbers[i], kit })); scene.add(figs[i].group);
   }
-  const ball = makeBall(); scene.add(ball);
-  // The card has two levels. Faint: an outline with a pale fill, saying he is in the play on a yellow. Full: solid and lit,
-  // when the model puts a challenge at one in five or more. It is a television graphic, so it keeps a readable size on screen.
+  const ball = makeBall(), pulses = makePulses(); scene.add(ball.group);
+  // The card has two levels. Faint: an outline with a pale fill and a thin ring round his marker, saying he is in the play on
+  // a yellow. Full: solid and lit, when the model puts a challenge at one in five or more.
   const cards = stake.map((s) => {
     if (!s.length) return null;
     const g = new THREE.Group(), geo = new THREE.BoxGeometry(0.34, 0.48, 0.03);
-    const fill = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xFFD21F, emissive: 0x7A5C00, emissiveIntensity: 0, roughness: 0.35, transparent: true, opacity: 0, depthWrite: false }));
-    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xFFD21F, transparent: true, opacity: 0 }));
-    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 6), new THREE.MeshBasicMaterial({ color: 0xFFD21F, transparent: true, opacity: 0 })); pin.position.y = -0.41;
+    const fill = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: CARD, emissive: 0x7A5C00, emissiveIntensity: 0, roughness: 0.35, transparent: true, opacity: 0, depthWrite: false }));
+    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: CARD, transparent: true, opacity: 0 }));
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 6), new THREE.MeshBasicMaterial({ color: CARD, transparent: true, opacity: 0 })); pin.position.y = -0.41;
     g.add(fill, edge, pin); g.userData = { fill, edge, pin, k: 0, full: 0 }; g.visible = false; g.renderOrder = 4; scene.add(g);
     return g;
   });
@@ -66,26 +62,15 @@ async function main() {
     return [lerp(p[0], q[0], t), lerp(p[1], q[1], t)];
   };
   const ballAt = (f) => { const n = L.frames - 1, a = Math.min(n, Math.max(0, Math.floor(f))), b = Math.min(n, a + 1), t = sat(f - a); return [0, 1, 2].map((k) => lerp(L.ball[a][k], L.ball[b][k], t)); };
-  const LEAD = 0.55, AFTER = 0.5;
-  const strike = (T, i) => {                                                    // is he passing or shooting around now?
-    for (const a of L.actions) {
-      if (a.player !== i || (a.kind !== 'pass' && a.kind !== 'shot')) continue;
-      const m = data.actions && data.actions[a.kind], dt = T - a.t;
-      if (!m || dt < -LEAD || dt > AFTER) continue;
-      return { name: a.kind, t: Math.max(0, m.contact + dt), w: Math.min(1, (dt + LEAD) / 0.18, (AFTER - dt) / 0.25) };
-    }
-    return null;
-  };
-
-  camera.fov = 27; camera.updateProjectionMatrix();
-  const camPos = new THREE.Vector3(0, 19, 57), camAim = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantAim = new THREE.Vector3(), v = new THREE.Vector3();
-  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), first = true, lastBall = null, shownBookings = -1;
+  camera.fov = 30; camera.updateProjectionMatrix();
+  const camPos = new THREE.Vector3(0, 52, 60), camAim = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantAim = new THREE.Vector3(), v = new THREE.Vector3();
+  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), first = true, shownBookings = -1;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function frame(now, once) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (playing) { T += dt; if (T >= TOTAL) { T = TOTAL - 0.001; playing = false; $('play').textContent = 'Replay'; } }
-    const f = T * FPS, rate = playing ? 1 : 0;
+    const f = T * FPS, rate = playing ? 1 : 0, b = ballAt(f);
     let top = null;                                                             // the player whose card matters most right now
     for (let i = 0; i < N; i++) {
       const fig = figs[i], p = pos(f, i);
@@ -93,30 +78,30 @@ async function main() {
       fig.group.visible = true;
       const a = pos(f - 2, i) || p, b = pos(f + 2, i) || p, vx = (b[0] - a[0]) * FPS / 4, vy = (b[1] - a[1]) * FPS / 4, sp = Math.hypot(vx, vy);
       fig.group.position.set(p[0], 0, -p[1]);
-      if (sp > 0.5) { let d = Math.atan2(vx, -vy) - fig.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? 0.25 : 1); }
-      fig.group.rotation.y = fig.yaw;
-      fig.update(dt, sp, rate, strike(T, i));
+      // he points where he is going; standing or walking slowly, he watches the ball
+      { let d = (sp > 0.9 ? Math.atan2(vx, -vy) : Math.atan2(b[0] - p[0], -(b[1] - p[1]))) - fig.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); fig.yaw += d * (rate ? (sp > 0.9 ? 0.25 : 0.08) : 1); }
+      fig.turn.rotation.y = fig.yaw;
+      fig.update(dt, sp, rate);
       const c = cards[i];
       if (c) {
         const [lvl, chance] = levelAt(i, T), u = c.userData, step = reduce || !playing ? 1 : 1 - Math.exp(-dt * 9);
         u.k += ((lvl > 0 ? 1 : 0) - u.k) * step; u.full += ((lvl === 2 ? 1 : 0) - u.full) * step;
-        c.visible = u.k > 0.02;
+        c.visible = u.k > 0.02; fig.setStake(u.k, u.full);
         if (c.visible) {
-          const dist = camera.position.distanceTo(fig.group.position), size = Math.max(1, dist / 24) * (1 + 0.3 * u.full);      // readable, and never bigger than the man
-          c.position.set(p[0], 1.86 + 0.42 * size + 0.5 * size * 0.48, -p[1]); c.scale.setScalar(size);
+          const dist = camera.position.distanceTo(fig.group.position), size = Math.max(1, dist / 20) * (1 + 0.3 * u.full);
+          c.position.set(p[0], 0.12 + 0.58 * size, -p[1]); c.scale.setScalar(size);      // the pin stands on his marker
           c.rotation.y = Math.atan2(camera.position.x - p[0], camera.position.z + p[1]);
-          u.fill.material.opacity = u.k * lerp(0.20, 1, u.full); u.fill.material.emissiveIntensity = 1.1 * u.full;
+          u.fill.material.opacity = u.k * lerp(0.3, 1, u.full); u.fill.material.emissiveIntensity = lerp(0.5, 1.1, u.full);
           u.edge.material.opacity = u.k; u.pin.material.opacity = u.k * lerp(0.55, 1, u.full);
         }
         if (lvl > 0 && (!top || lvl > top.lvl || (lvl === top.lvl && chance > top.chance))) top = { i, lvl, chance };
       }
     }
-    const b = ballAt(f); ball.position.set(b[0], Math.max(b[2], 0.11), -b[1]);
-    if (lastBall) { const dx = b[0] - lastBall[0], dz = -(b[1] - lastBall[1]), d = Math.hypot(dx, dz); if (d > 1e-4 && d < 2) { v.set(dz, 0, -dx).normalize(); ball.rotateOnWorldAxis(v, d / 0.11); } }
-    lastBall = b;
-    // the broadcast camera: on a gantry under the roof of the main stand (the seats there are 10 m up and the roof 25 m),
-    // following the ball without chasing every touch
-    wantPos.set(b[0] * 0.5, 19, 57); wantAim.set(b[0] * 0.92, 0, -b[1] * 0.5 + 1);
+    ball.set(b[0], b[2], -b[1]);
+    // a ring opens where someone plays the ball; a stronger one where a challenge is made
+    pulses(L.actions.filter((a) => T >= a.t && T < a.t + 0.45).map((a) => { const q = pos(a.t * FPS, a.player); return q && { x: q[0], z: -q[1], age: T - a.t, strong: a.kind !== 'pass' }; }).filter(Boolean));
+    // the camera sits high on the main-stand side and follows the ball without chasing every touch
+    wantPos.set(b[0] * 0.45, 52, 60); wantAim.set(b[0] * 0.8, 0, -b[1] * 0.3 + 4);
     const kk = first || !playing || reduce ? 1 : 1 - Math.exp(-dt * 2.4);
     camPos.lerp(wantPos, kk); camAim.lerp(wantAim, kk); first = false;
     camera.position.copy(camPos); camera.lookAt(camAim);
@@ -130,7 +115,7 @@ async function main() {
     const lab = labels.find((c) => T >= c.show && T <= c.show + c.valid_for);
     $('lower').classList.toggle('on', !!lab); if (lab) $('lower').textContent = lab.payload.text;
     const tg = tags.find((c) => T >= c.t && T <= c.t + c.valid_for), tp = tg ? pos(f, index(tg.payload.player)) : null;
-    if (tg && tp) { v.set(tp[0], 2.3, -tp[1]).project(camera); const el = $('tag'); el.textContent = tg.payload.text; el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`; el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`; el.style.opacity = 1; } else $('tag').style.opacity = 0;
+    if (tg && tp) { v.set(tp[0], 1.4, -tp[1]).project(camera); const el = $('tag'); el.textContent = tg.payload.text; el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`; el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`; el.style.opacity = 1; } else $('tag').style.opacity = 0;
     // ---- the phone: the same moment in words ----
     if (top) {
       const pid = L.ids[top.i];
