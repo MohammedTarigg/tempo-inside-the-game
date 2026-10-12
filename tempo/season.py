@@ -48,14 +48,16 @@ def build(n=6, seed0=100, verbose=True):
         per_min += [float(step[live[1:], j].sum() / mins) for j in range(22) if j % 11]
         if verbose:
             print(f"  season match {k + 1}/{n}", flush=True)
-    stahl = "p_har_6"
+    skoles = "p_har_6"
+    wide_share = round(100 * wide[0][0] / max(wide[0][1], 1)); zone = "wide" if wide_share >= 50 else "central"
+    channel = dict(subject=HOME["id"], kind="shot_channel", value=max(wide_share, 100 - wide_share), unit=f"in 100 shots from {'the wide channels' if zone == 'wide' else 'the middle'}", sample=n,
+                   mark="channels", zone=zone, text=f"{HOME['name']} shoot from wide" if zone == "wide" else f"{HOME['name']} shoot through the middle")
     habits = [
-        dict(subject=HOME["id"], kind="wide_shots", value=round(100 * wide[0][0] / max(wide[0][1], 1)), unit="in 100 shots from the wide channels", sample=n, mark="channels", zone="wide",
-             text=f"{HOME['name']} shoot from wide"),
-        dict(subject=stahl, kind="challenges_per_match", value=round(challenges.get(stahl, 0) / n, 1), unit="challenges a match", sample=n, mark="zone", zone="front_of_back_four",
-             text="If Stahl is booked, this space opens"),
+        channel,                                           # where the home side shoots from: whichever of the middle and the wide channels has most of its shots
+        dict(subject=skoles, kind="challenges_per_match", value=round(challenges.get(skoles, 0) / n, 1), unit="challenges a match", sample=n, mark="zone", zone="front_of_back_four",
+             text="If Skoles is booked, this space opens"),
         dict(subject=AWAY["id"], kind="late_shots_against", value=round(100 * late_against[1][0] / max(late_against[1][1], 1)), unit="in 100 shots against come after minute 70", sample=n,
-             mark="window", window=[70, 90], text=f"{AWAY['name']} are shot at late"),
+             mark="window", window=[70, 90], text=f"{AWAY['name']} give up chances late"),
     ]
     out = dict(matches=n, shot_speed=shot_speed, pass_distance=pass_dist, distance_per_minute=per_min, habits=habits, archive=archive)
     os.makedirs(ARTIFACTS, exist_ok=True)

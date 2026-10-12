@@ -13,7 +13,7 @@ def match_data(sim):
     period = np.array([f[0] for f in F]); clock = np.array([f[1] for f in F])
     dirs = np.where(period == 1, 1.0, -1.0)                                   # the home team's attacking direction
     meta = dict(match_id=sim.match_id, fps=HZ, pitchLength=105.0, pitchWidth=68.0, home=dict(HOME, players=sim.squads[0]), away=dict(AWAY, players=sim.squads[1]),
-                ids=sim.ids, numbers=[p["number"] for s in sim.squads for p in s], names={p["playerId"]: p["name"] for s in sim.squads for p in s},
+                ids=sim.ids, numbers=[p["number"] for s in sim.squads for p in s], names={p["playerId"]: p["name"] for s in sim.squads for p in s}, names_ar={p["playerId"]: p["name_ar"] for s in sim.squads for p in s},
                 team_of={p["playerId"]: p["team"] for s in sim.squads for p in s}, keepers=[0, 11], final_score=list(sim.score))
     return dict(meta=meta, pos=pos, ball=ball, live=np.array([f[2] for f in F]), poss=np.array([f[3] for f in F]), period=period, clock=clock,
                 home_dir=dirs, team=sim.team.copy(), events=sim.events, commentary=sorted(sim.commentary, key=lambda c: c["matchTime"]))

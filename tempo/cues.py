@@ -4,7 +4,7 @@ from .contracts import cue
 
 DEFAULT_RULES = {
     "enabled": {"stake_card": True, "tag": True, "kickoff_mark": True, "danger_window": True, "scene": True, "label": True, "sentence": True,
-                "form_card": True, "halftime_card": True, "fulltime_card": True, "energy": True, "duel": True},
+                "form_card": True, "halftime_card": True, "fulltime_card": True, "duel": True, "pressure": True},
     "stake_full_cap_per_match": 20,              # the pass mark in the architecture: 20 full cards a match or fewer
     "stake_faint_max_at_once": 2,                # at most two faint cards on the picture together
     "tag_cooldown_s": 90,
@@ -12,22 +12,22 @@ DEFAULT_RULES = {
     "sentence_veto_window_s": 0,
 }
 SLOT = {"stake_card": "on_player", "tag": "tv_lower", "label": "tv_lower", "scene": "tv_full", "kickoff_mark": "pitch", "danger_window": "strip",
-        "form_card": "tv_side", "halftime_card": "tv_full", "fulltime_card": "tv_full", "sentence": "phone", "energy": "on_player", "duel": "tv_lower"}
+        "form_card": "tv_side", "halftime_card": "tv_full", "fulltime_card": "tv_full", "sentence": "phone", "duel": "tv_lower", "pressure": "strip"}
 
 
 class CueService:
     def __init__(self, match_id, ledger, bus, rules=None):
         self.match_id, self.ledger, self.bus = match_id, ledger, bus
         self.rules = {**DEFAULT_RULES, **(rules or {})}
-        self.slot_busy_until, self.last_tag, self.full_cards, self.faint_live = {}, -1e9, 0, set()
+        self.slot_busy_until, self.last_tag, self.full_cards, self.faint_live = {}, {}, 0, set()      # last_tag: when each of the two small forms last showed
         self.shown, self.held = 0, 0
         self.frame, self.frame_of = 0, {}                # the tracking frame each cue was issued on, for a front end
 
     def state(self):
-        return dict(slot_busy_until=self.slot_busy_until, last_tag=self.last_tag, full_cards=self.full_cards, faint_live=sorted(self.faint_live), shown=self.shown, held=self.held)
+        return dict(slot_busy_until=self.slot_busy_until, last_tag=dict(self.last_tag), full_cards=self.full_cards, faint_live=sorted(self.faint_live), shown=self.shown, held=self.held)
 
     def restore(self, s):
-        self.slot_busy_until, self.last_tag, self.full_cards = dict(s["slot_busy_until"]), s["last_tag"], s["full_cards"]
+        self.slot_busy_until, self.last_tag, self.full_cards = dict(s["slot_busy_until"]), dict(s["last_tag"]), s["full_cards"]
         self.faint_live, self.shown, self.held = set(s["faint_live"]), s["shown"], s["held"]
 
     def propose(self, t, form, screen, payload, fact_ids, valid_for=2.0, priority=5, when="now"):
@@ -46,8 +46,8 @@ class CueService:
             else:
                 self.faint_live.add(pid)
                 self.full_cards += level == 2
-        elif form in ("tag", "duel") and t - self.last_tag < self.rules["tag_cooldown_s"]:
-            reason = "a number tag was shown under 90 seconds ago"
+        elif form in ("tag", "duel") and t - self.last_tag.get(form, -1e9) < self.rules["tag_cooldown_s"]:       # each keeps its own clock: a duel count must not silence a rare number
+            reason = "a number tag was shown under 90 seconds ago" if form == "tag" else "a duel count was shown under 90 seconds ago"
         elif SLOT.get(form, "").startswith("tv") and when == "now" and t < self.slot_busy_until.get(SLOT[form], -1e9):
             reason = "the television slot is taken by something of equal or higher priority"
         if reason:
@@ -59,7 +59,7 @@ class CueService:
             return None
         self.frame_of[c["cue_id"]] = self.frame
         if form in ("tag", "duel"):
-            self.last_tag = t
+            self.last_tag[form] = t
         if SLOT.get(form, "").startswith("tv"):
             self.slot_busy_until[SLOT[form]] = t + valid_for + self.rules["tv_slot_gap_s"]
         self.shown += form != "stake_card" or payload.get("level", 0) > 0

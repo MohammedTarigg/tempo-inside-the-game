@@ -102,7 +102,8 @@
   #track .book { position:absolute; top:6px; width:9px; height:13px; margin-left:-4px; border-radius:2px; background:var(--card); }
   #track .goal { position:absolute; top:27px; width:13px; height:13px; margin:0 0 0 -6px; border-radius:50%; border:2px solid #fff; }
   #track .goal.home { background:var(--home); border-color:#000; } #track .goal.away { background:var(--away); border-color:#000; }
-  #dwin { position:absolute; top:0; height:9px; border:2px dashed var(--mist); border-bottom:0; border-radius:3px 3px 0 0; transition:border-color .3s; }
+  #dwin { position:absolute; top:0; height:9px; border:2px dashed var(--mist); border-bottom:0; border-radius:3px 3px 0 0; opacity:0; transition:opacity .4s, border-color .3s; }      /* hidden unless it is being explained or the match is inside it */
+  #dwin.on, #dwin.now { opacity:1; }
   #dwin.on { border-color:var(--paper); }
   #head { position:absolute; top:4px; bottom:14px; width:2px; margin-left:-1px; background:var(--paper); }
 
@@ -124,6 +125,11 @@
   #meter i { display:block; height:100%; width:0; background:var(--card); border-radius:4px; transition:width .25s; }
   #pbig { margin:0; font-size:20px; font-weight:600; line-height:1.32; }
   #pbig[dir=rtl] { font-family:"Noto Sans Arabic", sans-serif; font-weight:500; }
+  #proof { display:grid; gap:10px; }
+  #proof:empty { display:none; }
+  #proof div { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:10px; background:var(--panel); border-radius:14px 14px 14px 4px; padding:9px 12px; }
+  #proof[dir=rtl] div { border-radius:14px 14px 4px 14px; font-family:"Noto Sans Arabic", sans-serif; }
+  #proof b { display:block; font-size:14px; font-weight:600; } #proof small { display:block; font-size:12.5px; color:var(--mist); line-height:1.3; } #proof em { font-style:normal; font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
   #pquiet { margin:0; font-size:15px; line-height:1.4; color:var(--mist); }
   #note { margin-top:auto; font-size:13px; color:var(--mist); }
   #intro { position:fixed; inset:0; z-index:5; background:#000; color:#fff; display:grid; place-items:center; transition:opacity .55s; }
@@ -156,19 +162,23 @@
   </main>
   <aside id="phone" aria-live="polite">
     <div id="brand"><svg viewBox="0 0 120 120" width="34" height="34" aria-hidden="true"><circle cx="60" cy="60" r="27.5" fill="none" stroke="#fff" stroke-width="13"/><rect x="54.9" y="6" width="10.1" height="26.5" fill="#fff"/><rect x="54.9" y="87.5" width="10.1" height="26.5" fill="#fff"/><circle id="eye" cx="60" cy="60" r="11" fill="#fff"/></svg><b>tempo</b></div>
-    <div id="modes"><button data-m="casual" aria-pressed="true">Casual</button><button data-m="analyst" aria-pressed="false">Analyst</button><button data-m="ar" aria-pressed="false">عربي</button></div>
+    <div id="modes"><button data-m="en" aria-pressed="true">English</button><button data-m="ar" aria-pressed="false">عربي</button></div>
     <p id="psc"></p>
     <div id="pstake"><h3><i id="pcard"></i><span id="pname"></span></h3><p id="ptext"></p><div id="meter"><i></i></div></div>
     <p id="pbig"></p>
+    <div id="proof" aria-label="What stands behind this line"></div>
     <p id="pquiet"></p>
     <div id="note"></div>
   </aside>
 </div>
 <div id="intro"></div>
 <div id="err"></div>
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+<script>
+  // Our own modules are mapped with the time of this page load, so a browser never runs an old copy of one file against a new copy of another.
+  { const v = Date.now(), m = document.createElement('script'); m.type = 'importmap';
+    m.textContent = JSON.stringify({ imports: { three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js', '#stage': `../stage.js?v=${v}`, '#intro': `../brand/intro.js?v=${v}`, '#portrait': `../brand/portrait.js?v=${v}`, '#main': `./main.js?v=${v}` } });
+    document.currentScript.after(m); }
 </script>
-<script type="module">import(`./main.js?v=${Date.now()}`);</script>
+<script type="module">import('#main');</script>
 </body>
 </html>

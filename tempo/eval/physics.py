@@ -52,6 +52,24 @@ def scan(s):
     out["ball changes pace by over 3 m/s on the turf with nobody within 1.5 m"] = int(((jump > 3) & (near > 1.5) & flat & onpitch & same[1:] & same[:-1]).sum())
     out["passes"] = int(len(kick)); out["passes that reach a team-mate's feet"] = float(len(rec) / max(len(kick), 1))
     out["restarts that had to be forced"] = int(getattr(s, "timeouts", 0))
+    # bodies: nobody stands inside anybody, and a challenge does something to the man who loses it
+    iu = np.triu_indices(pos.shape[1], 1); closest = np.inf; inside = 0
+    for k in range(0, len(pos), 20000):
+        dd = np.nanmin(np.linalg.norm(pos[k:k + 20000][:, iu[0]] - pos[k:k + 20000][:, iu[1]], axis=2), axis=1)
+        closest = min(closest, float(np.nanmin(dd))); inside += int((dd < 0.5).sum())
+    out["closest two players ever get (m)"] = closest
+    out["frames with two players under 0.5 m apart"] = inside
+    sp = np.linalg.norm(np.diff(pos, axis=0), axis=2) / DT; clock = np.array([f[1] for f in F]); res = {"tackle": [], "challenge": [], "foul": []}
+    from ..contracts import TYPE_NAME
+    for e in s.events:
+        if e.get("other"):
+            idx = np.flatnonzero(per == e["periodId"]); f = int(idx[0] + np.searchsorted(clock[idx], e["matchTime"]))
+            if 30 < f < len(pos) - 30:
+                loser = s.ids.index(e["playerId"] if TYPE_NAME[e["typeId"]] == "challenge" else e["other"])      # the beaten defender, or the man who was tackled or fouled
+                res[TYPE_NAME[e["typeId"]]].append((float(sp[f - 8:f - 1, loser].mean()), float(sp[f + 3:f + 15, loser].mean())))
+    for k, name in (("tackle", "tackled"), ("challenge", "beaten"), ("foul", "fouled")):
+        if res[k]:
+            r2 = np.array(res[k]); out[f"the man {name}: speed before, then after (m/s)"] = [float(np.median(r2[:, 0])), float(np.median(r2[:, 1]))]
     dead = np.diff(np.concatenate([[0], (~live).astype(int), [0]])); spells = (np.where(dead == -1)[0] - np.where(dead == 1)[0]) / 25
     out["stoppage length, median and longest (s)"] = [float(np.median(spells)), float(spells.max())]
     return out

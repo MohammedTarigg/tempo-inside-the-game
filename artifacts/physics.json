@@ -1,38 +1,52 @@
 {
  "ball jumps over 2 m in one frame": 0,
- "stoppages": 130,
- "median ball jump in the first second of a stoppage (m)": 0.6407024112867578,
- "fastest fall (m/s)": 11.920972383452998,
- "highest ball (m)": 5.547520593013813,
- "ground balls over half a second": 622,
+ "stoppages": 129,
+ "median ball jump in the first second of a stoppage (m)": 0.6869107388469612,
+ "fastest fall (m/s)": 11.961866733067241,
+ "highest ball (m)": 5.85750541552156,
+ "ground balls over half a second": 671,
  "their median speed, start then end (m/s)": [
-  13.042341249146945,
-  6.92668506050925
+  12.893568343505912,
+  7.001917976360311
  ],
- "share that lost pace": 0.9919614147909968,
+ "share that lost pace": 0.992548435171386,
  "player jumps over 1 m in one frame": 0,
- "player acceleration p99.9 (m/s2)": 4.799999996675853,
- "ball in play": 0.5632794074159556,
+ "player acceleration p99.9 (m/s2)": 4.799999999516887,
+ "ball in play": 0.6085454107716928,
  "dribbling: ball to the man on it, median, p90, p99 (m)": [
-  0.5744417740305567,
-  0.5999989096207539,
-  0.8370923797960158
+  0.5753102745686622,
+  0.5999998335781225,
+  1.2222396742954758
  ],
  "at the kick: ball to the passer, median, p90, furthest (m)": [
-  0.596599492964331,
-  0.5999981028300841,
-  0.6761312663759782
+  0.5941300997689049,
+  0.5999983834864152,
+  0.7305628057522542
  ],
  "at the first touch: ball to the receiver, median, furthest (m)": [
-  0.6696687775316065,
-  1.8955195900407518
+  0.6757688367563871,
+  2.1692470936275035
  ],
- "ball changes pace by over 3 m/s on the turf with nobody within 1.5 m": 1,
- "passes": 755,
- "passes that reach a team-mate's feet": 0.7748344370860927,
+ "ball changes pace by over 3 m/s on the turf with nobody within 1.5 m": 0,
+ "passes": 857,
+ "passes that reach a team-mate's feet": 0.7969661610268378,
  "restarts that had to be forced": 0,
+ "closest two players ever get (m)": 0.6923257934469228,
+ "frames with two players under 0.5 m apart": 0,
+ "the man tackled: speed before, then after (m/s)": [
+  2.7679764235490527,
+  1.0766970535554137
+ ],
+ "the man beaten: speed before, then after (m/s)": [
+  2.945137404878923,
+  0.7718165898785265
+ ],
+ "the man fouled: speed before, then after (m/s)": [
+  2.8317041721383527,
+  0.06399999999176889
+ ],
  "stoppage length, median and longest (s)": [
-  16.22,
-  58.2
+  15.16,
+  59.76
  ]
 }

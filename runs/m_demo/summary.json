@@ -1,50 +1,53 @@
 {
  "match_id": "m_demo",
  "final_score": [
-  2,
+  1,
   0
  ],
- "frames": 138647,
- "events_read": 1485,
+ "frames": 138854,
+ "events_read": 1603,
  "cues_by_form": {
   "kickoff_mark": 3,
   "danger_window": 1,
-  "tag": 3,
-  "duel": 14,
-  "sentence": 25,
-  "label": 4,
-  "stake_card": 347,
+  "sentence": 21,
+  "label": 7,
+  "stake_card": 419,
+  "duel": 12,
+  "tag": 8,
+  "pressure": 4,
   "form_card": 2,
   "halftime_card": 1,
-  "scene": 2,
+  "scene": 1,
   "fulltime_card": 1
  },
- "things_shown": 257,
- "held_back": 25,
- "facts": 338,
+ "things_shown": 283,
+ "held_back": 6,
+ "facts": 347,
  "stake_cards": {
-  "appearances": 146,
-  "full": 42,
+  "appearances": 197,
+  "full": 14,
   "players": [
    "p_har_6",
-   "p_nor_11"
+   "p_nor_9"
   ]
  },
  "verifier_rejections": 0,
  "frame_ms": {
-  "p50": 0.016,
-  "p95": 0.373,
-  "p99": 0.447,
-  "max": 10.8
+  "p50": 0.017,
+  "p95": 0.374,
+  "p99": 0.437,
+  "max": 28.5
  },
  "writer_ms": [
-  0.43,
+  0.69,
+  0.28,
+  0.27,
   0.31,
-  0.34,
-  0.36,
-  0.61
+  0.3,
+  0.41,
+  0.3
  ],
- "wall_seconds": 18.9,
+ "wall_seconds": 23.4,
  "writer_backend": "local-templates",
  "stake_model": {
   "provisional": false,

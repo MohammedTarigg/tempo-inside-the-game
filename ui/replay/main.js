@@ -1,11 +1,11 @@
-// Tempo replay: the closest earlier attempt, laid over the goal, on the same dark pitch as the live view.
+// Tempo replay: the closest earlier attempt and then the goal, one at a time, on the same dark pitch as the live view.
 // Everything on screen comes from runs/<match>/scenes.json, which the pipeline writes. Nothing here invents a number.
-// Solid markers are the goal. Outlined markers are the earlier attempt.
+// Solid markers are the attempt being shown. Outlined markers are where the earlier attempt ended, left behind while the goal plays.
 import * as THREE from 'three';
-import { renderer, scene, camera, KITS, Marker, makeBall, makePulses, facing, CRESTS, FONT } from '../stage.js';
+import { renderer, scene, camera, KITS, Marker, makeBall, makePulses, facing, CRESTS, FONT } from '#stage';
 
 const Q = new URLSearchParams(location.search);
-const RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t'), FROM = Q.get('from');      // ?t= opens paused at a moment, ?from= starts playing from one
+const RUN = Q.get('run') || 'm_demo', FIXED_T = Q.get('t'), FROM = Q.get('from'), WAIT = parseFloat(Q.get('wait') || 0);      // ?wait= holds the first picture still for that long, so the film can fade it in before it moves      // ?t= opens paused at a moment, ?from= starts playing from one
 if (Q.get('bare')) document.documentElement.classList.add('bare');                       // no controls or caption, for showing inside the product film
 const $ = (id) => document.getElementById(id);
 const fail = (m) => { $('err').style.display = 'flex'; $('err').textContent = m; };
@@ -42,7 +42,7 @@ function place(fig, clip, f, i, dt, rate) {
 // ---------- the show ----------
 async function main() {
   await Promise.all([document.fonts.load(`700 20px ${FONT}`), document.fonts.load(`600 20px ${FONT}`)]).catch(() => {});      // the numbers on the markers are drawn once, so the face must be in
-  const scenes = await fetch(`../../runs/${RUN}/scenes.json`).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }).catch(() => null);
+  const scenes = await fetch(`../../runs/${RUN}/scenes.json`, { cache: 'no-cache' }).then((r) => { if (!r.ok) throw new Error('run'); return r.json(); }).catch(() => null);
   if (!scenes) return fail('Could not load the run. Run python3 -m tempo.run_match, then serve the project folder.');
   if (!scenes.length) return fail('This run has no replay scene: no goal had a close enough earlier attempt.');
   const S = scenes[0], G = S.clips.goal, E = S.clips.earlier, N = S.ids.length;
@@ -65,68 +65,93 @@ async function main() {
   const ringMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0, depthTest: false, side: THREE.DoubleSide });
   const rings = [0, 1].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 48), ringMat); r.rotation.x = -Math.PI / 2; r.position.y = 0.03; r.renderOrder = 6; scene.add(r); return r; });
 
-  // timeline, in seconds of show time. Clip positions are in frames.
-  const part = S.parting_s * 25, gEnd = G.pos.length - 1, eEnd = E.pos.length - 1;
-  const A = (gEnd - 0) / 25, B = 1.8, c0 = G.start_offset, c1 = c0 + part + 6, C = (c1 - c0) / 25;      // slow motion starts just after they part
-  const d1 = c0 + part + 62, SLOW = 0.3, D = (d1 - c1) / 25 / SLOW, Ee = (gEnd - d1) / 25, HOLD = 3.0;  // and runs until two and a half seconds after
-  const marks = [A, A + B, A + B + C, A + B + C + D, A + B + C + D + Ee, A + B + C + D + Ee + HOLD], TOTAL = marks[5];
+  // The film shows the pitch the way the match was played; the clips are stored turned to run one way. ?turn=-1 turns them back.
+  if (Q.get('turn') === '-1') for (const C of [G, E]) { for (const row of C.pos) for (const q of row) if (q && q[0] !== null) { q[0] = -q[0]; q[1] = -q[1]; } for (const q of C.ball) { q[0] = -q[0]; q[1] = -q[1]; } }
+
+  // The show, in seconds. One attempt is on the pitch at a time. First the earlier one, alone: the clock winds back to it and
+  // it plays until two seconds after the attacks part. Then the picture rewinds to the start of the goal, and what the earlier
+  // attempt came to stays behind as two outlined markers and a dotted trail. The goal plays alone, in full, past them. It stops
+  // once, two seconds after the attacks part, and the one distance that differs is drawn.
+  const part = S.parting_s * 25, shown = part + 50, c0 = G.start_offset, e0 = E.start_offset;
+  const moved = (C) => Math.max(0, C.pos.findIndex((q) => q[scorer] && C.pos[0][scorer] && Math.hypot(q[scorer][0] - C.pos[0][scorer][0], q[scorer][1] - C.pos[0][scorer][1]) > 0.4));
+  const lead = Math.max(0, Math.min(moved(G) - c0, moved(E) - e0) - 6);                 // the wait before the runner sets off is skipped
+  const gs = c0 + lead, es = e0 + lead, gm = c0 + shown, em = Math.min(E.pos.length - 1, e0 + shown), gEnd = Math.min(G.pos.length - 1, G.shot_offset + 26);
+  const dirx = Math.sign(G.pos[G.shot_offset][scorer][0] - G.pos[c0][scorer][0]) || 1;
+  const LEN = [['stop', 0.4], ['back', 0.7], ['then', (em - es) / 25], ['thenhold', 0.6], ['rewind', 1.2], ['now', (gm - gs) / 25], ['diff', 1.4], ['finish', (gEnd - gm) / 25], ['hold', 0.4]];
+  const marks = []; LEN.reduce((t, [, d]) => { marks.push(t + d); return t + d; }, 0); const TOTAL = marks[marks.length - 1];
+  const gClock = (f) => G.clock + f / 25, eClock = (f) => E.clock + f / 25, booked = S.booked_minute !== null ? 1 : 0;
+  // a: what the solid markers show. b: what they are on the way to, u of the way there. ghost: how strongly the earlier attempt's end is drawn.
   function at(T) {
-    if (T < marks[0]) return { ph: 'goal', fg: T * 25, fe: null, ghost: 0, rate: 1 };
-    if (T < marks[1]) { const u = ease((T - marks[0]) / B); return { ph: 'rewind', fg: lerp(gEnd, c0, u), fe: E.start_offset, ghost: sat((u - 0.55) / 0.45), rate: 3 }; }
-    if (T < marks[2]) { const k = (T - marks[1]) * 25; return { ph: 'together', fg: c0 + k, fe: E.start_offset + k, ghost: 1, rate: 1 }; }
-    if (T < marks[3]) { const k = (c1 - c0) + (T - marks[2]) * 25 * SLOW; return { ph: 'part', fg: c0 + k, fe: E.start_offset + k, ghost: 1, rate: SLOW }; }
-    const k = (d1 - c0) + Math.min(T - marks[3], Ee) * 25;
-    return { ph: T < marks[4] ? 'finish' : 'hold', fg: Math.min(c0 + k, gEnd), fe: Math.min(E.start_offset + k, eEnd), ghost: T < marks[4] ? 1 : sat(1 - (T - marks[4]) / 1.2), rate: T < marks[4] ? 1 : 0.0001 };
+    const i = Math.max(0, marks.findIndex((m) => T < m)), ph = LEN[i][0], t = T - (i ? marks[i - 1] : 0), u = sat(t / LEN[i][1]);
+    if (ph === 'stop') return { ph, a: [G, gs], u: 0, ghost: 0, rate: 0, clock: gClock(gs), card: booked };
+    if (ph === 'back') return { ph, a: [G, gs], b: [E, es], u: ease(u), ghost: 0, rate: 0, clock: lerp(gClock(gs), eClock(es), ease(u)), card: booked * (1 - ease(u)) };
+    if (ph === 'then') return { ph, a: [E, es + t * 25], u: 0, ghost: 0, rate: 1, clock: eClock(es + t * 25), card: 0 };
+    if (ph === 'thenhold') return { ph, a: [E, em], u: 0, ghost: 0, rate: 0, clock: eClock(em), card: 0 };
+    if (ph === 'rewind') return { ph, a: [E, em], b: [G, gs], u: ease(u), ghost: sat(u / 0.35), rate: 0, clock: lerp(eClock(em), gClock(gs), ease(u)), card: booked * sat((u - 0.6) / 0.4) };
+    if (ph === 'now') return { ph, a: [G, gs + t * 25], u: 0, ghost: 1, rate: 1, clock: gClock(gs + t * 25), card: booked };
+    if (ph === 'diff') return { ph, a: [G, gm], u: 0, ghost: 1, rate: 0, clock: gClock(gm), card: booked, gap: Math.min(sat(t / 0.3), sat((LEN[i][1] - t) / 0.3)) };
+    if (ph === 'finish') return { ph, a: [G, gm + t * 25], u: 0, ghost: 1 - 0.6 * sat(t / 0.8), rate: 1, clock: gClock(gm + t * 25), card: booked };
+    return { ph, a: [G, gEnd], u: 0, ghost: 0.4, rate: 0, clock: gClock(gEnd), card: booked };
   }
+  const side = S.team[scorer] ? S.away : S.home;
   const COPY = {
-    goal: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${S.team[scorer] ? 'Harbour City' : 'Northgate'}`],
-    rewind: () => [`Closest earlier attempt, minute ${E.minute}`, `The two attacks start ${S.gap_m} m apart on average`],
-    together: () => [`Closest earlier attempt, minute ${E.minute}`, `Outlined markers are minute ${E.minute}, laid over the goal`],
-    part: () => [`${nm(who)} backs off`, S.booked_minute ? `In minute ${E.minute} he stepped in. Booked in minute ${S.booked_minute}, he does not` : `In minute ${E.minute} he stepped in`],
-    finish: () => [`${nm(who)} backs off`, `Two seconds after they part he is ${S.differing_by_m} m from where he was in minute ${E.minute}`],
-    hold: () => [`Closest earlier attempt, minute ${E.minute}`, `${nm(scorer)} scores. Two seconds after the attacks part, ${nm(who)}${S.booked_minute ? `, booked in minute ${S.booked_minute},` : ''} is ${S.differing_by_m} m from where he was then`],
+    stop: () => [`Minute ${G.minute}`, `${nm(scorer)} is about to run at goal`],
+    back: () => [`Back to minute ${E.minute}`, 'The closest earlier attempt in this match'],
+    then: () => [`Minute ${E.minute}`, `The same run. ${nm(who)} steps in`],
+    thenhold: () => [`Minute ${E.minute}`, `The same run. ${nm(who)} steps in`],
+    rewind: () => [`Now minute ${G.minute}`, `The outlines are where minute ${E.minute} ended`],
+    now: () => [`Minute ${G.minute}`, booked ? `${nm(who)} is on a yellow card from minute ${S.booked_minute}` : 'The same run again'],
+    diff: () => ['One thing changed', `Two seconds after the attacks part ${nm(who)} is ${S.differing_by_m} m from where he was in minute ${E.minute}`],      // what differs, and the card. Not a verdict on the man: nobody can see what he was told to do
+    finish: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${side === S.home ? 'Northgate' : 'Harbour City'}`],
+    hold: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${side === S.home ? 'Northgate' : 'Harbour City'}`],
   };
-  const PHASE = { goal: 'The goal', rewind: 'Back to the start', together: 'Both attempts', part: 'Where they part', finish: 'To the finish', hold: 'The reason' };
+  const PHASE = { stop: 'The goal, about to start', back: 'Back to the earlier attempt', then: 'The earlier attempt', thenhold: 'The earlier attempt', rewind: 'Back to the goal', now: 'The goal', diff: 'What changed', finish: 'The goal', hold: 'The goal' };
+
+  // What the earlier attempt came to: the runner's path as dots on the grass, and (drawn with the outlined markers) where the runner and the man who stepped in stood at the end.
+  const dotMat = new THREE.MeshBasicMaterial({ color: KITS[S.team[scorer]].line, transparent: true, opacity: 0, depthTest: false });
+  { let lastP = null; for (let f = es; f <= em; f++) { const q = sample(E, f, scorer); if (!q || (lastP && Math.hypot(q[0] - lastP[0], q[1] - lastP[1]) < 0.9)) continue; lastP = q; const d = new THREE.Mesh(new THREE.CircleGeometry(0.2, 16), dotMat); d.rotation.x = -Math.PI / 2; d.position.set(q[0], 0.025, -q[1]); d.renderOrder = 1; scene.add(d); } }
+  const endOf = [scorer, who].map((i) => sample(E, em, i));
 
   const camPos = new THREE.Vector3(0, 40, 80), camAim = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantAim = new THREE.Vector3(), v = new THREE.Vector3();
-  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : FROM !== null ? Math.min(parseFloat(FROM), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), firstFrame = true;
+  let T = FIXED_T !== null ? Math.min(parseFloat(FIXED_T), TOTAL - 0.01) : FROM !== null ? Math.min(parseFloat(FROM), TOTAL - 0.01) : 0, playing = FIXED_T === null, last = performance.now(), firstFrame = true, began = null;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stand = (fig, src, i, dt, rate) => {                                    // one marker, on a clip or part of the way between two
+    const p = place(fig, src.a[0], src.a[1], i, dt, rate); if (!src.b || !p) return p;
+    const q = sample(src.b[0], src.b[1], i); if (!q) return p;
+    const m = [lerp(p[0], q[0], src.u), lerp(p[1], q[1], src.u)]; fig.group.position.set(m[0], 0, -m[1]); return m;
+  };
 
   function frame(now, once) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (playing) { T += dt; if (T >= TOTAL) { T = TOTAL - 0.001; playing = false; $('play').textContent = 'Replay'; } }
+    if (began === null) began = now;
+    if (playing && now - began >= WAIT * 1000) { T += dt; if (T >= TOTAL) { T = TOTAL - 0.001; playing = false; $('play').textContent = 'Replay'; } }
     const s = at(T), run = playing ? s.rate : 0;
-    let pw = null, pg = null, ps = null;
+    let pw = null, ps = null;
     for (let i = 0; i < N; i++) {
-      const p = place(live[i], G, s.fg, i, dt, run);
+      const p = stand(live[i], s, i, dt, run);
       if (i === who) pw = p; if (i === scorer) ps = p;
-      const g = ghosts[i];
-      if (s.fe === null || s.ghost <= 0.001) { g.setOpacity(0); continue; }
-      const q = place(g, E, s.fe, i, dt, run);
-      if (i === who) pg = q;
-      const near = p && q ? Math.hypot(p[0] - q[0], p[1] - q[1]) : 9;
-      g.setOpacity(q ? s.ghost * (i === who ? 1 : 0.5) * sat((near - 0.6) / 1.2) : 0);        // an outline lying on its own man would only blur him
+      const g = ghosts[i], k = [scorer, who].indexOf(i), q = k >= 0 ? endOf[k] : null;      // only two outlines are ever drawn
+      if (!q || s.ghost <= 0.001) { g.setOpacity(0); continue; }
+      g.group.visible = true; g.group.position.set(q[0], 0, -q[1]); g.update(dt, 0, 0);
+      g.setOpacity(s.ghost * (p ? sat((Math.hypot(p[0] - q[0], p[1] - q[1]) - 0.5) / 1.0) : 1));        // an outline lying on its own man would only blur him
     }
-    const b = sampleBall(G, s.fg); ball.set(b[0], b[2], -b[1]);
-    if (s.fe !== null) { const e = sampleBall(E, s.fe); ghostBall.set(e[0], e[2], -e[1]); ghostBall.setOpacity(0.45 * s.ghost * sat(Math.hypot(e[0] - b[0], e[1] - b[1]) - 0.5)); } else ghostBall.setOpacity(0);
-    live[who].setStake(S.booked_minute !== null ? 1 : 0, S.booked_minute !== null ? 1 : 0);          // he was booked before this goal
-    pulses((G.actions || []).filter((a) => s.fg >= a.frame && s.fg < a.frame + 11).map((a) => { const q = sample(G, a.frame, a.player); return q && { x: q[0], z: -q[1], age: (s.fg - a.frame) / 25, strong: a.kind !== 'pass' }; }).filter(Boolean));
-    // the gap
-    const showGap = pw && pg && (s.ph === 'part' || s.ph === 'finish' || s.ph === 'hold');
-    const d = pw && pg ? Math.hypot(pw[0] - pg[0], pw[1] - pg[1]) : 0, on = showGap && d > 1.2 ? sat((d - 1.2) / 1.2) * s.ghost : 0;
+    const ba = sampleBall(s.a[0], s.a[1]), bq = s.b ? sampleBall(s.b[0], s.b[1]) : ba, b = ba.map((x, j) => lerp(x, bq[j], s.u)); ball.set(b[0], b[2], -b[1]);
+    ghostBall.setOpacity(0); dotMat.opacity = 0.9 * s.ghost;
+    live[who].setStake(s.card, s.card);                                          // his card is the thing that is there the second time
+    const C = s.a[0], cf = s.a[1];
+    pulses(s.b ? [] : (C.actions || []).filter((a) => cf >= a.frame && cf < a.frame + 11).map((a) => { const q = sample(C, a.frame, a.player); return q && { x: q[0], z: -q[1], age: (cf - a.frame) / 25, strong: a.kind !== 'pass' }; }).filter(Boolean));
+    // the gap: where he stood at this moment the first time, and where he stands now
+    const pg = endOf[1], on = pw && pg && s.gap ? s.gap : 0;
     gapLine.material.opacity = on; ringMat.opacity = on * 0.9;
     if (pw && pg) {
       gapGeo.setFromPoints([new THREE.Vector3(pw[0], 0.05, -pw[1]), new THREE.Vector3(pg[0], 0.05, -pg[1])]);
       rings[0].position.set(pw[0], 0.03, -pw[1]); rings[1].position.set(pg[0], 0.03, -pg[1]);
     }
-    // camera
-    // always from the main-stand side and high enough that every marker and number reads
-    if (s.ph === 'goal') { wantPos.set(b[0] * 0.6, 40, 48); wantAim.set(b[0] * 0.85, 0, -b[1] * 0.3 + 8); }
-    else if (s.ph === 'rewind') { const p = ps || [0, 0]; wantPos.set(p[0] * 0.7, 44, 50); wantAim.set(p[0] * 0.8, 0, -p[1] * 0.3 + 8); }
-    else if (s.ph === 'together') { const p = ps || [0, 0]; wantPos.set(p[0] + 2, 30, -p[1] + 30); wantAim.set(p[0] + 4, 0, -p[1] + 5); }
-    else if (s.ph === 'part' && pw && pg) { const mx = (pw[0] + pg[0]) / 2, mz = -(pw[1] + pg[1]) / 2, sp = Math.max(6, d * 0.9); wantPos.set(mx, 24 + sp * 1.2, mz + 22 + sp * 1.2); wantAim.set(mx, 0, mz + 3); }
-    else { wantPos.set(b[0] - 3, 32, 34 - b[1] * 0.3); wantAim.set(Math.min(b[0] + 2, 47), 0, -b[1] * 0.5 + 7); }
-    const kk = firstFrame || !playing || reduce ? 1 : 1 - Math.exp(-dt * (s.ph === 'goal' ? 3.2 : 2.1));
+    // camera: always from the main-stand side and high enough that every marker and number reads
+    if (s.ph === 'diff' && pw && pg) { const mx = (pw[0] + pg[0]) / 2, mz = -(pw[1] + pg[1]) / 2; wantPos.set(mx, 31, mz + 29); wantAim.set(mx, 0, mz + 3); }
+    else if (s.ph === 'finish' || s.ph === 'hold') { wantPos.set(b[0] - 3 * dirx, 32, 34 - b[1] * 0.3); wantAim.set(dirx > 0 ? Math.min(b[0] + 2, 47) : Math.max(b[0] - 2, -47), 0, -b[1] * 0.5 + 7); }
+    else { const p = ps || [0, 0]; wantPos.set(p[0] + 2 * dirx, 30, -p[1] + 30); wantAim.set(p[0] + 4 * dirx, 0, -p[1] + 5); }
+    const kk = firstFrame || !playing || reduce ? 1 : 1 - Math.exp(-dt * 2.1);
     camPos.lerp(wantPos, kk); camAim.lerp(wantAim, kk); firstFrame = false;
     camera.position.copy(camPos); camera.lookAt(camAim);
     // words: every number here is read from the run
@@ -134,13 +159,14 @@ async function main() {
     if ($('l1').textContent !== h) $('l1').textContent = h;
     if ($('l2').textContent !== p2) $('l2').textContent = p2;
     $('phase').textContent = PHASE[s.ph];
-    const clk = G.clock + (s.fg - G.start_offset) / 25; $('clock').textContent = `${String(Math.floor(clk / 60)).padStart(2, '0')}:${String(Math.floor(clk % 60)).padStart(2, '0')}`;
+    $('clock').textContent = `${String(Math.floor(s.clock / 60)).padStart(2, '0')}:${String(Math.floor(s.clock % 60)).padStart(2, '0')}`;
+    if (parent !== window) parent.postMessage({ tempoReplay: { clock: s.clock, phase: s.ph, scored: s.a[0] === G && s.a[1] >= G.shot_offset + 19 } }, location.origin);      // inside the film, the film's own scoreboard shows which minute this is
     const proj = (x, y, z, el, txt, show) => {
       v.set(x, y, z).project(camera);
       el.style.left = `${(v.x * 0.5 + 0.5) * innerWidth}px`; el.style.top = `${(-v.y * 0.5 + 0.5) * innerHeight}px`; el.style.opacity = show; if (txt !== null) el.textContent = txt;
     };
     if (pw && pg) {
-      proj((pw[0] + pg[0]) / 2, 0.1, -(pw[1] + pg[1]) / 2 - 2.4, $('gap'), `${(s.fg >= c0 + part + 50 ? S.differing_by_m : d).toFixed(1)} m`, on);      // once measured, two seconds after they part, the number holds
+      proj((pw[0] + pg[0]) / 2, 0.1, -(pw[1] + pg[1]) / 2 - 2.4, $('gap'), `${S.differing_by_m.toFixed(1)} m`, on);
       proj(pg[0], 0.1, -pg[1] + 2.6, $('tagA'), `Minute ${E.minute}`, on); proj(pw[0], 0.1, -pw[1] + 2.6, $('tagB'), `Minute ${G.minute}`, on);
     } else { $('gap').style.opacity = 0; $('tagA').style.opacity = 0; $('tagB').style.opacity = 0; }
     if (document.activeElement !== $('scrub')) $('scrub').value = Math.round(T / TOTAL * 1000);
@@ -158,7 +184,7 @@ async function main() {
   // It does not depend on how often the browser offers a frame, so it works in a hidden or throttled tab.
   if (Q.get('bench')) {
     const gl = renderer.getContext(), px = new Uint8Array(4), ms = [];
-    playing = true; T = 14;
+    playing = true; T = Math.min(14, TOTAL - 2);
     for (let i = 0; i < 46; i++) {
       const t0 = performance.now(); frame(last + 33.3, true); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
       if (i >= 6) ms.push(performance.now() - t0);

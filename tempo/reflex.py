@@ -7,11 +7,13 @@ import math
 import numpy as np
 
 from . import twin as twinmod
+from .ghost import Ghost
 from .contracts import Q_RED, Q_SECOND_YELLOW, Q_YELLOW, TYPE, fact
 from .stake.features import HIST, HZ, window_features
 from .stake.model import CardState
 
 STEP = 3
+PRESS_S = 300                              # a pressure change compares the last five minutes with the five before
 
 
 def win_chance(score, minutes_left, rate=1.35 / 90):
@@ -32,6 +34,7 @@ class Reflex:
         self.match_id, self.ids = md_meta["match_id"], md_meta["ids"]
         self.base = baselines or {}
         self.search = search or twinmod.TwinSearch()
+        self.ghost = Ghost() if Ghost.available() else None
         n = len(self.ids)
         self.buf_pos = np.full((n, HIST, 2), np.nan); self.buf_ball = np.zeros((HIST, 3)); self.buf_live = np.zeros(HIST, bool); self.buf_poss = np.full(HIST, -1)
         self.filled = 0
@@ -42,7 +45,9 @@ class Reflex:
         self.dist = np.zeros(n); self.fast = np.zeros(n); self.top = np.zeros(n); self.minutes = np.zeros(n)
         self.prev = None
         self.score = [0, 0]
-        self.mom = 0.0; self.mom_sign = 0; self.last_turn = -1e9; self.mom_hist = []
+        self.mom = 0.0; self.last_turn = -1e9; self.mom_hist = []
+        self.terr = []                        # one entry a second for the last ten minutes: 0 ball dead, 1 in the away half, 2 in the home half
+        self.high_wins = []                   # (time, team) for each ball won in the other team's half
         self.duels = {}                       # (defender, attacker) -> [defender wins, attacker wins]
         self.pending_duel = None
         self.shots = []                       # frames kept for twin search
@@ -52,7 +57,7 @@ class Reflex:
     # ----- recovery -----
     def snapshot(self):
         return dict(frame_no=self.frame_no, score=self.score, dist=self.dist.tolist(), fast=self.fast.tolist(), top=self.top.tolist(), minutes=self.minutes.tolist(),
-                    mom=self.mom, mom_sign=self.mom_sign, last_turn=self.last_turn, duels={f"{a}|{b}": v for (a, b), v in self.duels.items()},
+                    mom=self.mom, last_turn=self.last_turn, terr=self.terr, high_wins=self.high_wins, duels={f"{a}|{b}": v for (a, b), v in self.duels.items()},
                     card_fact={str(k): v for k, v in self.card_fact.items()}, level={str(k): v for k, v in self.level.items()},
                     cards={str(k): dict(level=c.level, since=c.since, below=c._below, last=c._last_t, prev_hi=c._prev_hi, full_since=c._full_since) for k, c in self.cards.items()})
 
@@ -60,7 +65,8 @@ class Reflex:
         """Reload a snapshot and refill the frame window from the feed log, which is how a restarted replica catches up."""
         self.frame_no, self.score = s["frame_no"], list(s["score"])
         self.dist, self.fast, self.top, self.minutes = (np.array(s[k]) for k in ("dist", "fast", "top", "minutes"))
-        self.mom, self.mom_sign, self.last_turn = s["mom"], s["mom_sign"], s["last_turn"]
+        self.mom, self.last_turn = s["mom"], s["last_turn"]
+        self.terr, self.high_wins = list(s["terr"]), [tuple(x) for x in s["high_wins"]]
         self.duels = {tuple(int(x) for x in k.split("|")): v for k, v in s["duels"].items()}
         self.card_fact = {int(k): v for k, v in s["card_fact"].items()}; self.level = {int(k): v for k, v in s["level"].items()}
         for k, c in s["cards"].items():
@@ -94,13 +100,13 @@ class Reflex:
         if i % HZ == 0:                                                         # momentum, once a second
             if live:
                 self.mom += ((ball[0] * home_dir) / 52.5 - self.mom) / 240.0
+            self.terr.append(0 if not live else 1 if ball[0] * home_dir > 0 else 2); del self.terr[:-2 * PRESS_S]
             if i % (HZ * 15) == 0:
                 self.mom_hist.append((round(t, 1), round(self.mom, 3)))
-            sign = 1 if self.mom > 0.12 else -1 if self.mom < -0.12 else self.mom_sign
-            if sign != self.mom_sign and self.mom_sign != 0 and t - self.last_turn > 480:
-                f = self.ledger.put_fact(fact(self.match_id, t, "turning_point", "home" if sign > 0 else "away", round(self.mom, 2), "momentum"))
-                moments.append(dict(kind="turning_point", t=t, fact_ids=[f["fact_id"]], team=0 if sign > 0 else 1)); self.last_turn = t
-            self.mom_sign = sign
+            if i % (HZ * 15) == 0 and t - self.last_turn > 600:                 # a change of pressure, looked for four times a minute
+                m = self._pressure(t, 0) or self._pressure(t, 1)
+                if m:
+                    moments.append(m); self.last_turn = t
         if self.cards and i % STEP == 0 and self.filled == HIST:
             own = np.array([-home_dir * 52.5, home_dir * 52.5])
             idx, feats, dist = window_features(self.buf_pos, self.buf_ball, self.team, own, self.buf_poss, self.buf_live)
@@ -113,6 +119,43 @@ class Reflex:
                 if lvl != self.level.get(p, 0):
                     self._card_change(t, p, lvl, s)
         return moments
+
+    def _pressure(self, t, team):
+        """A change of pressure towards `team`: at least 70 in 100 of the play in the other team's half over the last five minutes,
+        and at least 30 more than in the five before. Everything here is behind `t`, so nothing is read ahead."""
+        want = 1 if team == 0 else 2                                            # the code for the half this team attacks
+        now, before = self.terr[-PRESS_S:], self.terr[-2 * PRESS_S:-PRESS_S]
+        live_now, live_before = sum(1 for x in now if x), sum(1 for x in before if x)
+        if len(before) < PRESS_S or live_now < 120 or live_before < 120:        # too little play in one of the two windows to compare
+            return None
+        a, b = round(100 * sum(1 for x in now if x == want) / live_now), round(100 * sum(1 for x in before if x == want) / live_before)
+        if a < 70 or a - b < 30:
+            return None
+        won = sum(1 for wt, wteam in self.high_wins if wteam == team and t - wt <= PRESS_S)
+        tid = (self.meta["home"], self.meta["away"])[team]["id"]
+        f = self.ledger.put_fact(fact(self.match_id, t, "pressure", tid, a, "in 100 of play in the other half", before=b, window_min=PRESS_S // 60, won_high=won))
+        self.cues.propose(t, "pressure", "tv", dict(team=team, now=a, before=b, window_min=PRESS_S // 60, won_high=won), [f["fact_id"]], valid_for=6.0, priority=3)
+        return dict(kind="pressure", t=t, fact_ids=[f["fact_id"]], team=team, now=a, before=b, won_high=won)
+
+    def _reason(self, t, m, frames_view, shot_frame, team, home_dir):
+        """The reason rule. Three instruments that do not share a method have to point at the same defender: the earlier attempt
+        (he stood differently then), the ghost (he is further off the ball than an average defender), and the ledger (a yellow
+        card from before the goal). The ghost says who and cannot say whether, so it never names a reason alone."""
+        if self.ghost is None or frames_view is None or shot_frame is None:
+            return
+        off = self.ghost.at_shot(frames_view, self.meta["keepers"], shot_frame, team, home_dir)
+        off = {i: v for i, v in off.items() if v > 0}
+        if not off:
+            return
+        top = max(off, key=off.get); o = self.ghost.meta["ordinary_top_standoff_m"]
+        g = self.ledger.put_fact(fact(self.match_id, t, "ghost_standoff", self.ids[top], round(off[top], 1), "m further from the ball than an average defender", ordinary_median=o["median"], ordinary_p90=o["p90"]))
+        m["fact_ids"] = m["fact_ids"] + [g["fact_id"]]; m["ghost"] = g
+        ca = m.get("closest_attempt")
+        if ca and ca["differing_player"] == self.ids[top] and top in self.card_fact:
+            r = self.ledger.put_fact(fact(self.match_id, t, "reason", self.ids[top], 3, "instruments agree", instruments=[ca["fact_id"], g["fact_id"], self.card_fact[top]]))
+            m["fact_ids"] = m["fact_ids"] + [r["fact_id"], self.card_fact[top]]; m["reason"] = r
+        else:
+            self.ledger.audit(t, "held_back", dict(form="reason", reason="the three instruments do not point at one player", ghost=self.ids[top], earlier_attempt=ca["differing_player"] if ca else None, booked=top in self.card_fact))
 
     def _card_change(self, t, p, lvl, s):
         self.level[p] = lvl
@@ -138,6 +181,8 @@ class Reflex:
                         if self.level.pop(k, 0):
                             self.cues.propose(t, "stake_card", "tv", dict(player=self.ids[k], level=0, chance=0.0, stake="withdrawn"), [], priority=9)
             return moments
+        if typ in (TYPE["tackle"], TYPE["interception"], TYPE["ball_recovery"]) and e["outcome"] == 1 and e["x"] > 50 and p is not None:
+            self.high_wins.append((t, int(self.team[p]))); self.high_wins = [w for w in self.high_wins if t - w[0] <= 2 * PRESS_S]
         if typ == TYPE["card"]:
             colour = "yellow" if Q_YELLOW in q else "second_yellow" if Q_SECOND_YELLOW in q else "red"
             f = self.ledger.put_fact(fact(self.match_id, t, "card", pid, colour, "", sources=[e["id"]]))
@@ -176,6 +221,7 @@ class Reflex:
                     m["fact_ids"] = ids + [f2["fact_id"]]; m["closest_attempt"] = f2
                 elif tw:
                     self.ledger.audit(t, "no_twin", dict(gap_m=round(tw["gap_m"], 1), closer_than=round(tw["closer_than"], 3)))
+                self._reason(t, m, frames_view, shot_frame, team, home_dir)
                 moments.append(m)
         elif typ == TYPE["pass"]:
             d = q.get(212)

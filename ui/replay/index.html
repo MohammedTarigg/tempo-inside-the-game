@@ -30,7 +30,7 @@
   #phase { font-size:14px; color:var(--mute); min-width:190px; text-align:right; }
   #err { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:40px; font-size:17px; text-align:center; }
   #score [hidden] { display:none; }
-  .bare #bar, .bare #top, .bare #label { display:none; }
+  .bare #bar, .bare #top, .bare #label, .bare .tag { display:none; }
 </style>
 </head>
 <body>
@@ -41,9 +41,12 @@
 <div class="tag" id="tagA"></div><div class="tag" id="tagB"></div>
 <div id="bar"><button id="play">Pause</button><input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Replay position"><span id="phase"></span></div>
 <div id="err"></div>
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+<script>
+  // Our own modules are mapped with the time of this page load, so a browser never runs an old copy of one file against a new copy of another.
+  { const v = Date.now(), m = document.createElement('script'); m.type = 'importmap';
+    m.textContent = JSON.stringify({ imports: { three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js', 'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/', '#stage': `../stage.js?v=${v}`, '#intro': `../brand/intro.js?v=${v}`, '#portrait': `../brand/portrait.js?v=${v}`, '#main': `./main.js?v=${v}` } });
+    document.currentScript.after(m); }
 </script>
-<script type="module" src="./main.js"></script>
+<script type="module">import('#main');</script>
 </body>
 </html>

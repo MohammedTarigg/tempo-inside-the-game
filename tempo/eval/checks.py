@@ -82,26 +82,27 @@ def main():
     card = [f for f in facts if f["kind"] == "card" and f["subject"] == booking["player"]]
     ok = bool(ca) and ca[0]["differing_player"] == booking["player"] and 0 <= ca[0]["earlier_time"] - step["restart"] <= 15 and bool(card) and abs(card[0]["match_time"] - booking["matchTime"]) < 1
     record("the planted story is found", ok, f"booking at {card[0]['match_time'] / 60:.1f}' (planted {booking['matchTime'] / 60:.1f}'); closest earlier attempt at {ca[0]['earlier_time'] / 60:.1f}' (planted {step['restart'] / 60:.1f}'); first relevant difference {ca[0]['differing_player']} by {ca[0]['differing_by_m']} m" if ca and card else "missing")
-    stahl_cards = [c for c in cues_full if c["form"] == "stake_card" and c["payload"]["player"] == booking["player"] and c["payload"]["level"] > 0]
-    record("no stake card before the booking", all(c["match_time"] >= booking["matchTime"] for c in stahl_cards) and len(stahl_cards) > 0, f"{len(stahl_cards)} card changes for the booked player, the first at {min(c['match_time'] for c in stahl_cards) / 60:.1f}'")
+    skoles_cards = [c for c in cues_full if c["form"] == "stake_card" and c["payload"]["player"] == booking["player"] and c["payload"]["level"] > 0]
+    record("no stake card before the booking", all(c["match_time"] >= booking["matchTime"] for c in skoles_cards) and len(skoles_cards) > 0, f"{len(skoles_cards)} card changes for the booked player, the first at {min(c['match_time'] for c in skoles_cards) / 60:.1f}'")
 
     # 4. the verifier against planted errors
-    names = md["meta"]["names"]
-    sents = [(c["payload"]["text"], [full.ledger.get_fact(i) for i in c["fact_ids"]], c["payload"]["lang"], c["payload"]["numbers"]) for c in cues_full if c["form"] == "sentence" and c["screen"] == "phone"]
+    names = {pid: (nm, md["meta"]["names_ar"][pid]) for pid, nm in md["meta"]["names"].items()}      # a player is known by either spelling
+    sents = [(c["payload"]["text"], [full.ledger.get_fact(i) for i in c["fact_ids"]], c["payload"]["lang"], c["payload"]["numbers"], c["payload"]["names"]) for c in cues_full if c["form"] == "sentence" and c["screen"] == "phone"]
     rng = np.random.default_rng(0)
-    clean_ok = sum(verify(t, [f for f in fs if f], names, allowed_numbers=want, expected=want)[0] for t, fs, _, want in sents)
+    clean_ok = sum(verify(t, [f for f in fs if f], names, allowed_numbers=want, expected=want, expected_names=who)[0] for t, fs, _, want, who in sents)
     caught = total = 0
     kinds = {"number": 0, "name": 0, "overclaim": 0, "arabic digit": 0}
     import re
-    for text, fs, lang, want in sents * 12:
+    for text, fs, lang, want, who in sents * 12:
         fs = [f for f in fs if f]
         nums = re.findall(r"\d+(?:\.\d+)?", text)
         mode = rng.choice(["number", "name", "overclaim", "arabic digit"] if lang == "ar" else ["number", "name", "overclaim"])
         if mode == "number" and nums:
             x = rng.choice(nums); bad = text.replace(x, str(int(float(x)) + int(rng.integers(3, 40))), 1)
         elif mode == "name":
-            present = [n for n in names.values() if n in text]
-            other = [n for n in names.values() if n not in text]
+            pool = [n[1 if lang == "ar" else 0] for n in names.values()]
+            present = [n for n in pool if n in text]
+            other = [n for n in pool if n not in text]
             if not present:
                 continue
             bad = text.replace(present[0], str(rng.choice(other)))
@@ -111,7 +112,7 @@ def main():
             x = rng.choice(nums); bad = text.replace(x, str(int(float(x)) + 7).translate(str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩")), 1)
         else:
             continue
-        total += 1; hit = not verify(bad, fs, names, allowed_numbers=want, expected=want)[0]; caught += hit; kinds[mode] += 1
+        total += 1; hit = not verify(bad, fs, names, allowed_numbers=want, expected=want, expected_names=who)[0]; caught += hit; kinds[mode] += 1
     record("verifier accepts what the pipeline wrote", clean_ok == len(sents), f"{clean_ok} of {len(sents)} sentences pass")
     record("verifier rejects planted errors", caught == total and total >= 100, f"{caught} of {total} caught ({kinds})")
 

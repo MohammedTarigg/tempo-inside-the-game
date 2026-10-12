@@ -1,0 +1,16 @@
+{
+ "horizon_s": 2.0,
+ "fitted_on": "6 generated matches",
+ "samples": 378362,
+ "median_error_m": {
+  "ghost": 1.06,
+  "keep_pace": 3.39,
+  "stand_still": 5.03
+ },
+ "ordinary_shots": 86,
+ "ordinary_top_standoff_m": {
+  "median": 3.0,
+  "p90": 4.8
+ },
+ "real_football": "leave-one-match-out on the seven DFL matches: artifacts/ghost_real.json"
+}

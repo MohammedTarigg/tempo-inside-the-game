@@ -1,0 +1,34 @@
+{
+ "track": "With You",
+ "by": "Soft and Furious",
+ "licence": "CC0 1.0",
+ "source": "https://freemusicarchive.org/music/Soft_and_Furious/The_Man_Im_Not/Soft_And_Furious_-_The_Man_Im_Not_-_03_With_You/",
+ "beat": 0.92308,
+ "open": 10,
+ "parts": [
+  10,
+  8,
+  10,
+  16,
+  18,
+  16,
+  12,
+  8
+ ],
+ "strike": 3,
+ "lit": 10,
+ "speech": {
+  "text": "Skoles is everywhere for Harbour City today",
+  "at": 2.769,
+  "len": 2.48,
+  "words": [
+   0.04,
+   0.403,
+   0.573,
+   1.129,
+   1.347,
+   1.759,
+   2.025
+  ]
+ }
+}

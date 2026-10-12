@@ -8,19 +8,19 @@
   {
    "measure": "in-play metres a minute, outfield",
    "real": 151.1,
-   "generated": 133.8,
+   "generated": 167.0,
    "within_25_percent": true
   },
   {
    "measure": "share of in-play time above 5.5 m/s",
    "real": 0.0436,
-   "generated": 0.0439,
+   "generated": 0.0529,
    "within_25_percent": true
   },
   {
    "measure": "share of in-play time above 7 m/s",
    "real": 0.0084,
-   "generated": 0.0042,
+   "generated": 0.0054,
    "within_25_percent": false
   },
   {
@@ -31,73 +31,73 @@
     8.7
    ],
    "generated": [
-    1.7,
-    2.7,
-    6.0
+    2.8,
+    5.1,
+    8.1
    ],
-   "within_25_percent": false
+   "within_25_percent": true
   },
   {
    "measure": "ball in play, minutes a match",
    "real": 52.7,
-   "generated": 63.9,
+   "generated": 58.4,
    "within_25_percent": true
   },
   {
    "measure": "defender-moments near a live ball, a match",
    "real": 120337,
-   "generated": 105950,
+   "generated": 104492,
    "within_25_percent": true
   },
   {
    "measure": "logged defending challenges a match",
    "real": 157.0,
-   "generated": 126.0,
+   "generated": 192.0,
    "within_25_percent": true
   },
   {
    "measure": "share of those moments followed by a challenge",
    "real": 0.0145,
-   "generated": 0.0142,
-   "within_25_percent": true
+   "generated": 0.0218,
+   "within_25_percent": false
   },
   {
    "measure": "stake score: mean",
    "real": 0.0153,
-   "generated": 0.0121,
+   "generated": 0.0172,
    "within_25_percent": true
   },
   {
    "measure": "stake score: share above the faint threshold",
    "real": 0.0814,
-   "generated": 0.0598,
-   "within_25_percent": false
+   "generated": 0.0848,
+   "within_25_percent": true
   },
   {
    "measure": "stake score: share above the full threshold",
    "real": 0.01,
-   "generated": 0.0126,
+   "generated": 0.0182,
    "within_25_percent": false
   },
   {
    "measure": "stake model ROC AUC on these matches",
    "real": 0.913,
-   "generated": 0.847,
+   "generated": 0.804,
    "within_25_percent": true
   },
   {
    "measure": "faint cards per 100 player-minutes in play, if everyone carried a card",
    "real": 108.3,
-   "generated": 95.6,
-   "within_25_percent": true
+   "generated": 145.3,
+   "within_25_percent": false
   },
   {
    "measure": "full cards per 100 player-minutes in play, if everyone carried a card",
    "real": 22.3,
-   "generated": 22.5,
-   "within_25_percent": true
+   "generated": 34.4,
+   "within_25_percent": false
   }
  ],
- "within": 10,
+ "within": 9,
  "total": 14
 }

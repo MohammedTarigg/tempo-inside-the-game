@@ -1,10 +1,79 @@
-# real tracking data used only for training and checks (2.6 GB, CC BY 4.0, fetched separately)
+# never in any public copy
 data/
-__pycache__/
-*.pyc
-.DS_Store
-*.sqlite
-*.sqlite-*
+private/
+.claude/
 .env
 .env.*
-.claude/
+*.pem
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# node, used only for the formatter
+node_modules/
+
+# os and editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# databases and logs
+*.sqlite
+*.sqlite-*
+*.log
+
+# runs: only the demo match, and of it only what the pages and the local server read
+runs/*
+!runs/m_demo/
+runs/m_demo/*
+!runs/m_demo/match.bin
+!runs/m_demo/match.json
+!runs/m_demo/scenes.json
+!runs/m_demo/summary.json
+!runs/m_demo/meta.json
+!runs/m_demo/replay.npz
+!runs/m_demo/cues.jsonl
+!runs/m_demo/facts.jsonl
+
+# weights and arrays: ignored unless listed
+*.pt
+*.npy
+*.npz
+*.onnx
+*.pkl
+!artifacts/stake_model.pt
+!artifacts/ghost_model.pt
+!runs/m_demo/replay.npz
+
+# scratch output from experiments
+spike/**/out/
+spike/**/out[0-9]*/
+artifacts/agents_*.json
+artifacts/ghost_demo.json
+artifacts/ghost_standoff.json
+
+# audio: ignored unless listed. The film's sound and the three sources it is cut from are kept
+*.mp3
+*.wav
+*.m4a
+!ui/tour/tempo-theme.m4a
+!ui/tour/music/with-you.mp3
+!ui/tour/music/crowd.mp3
+!ui/tour/music/commentator.wav
+
+# third-party assets that must never be committed
+*.fbx
+*.glb
+*.gltf
+
+# per-track copies of the film sound, written by the music script beside the default
+ui/tour/tempo-theme-*

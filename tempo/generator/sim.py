@@ -15,16 +15,20 @@ G = 9.81
 ANCHOR = np.array([[0.03, 0], [0.25, -0.38], [0.20, -0.13], [0.20, 0.13], [0.25, 0.38], [0.42, 0],
                    [0.52, -0.2], [0.52, 0.2], [0.78, -0.36], [0.85, 0], [0.78, 0.36]])
 NUMBERS = [1, 2, 5, 4, 3, 6, 8, 10, 7, 9, 11]
-HOME = dict(id="t_nor", name="Northgate", short="NOR", names=["Pell", "Adeyemi", "Brandt", "Soto", "Ferrand", "Hale", "Kessler", "Draper", "Okoye", "Marek", "Ilves"])
-AWAY = dict(id="t_har", name="Harbour City", short="HAR", names=["Quist", "Renner", "Baro", "Novak", "Varga", "Stahl", "Dorn", "Ashby", "Tully", "Lund", "Maro"])
+HOME = dict(id="t_nor", name="Northgate", short="NOR", names=["Pell", "Adeyemi", "Brandt", "Soto", "Ferrand", "Hale", "Kessler", "Roonay", "Okoye", "Marek", "Ilves"],
+            name_ar="نورثغيت", names_ar=["بيل", "أديمي", "برانت", "سوتو", "فيران", "هيل", "كيسلر", "روناي", "أوكويي", "ماريك", "إلفيس"])
+AWAY = dict(id="t_har", name="Harbour City", short="HAR", names=["Quist", "Renner", "Baro", "Novak", "Varga", "Skoles", "Dorn", "Ashby", "Tully", "Lund", "Maro"],
+            name_ar="هاربر سيتي", names_ar=["كويست", "رينر", "بارو", "نوفاك", "فارغا", "سكولز", "دورن", "آشبي", "تولي", "لوند", "مارو"])
 
 
 def squads():
     out = []
     for team in (HOME, AWAY):
-        out.append([dict(playerId=f"p_{team['short'].lower()}_{n}", number=n, name=nm, team=team["id"]) for n, nm in zip(NUMBERS, team["names"])])
+        out.append([dict(playerId=f"p_{team['short'].lower()}_{n}", number=n, name=nm, name_ar=ar, team=team["id"]) for n, nm, ar in zip(NUMBERS, team["names"], team["names_ar"])])
     return out
 
+
+BODY = 0.7                           # metres between two players' centres when they are in contact
 
 class Sim:
     def __init__(self, seed=7, match_id="m_demo", story=None, minutes=90):
@@ -43,7 +47,9 @@ class Sim:
         self.frames = []                                 # (period, clock, live, poss, ball x y z, positions 22x2) as arrays
         self.noise = np.zeros((22, 2))
         self.pos = np.zeros((22, 2)); self.vel = np.zeros((22, 2))
-        self.stun = np.zeros(22)                         # seconds a beaten defender is slow to react
+        self.stun = np.zeros(22)                         # seconds a player who has just lost a challenge is slow to react
+        self.down = np.zeros(22)                         # seconds a fouled player stays on the ground
+        self.fx = np.random.default_rng(seed + 7919)     # its own stream, so what a body does after contact never shifts the match's decisions
         self.script = None
         self.bvz = 0.0                                   # the ball's vertical speed
         self.controlled = False                          # the man on the ball has it at his feet
@@ -184,7 +190,7 @@ class Sim:
                 self.interceptor, self.intercept_at = int(opp[k]), foot[k]
         self.log("pass", p, outcome=0 if self.interceptor is not None else 1, qualifiers={212: round(float(dist), 1)})
 
-    def shoot(self, p, forced=None):
+    def shoot(self, p, forced=None, power=None):
         goal = self.opp_goal(self.team[p])
         dist = np.linalg.norm(goal - self.pos[p])
         ang = abs(math.atan2(abs(self.pos[p, 1]), max(PX - abs(self.pos[p, 0]), 0.5)))
@@ -208,7 +214,10 @@ class Sim:
             self.blocker = self.nearest(self.pos[p] + (goal - self.pos[p]) * 0.3, team=1 - t, exclude=[gk])[0]
             aim, h = self.pos[self.blocker].copy(), self.rng.uniform(0.3, 1.1)
         vec = aim - self.ball[:2]; L = float(np.linalg.norm(vec)) + 1e-9
-        speed = self.rng.uniform(22, 29); tof = L / speed
+        speed = self.rng.uniform(22, 29)
+        if power:                                                         # a story may say how hard this one is struck
+            speed = power
+        tof = L / speed
         self.state, self.shooter, self.shot_outcome = "shot", p, outcome
         self.bvel = vec / L * speed
         self.bvz = (h - self.ball[2] + 0.5 * G * tof * tof) / tof          # struck to be at height h when it gets there
@@ -270,9 +279,12 @@ class Sim:
         if force_card or out == "foul_plain":
             out = "foul"
         self.committed = None
+        away = self.pos[car] - self.pos[dfn]; away /= np.linalg.norm(away) + 1e-9      # from the defender towards the man he has met
         if out == "foul":
-            e = self.log("foul", dfn, outcome=0, qualifiers={13: 1})
-            self.log("foul", car, outcome=1)
+            self.down[car] = self.fx.uniform(1.8, 3.0)                       # he goes down and stays down for a moment
+            self.vel[car] = away * 1.6; self.stun[dfn] = 1.0; self.vel[dfn] *= 0.4
+            e = self.log("foul", dfn, outcome=0, qualifiers={13: 1}, other=self.ids[car])
+            self.log("foul", car, outcome=1, down_s=round(float(self.down[car]), 2))
             card = None
             if force_card:
                 card = force_card
@@ -289,14 +301,16 @@ class Sim:
                     self.off[dfn] = True; self.pos[dfn] = np.nan
             self.dead("free_kick", self.pos[car].copy(), int(self.team[car]), self.rng.uniform(16, 36) + (20 if card else 0), taker=car)
         elif out == "won":
-            self.log("tackle", dfn, outcome=1); self.log("take_on", car, outcome=0)
+            self.log("tackle", dfn, outcome=1, other=self.ids[car]); self.log("take_on", car, outcome=0)
+            self.stun[car] = self.fx.uniform(0.7, 1.3); self.vel[car] = self.vel[car] * 0.3 + away * 1.2      # knocked off the ball and off his stride
             self.give(dfn, timer=self.rng.uniform(0.4, 1.0))
         elif out == "kept":
-            self.log("challenge", dfn, outcome=0); self.log("take_on", car, outcome=1)
-            self.stun[dfn] = self.rng.uniform(0.8, 1.6)
+            self.log("challenge", dfn, outcome=0, other=self.ids[car]); self.log("take_on", car, outcome=1)
+            self.stun[dfn] = self.rng.uniform(0.8, 1.6); self.vel[dfn] *= 0.3                                  # beaten: he is left standing
             self.timer = min(self.timer, self.rng.uniform(0.5, 1.2))
         else:
-            self.log("tackle", dfn, outcome=1); self.log("out", dfn, outcome=0)
+            self.log("tackle", dfn, outcome=1, other=self.ids[car]); self.log("out", dfn, outcome=0)
+            self.vel[car] *= 0.4; self.vel[dfn] *= 0.5
             side = np.sign(self.pos[car, 1]) or 1.0                         # he pokes it towards the touchline and it runs out
             self.bvel = np.array([self.rng.uniform(-3, 3), side * self.rng.uniform(13, 18)]); self.bvz = 0.0
             self.poss = int(self.team[dfn]); self.state = "loose"
@@ -324,6 +338,8 @@ class Sim:
             if r["taker"] is None or self.off[r["taker"]]:
                 r["taker"] = self.nearest(spot, team=r["team"], exclude=[] if r["kind"] in ("goal_kick", "keeper") else [0, 11])[0]
             taker = r["taker"]
+            if r["kind"] == "kick_off" and not (self.script and self.script.phase == "setup"):
+                self.kickoff_marks(tgt, r["team"], taker)
             if not r["has"]:
                 self.roll()
                 if abs(self.ball[0]) > PX + 3.5 or abs(self.ball[1]) > PY + 3:       # it has reached the boards
@@ -467,21 +483,37 @@ class Sim:
                 else:
                     self.dead("goal_kick", np.array([np.sign(self.ball[0]) * (PX - 5.5), 0.0]), end_team, self.rng.uniform(17, 32), taker=11 * end_team)
         # move
-        self.stun = np.maximum(self.stun - DT, 0)
+        self.stun = np.maximum(self.stun - DT, 0); self.down = np.maximum(self.down - DT, 0)
         d = tgt - self.pos; dist = np.linalg.norm(d, axis=1) + 1e-9
         far = dist > 9                                                    # out of shape after a turnover: run back into it
         want = np.where(urgent, np.minimum(self.vmax, dist * 2.2), np.where(far, np.minimum(self.vmax * 0.66, dist * 0.45), np.minimum(self.vmax * 0.29, dist * 0.7)))
         if self.state == "carried" and self.controlled:
             want[self.carrier] = self.dribble_speed
         want = np.where(self.stun > 0, want * 0.35, want)
+        want = np.where(self.down > 0, 0.0, want)                          # on the ground
         dv = d / dist[:, None] * want[:, None] - self.vel
         n = np.linalg.norm(dv, axis=1) + 1e-9
         self.vel += dv / n[:, None] * np.minimum(n, 4.8 * DT)[:, None]
         on = ~self.off
         self.pos[on] += self.vel[on] * DT
+        self.bodies()
         self.pos[on] = np.clip(self.pos[on], [-PX - 4, -PY - 3.5], [PX + 4, PY + 3.5])
         self.frames.append((self.period, self.clock, self.state != "dead", self.poss, *self.ball, self.pos.copy()))
         self.ctl.append((self.state, getattr(self, "carrier", -1) if self.state == "carried" else getattr(self, "receiver", -1) if self.state == "pass" else -1))
+
+    def bodies(self):
+        """Two players cannot stand in the same place. Where two bodies overlap they are moved apart along the line between
+        them and lose the speed they were closing at, so a man runs into another and not through him."""
+        on = np.flatnonzero(~self.off)
+        P = self.pos[on]; D = P[:, None, :] - P[None, :, :]; dist = np.linalg.norm(D, axis=2)
+        ii, jj = np.nonzero(np.triu(dist < BODY, 1))
+        for a, b in zip(ii, jj):
+            i, j = on[a], on[b]; d = self.pos[i] - self.pos[j]; L = float(np.linalg.norm(d))
+            n = d / L if L > 1e-6 else np.array([1.0, 0.0])
+            push = (BODY - L) / 2; self.pos[i] += n * push; self.pos[j] -= n * push
+            closing = float((self.vel[i] - self.vel[j]) @ n)
+            if closing < 0:
+                self.vel[i] -= n * closing / 2; self.vel[j] += n * closing / 2
 
     def finish_shot(self):
         """The shot has reached the goal, the keeper or a defender. Nothing is moved by hand: the ball keeps its own motion."""
@@ -511,6 +543,27 @@ class Sim:
                 ang = self.rng.uniform(0, 2 * math.pi)
                 self.bvel = np.array([math.cos(ang), math.sin(ang)]) * self.rng.uniform(4, 8); self.bvz = self.rng.uniform(0.5, 3)
 
+    def kickoff_marks(self, where, team, taker, mate=None):
+        """Where everyone may stand for a kick-off, written into `where` (22 by 2). The two men at the ball are both from the
+        side taking it. Everyone is in his own half, and the other side stays out of the centre circle until the ball is played."""
+        for i in range(22):
+            if self.off[i]:
+                continue
+            d = self.dir[int(self.team[i])]
+            if where[i, 0] * d > -0.6:                                       # his own half is the one his side defends
+                where[i, 0] = -0.6 * d
+            if int(self.team[i]) != team and np.hypot(*where[i]) < 9.8:      # 9.15 m, with a little to spare
+                y = where[i, 1] if abs(where[i, 1]) > 0.5 else (1.0 if i % 2 else -1.0)
+                where[i] = np.array([-d * math.sqrt(max(9.8 ** 2 - min(abs(y), 9.8) ** 2, 0.36)), y]) if abs(y) < 9.8 else where[i]
+        d = self.dir[team]
+        if mate is None:
+            own = [i for i in range(22) if int(self.team[i]) == team and not self.off[i] and i not in (taker, 0, 11)]
+            mate = min(own, key=lambda i: float(np.hypot(*where[i]))) if own else None
+        where[taker] = np.array([-0.4 * d, 0.0])
+        if mate is not None:
+            where[mate] = np.array([-0.7 * d, 2.2])
+        return mate
+
     # ---------- a whole match ----------
     def run(self):
         for period in (1, 2):
@@ -521,6 +574,7 @@ class Sim:
             for t in (0, 1):
                 idx, sh = self.shape(t, False)
                 self.pos[idx] = np.where(np.isnan(self.pos[idx]) & False, self.pos[idx], sh)
+            self.kickoff_marks(self.pos, self.poss, 9 if period == 1 else 20, 7 if period == 1 else 18)
             self.pos[self.off] = np.nan
             self.vel[:] = 0
             self.log("start", 9 if period == 1 else 20)

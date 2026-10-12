@@ -1,10 +1,12 @@
-"""The writing path: two team agents, a Director, a Narrator, a Verifier and a Localizer, run as one checkpointed workflow per moment.
+"""The writing path and its checks.
 
-Agents never see raw feeds and never write to the ledger. They read facts through FactTools, which enforces two things by who is
-calling: nothing after the moment's own match time, and a team agent only sees its own team's players.
+Which facts belong to a moment is decided by code. A writer turns them into one sentence per language, and the Verifier holds
+every sentence to the facts before it leaves. FactTools are the read-only tools an agent gets: nothing after the moment's own
+match time, and scope taken from who is calling. The agents themselves (two investigators and a gate, for a turn nobody
+scripted) are described in 01-architecture.md section 6 and are not in this build.
 
 Model calls go through a Backend. LocalBackend writes from templates, so the whole pipeline runs with no cloud and serves as the
-fallback when a model is slow or down. FoundryBackend is the seam for Microsoft Agent Framework on Azure and is wired on day one."""
+fallback when a model is slow or down. FoundryBackend is the seam for a model on Azure AI Foundry."""
 import re
 import time
 
@@ -64,58 +66,101 @@ AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
 
 class LocalBackend:
-    """Deterministic writer. Every sentence is assembled from the facts it is given, so it passes the Verifier by construction."""
+    """Deterministic writer. Every sentence is assembled from the facts it is given, so it passes the Verifier by construction.
+    A sentence states facts side by side. It never says one caused another."""
     name = "local-templates"
 
-    def narrate(self, kind, ctx, lang="en", depth="casual"):
-        n = ctx.get("names", {})
+    def narrate(self, kind, ctx, lang="en"):
+        n = ctx["names_ar"] if lang == "ar" else ctx.get("names", {})
         if kind == "card":
             p = n[ctx["player"]]; m = ctx["minute"]
             return {"en": f"{p} is booked in minute {m}. One more foul is a red card.", "ar": f"إنذار لـ{p} في الدقيقة {m}. مخالفة أخرى تعني بطاقة حمراء."}[lang]
         if kind == "goal":
             p = n[ctx["player"]]; a, b = ctx["score"]
-            base = {"en": f"{p} scores in minute {ctx['minute']}. It is {a}-{b}.", "ar": f"{p} يسجل في الدقيقة {ctx['minute']}. النتيجة {a}-{b}."}[lang]
+            text = {"en": f"{p} scores in minute {ctx['minute']}. It is {a}-{b}.", "ar": f"{p} يسجل في الدقيقة {ctx['minute']}. النتيجة {a}-{b}."}[lang]
             ca = ctx.get("closest")
             if not ca:
-                return base
+                return text
             d = n[ca["differing_player"]]
             if lang == "ar":
-                extra = f" أقرب محاولة سابقة كانت في الدقيقة {ca['earlier_minute']} ولم تنته بهدف. أكبر فرق: بعد ثانيتين من افتراق الهجمتين كان {d} على بعد {ca['differing_by_m']} متر من موقعه السابق."
-                if ctx.get("differing_booked_minute"):
-                    extra += f" كان قد تلقى إنذارا في الدقيقة {ctx['differing_booked_minute']}."
+                text += f" أقرب محاولة سابقة كانت في الدقيقة {ca['earlier_minute']} ولم تنته بهدف."
+                text += f" هذه المرة وقف {d} على بعد {ca['differing_by_m']} متر من موقعه حينها." if ctx.get("booked_minute") else f" أكبر فرق: وقف {d} على بعد {ca['differing_by_m']} متر من موقعه حينها."
+                if ctx.get("booked_minute"):
+                    text += f" كان قد تلقى إنذارا في الدقيقة {ctx['booked_minute']}."
             else:
-                extra = f" The closest earlier attempt came in minute {ca['earlier_minute']} and did not go in. The biggest difference: two seconds after the attacks part, {d} is {ca['differing_by_m']} m from where he was then."
-                if ctx.get("differing_booked_minute"):
-                    extra += f" He had been booked in minute {ctx['differing_booked_minute']}."
-                if depth == "analyst":
-                    extra += f" Average gap between the two attacks: {ca['gap_m']} m."
-            return base + extra
-        if kind == "turning_point":
-            return {"en": f"The play has tilted towards {ctx['team_name']} since minute {ctx['minute']}.", "ar": f"اللعب يميل لصالح {ctx['team_name']} منذ الدقيقة {ctx['minute']}."}[lang]
+                text += f" The closest earlier attempt came in minute {ca['earlier_minute']} and did not go in."
+                text += f" This time {d} stood {ca['differing_by_m']} m from where he was then." if ctx.get("booked_minute") else f" The biggest difference: {d} stood {ca['differing_by_m']} m from where he was then."
+                if ctx.get("booked_minute"):
+                    text += f" He had been booked in minute {ctx['booked_minute']}."
+            return text
+        if kind == "pressure":
+            pr = ctx["pressure"]
+            if lang == "ar":
+                return f"خلال آخر {pr['window_min']} دقائق كان {pr['now']} من كل 100 من اللعب في نصف ملعب {ctx['other_name_ar']}، مقابل {pr['before']} قبلها."
+            return f"{ctx['team_name']} have had {pr['now']} in 100 of the play in {ctx['other_name']}'s half over the last {pr['window_min']} minutes, up from {pr['before']}."
         if kind == "form":
             p = n[ctx["player"]]
             return {"en": f"{p}: {ctx['per_minute']} m a minute in play, top speed {ctx['top_speed']} m/s.", "ar": f"{p}: {ctx['per_minute']} متر في الدقيقة، أقصى سرعة {ctx['top_speed']} م/ث."}[lang]
         return ""
 
     @staticmethod
-    def numbers(kind, ctx, lang="en", depth="casual"):
+    def numbers(kind, ctx, lang="en"):
         """The numbers a sentence of this kind must contain, in order, taken from the facts. The Verifier holds the text to this
         list, so a number that is real but belongs to a different fact is still caught."""
-        if kind in ("card", "turning_point"):
+        if kind == "card":
             return [ctx["minute"]]
+        if kind == "pressure":
+            pr = ctx["pressure"]
+            return [pr["window_min"], pr["now"], 100, pr["before"]] if lang == "ar" else [pr["now"], 100, pr["window_min"], pr["before"]]
         if kind == "form":
             return [ctx["per_minute"], ctx["top_speed"]]
         if kind == "goal":
             out = [ctx["minute"], *ctx["score"]]
             ca = ctx.get("closest")
             if ca:
-                out += [ca["earlier_minute"], ca["differing_by_m"]]
-                if ctx.get("differing_booked_minute"):
-                    out.append(ctx["differing_booked_minute"])
-                if lang == "en" and depth == "analyst":
-                    out.append(ca["gap_m"])
+                out += [ca["earlier_minute"], ca["differing_by_m"]] + ([ctx["booked_minute"]] if ctx.get("booked_minute") else [])
             return out
         return []
+
+    @staticmethod
+    def who(kind, ctx):
+        """The players a sentence of this kind must name, in order. As with numbers, the Verifier holds the text to this list:
+        a player who is in a cited fact but does not belong in this sentence is still caught."""
+        if kind in ("card", "form"):
+            return [ctx["player"]]
+        if kind == "goal":
+            return [ctx["player"]] + ([ctx["closest"]["differing_player"]] if ctx.get("closest") else [])
+        return []
+
+    @staticmethod
+    def proof(kind, ctx, lang="en"):
+        """What stands behind the line, as data and not prose: each item is one fact with its number. This is what a viewer who
+        wants more gets, in place of a longer sentence."""
+        ar = lang == "ar"; n = ctx["names_ar"] if ar else ctx.get("names", {}); m_unit = "م" if ar else "m"; out = []
+        if kind == "goal":
+            ca = ctx.get("closest")
+            if ca:
+                d = n[ca["differing_player"]]
+                out.append(dict(icon="attempt", fact_id=ca["fact_id"], title=f"الهجمة نفسها، الدقيقة {ca['earlier_minute']}" if ar else f"Same attack, minute {ca['earlier_minute']}", value=f"{ca['differing_by_m']} {m_unit}",
+                                note=f"بين موقع {d} حينها وموقعه الآن" if ar else f"between where {d} stood then and now"))
+            g = ctx.get("ghost")
+            if g and ctx.get("booked_minute"):
+                d = n[g["player"]]
+                out.append(dict(icon="ghost", fact_id=g["fact_id"], title="مدافع عادي" if ar else "An average defender", value=f"{g['off_m']} {m_unit}", note=f"أقرب إلى الكرة من موقع {d}" if ar else f"closer to the ball than {d} stood"))
+                out.append(dict(icon="card", fact_id=ctx["booked_fact"], title=f"إنذار، الدقيقة {ctx['booked_minute']}" if ar else f"Booked, minute {ctx['booked_minute']}", value="", note="مخالفة أخرى تعني بطاقة حمراء" if ar else "One more foul is a red card"))
+            sp = ctx.get("shot_speed")
+            if sp and not ca:
+                out.append(dict(icon="speed", fact_id=sp["fact_id"], title="سرعة التسديدة" if ar else "Shot speed", value=f"{sp['value']:.0f} {'كم/س' if ar else 'km/h'}",
+                                note=(f"أسرع من {sp['percentile']:.0f} من كل 100 تسديدة هذا الموسم" if ar else f"faster than {sp['percentile']:.0f} in 100 shots this season") if sp.get("percentile") is not None else ""))
+        elif kind == "pressure":
+            pr = ctx["pressure"]
+            out.append(dict(icon="share", fact_id=pr["fact_id"], title=f"اللعب في نصف ملعب {ctx['other_name_ar']}" if ar else f"Play in {ctx['other_name']}'s half", value=f"{pr['now']} من 100" if ar else f"{pr['now']} in 100",
+                            note=f"مقابل {pr['before']} في الدقائق {pr['window_min']} السابقة" if ar else f"up from {pr['before']} in the {pr['window_min']} minutes before"))
+            if pr["won_high"] >= 2:
+                out.append(dict(icon="won", fact_id=pr["fact_id"], title="استعادة الكرة هناك" if ar else "Ball won there", value=str(pr["won_high"]), note=f"مرات في {pr['window_min']} دقائق" if ar else f"times in {pr['window_min']} minutes"))
+        elif kind == "card":
+            out.append(dict(icon="card", fact_id=ctx["card_fact"], title=f"إنذار، الدقيقة {ctx['minute']}" if ar else f"Booked, minute {ctx['minute']}", value="", note="مخالفة أخرى تعني بطاقة حمراء" if ar else "One more foul is a red card"))
+        return out
 
     def label(self, kind, ctx):
         n = ctx.get("names", {})
@@ -125,6 +170,8 @@ class LocalBackend:
             return f"{n[ctx['player']]} {ctx['score'][0]}-{ctx['score'][1]}"
         if kind == "card":
             return f"{n[ctx['player']]} booked"
+        if kind == "pressure":
+            return f"{ctx['team_name']} on top"
         return ""
 
 
@@ -164,12 +211,13 @@ def _numbers(text):
     return [float(x) for x in re.findall(r"\d+(?:\.\d+)?", text.translate(AR_DIGITS))]
 
 
-def verify(text, facts, names, allowed_numbers=(), expected=None):
+def verify(text, facts, names, allowed_numbers=(), expected=None, expected_names=None):
     """Code check. Returns (ok, reasons).
     - Every number in the text must come from a cited fact.
     - When `expected` is given (the ordered numbers the facts dictate for this sentence), the text must contain exactly those,
       in that order. This catches a real number used in the wrong place.
-    - Every player named must be in a cited fact.
+    - Every player named must be in a cited fact. When `expected_names` is given (the players the facts dictate for this
+      sentence, in order), the text must name exactly those, in that order. This catches a real player named in the wrong place.
     - No wording may claim more than a fact holds."""
     pool = set(float(x) for x in allowed_numbers)
     people = set()
@@ -191,9 +239,14 @@ def verify(text, facts, names, allowed_numbers=(), expected=None):
         want = [float(x) for x in expected]
         if len(found) != len(want) or any(abs(a - b) >= 0.051 for a, b in zip(found, want)):
             reasons.append(f"the numbers {found} are not the ones the facts give for this sentence, in order: {want}")
-    for pid, nm in names.items():
-        if nm in text and not any(pid in s.split("|") for s in people):
-            reasons.append(f"{nm} is named but no cited fact is about him")
+    for pid, nms in names.items():
+        for nm in ([nms] if isinstance(nms, str) else nms):
+            if nm in text and not any(pid in s.split("|") for s in people):
+                reasons.append(f"{nm} is named but no cited fact is about him")
+    if expected_names is not None:
+        hits = sorted((m.start(), pid) for pid, nms in names.items() for nm in ([nms] if isinstance(nms, str) else nms) for m in re.finditer(re.escape(nm), text))
+        if [pid for _, pid in hits] != list(expected_names):
+            reasons.append(f"the players named are not the ones the facts give for this sentence, in order: {list(expected_names)}")
     low = text.lower()
     reasons += [f"claims more than the facts hold: '{w}'" for w in OVERCLAIM if w in low]
     return not reasons, reasons
@@ -201,81 +254,55 @@ def verify(text, facts, names, allowed_numbers=(), expected=None):
 
 # ---------------- the workflow ----------------
 class Writer:
+    """The writing path for a moment whose kind is known: which facts belong together is decided by code, the sentence is one
+    writer call per language, and every sentence is checked before it leaves. A checkpoint after each step lets a restart resume."""
+
     def __init__(self, ledger, cues, meta, backend=None):
         self.ledger, self.cues, self.meta = ledger, cues, meta
         self.backend, self.fallback, self.breaker = backend or LocalBackend(), LocalBackend(), Breaker()
-        self.names = meta["names"]
+        self.names = {pid: (nm, meta["names_ar"][pid]) for pid, nm in meta["names"].items()}      # the Verifier knows a player by either spelling
         self.timings = []
 
-    def _tools(self, role, t):
-        team = {"home": self.meta["home"]["id"], "away": self.meta["away"]["id"]}.get(role)
-        return FactTools(self.ledger, self.meta, role, team, t)
-
-    def _propose(self, role, moment, t):
-        """A team agent: what does this moment mean from our side? Returns typed proposals or 'nothing from us'."""
-        tools = self._tools(role, t)
-        team_id = tools.team_id
-        facts = tools.get_moment(moment["fact_ids"])
-        out = []
-        if moment["kind"] == "goal":
-            ca = moment.get("closest_attempt")
-            scorer_team = self.meta["team_of"][moment["player"]]
-            if scorer_team == team_id:
-                out.append(dict(claim="goal", kind="result", fact_ids=[f["fact_id"] for f in facts if f["kind"] in ("goal", "shot_speed")], confidence=1.0))
-                if ca:
-                    out.append(dict(claim="closest_earlier_attempt", kind="reason", fact_ids=[ca["fact_id"]], confidence=round(ca["closer_than"], 2)))
-            elif ca and self.meta["team_of"].get(ca["differing_player"]) == team_id:
-                mine = tools.get_player_ledger(ca["differing_player"])
-                card = [f for f in mine if f["kind"] == "card" and f["value"] == "yellow"]
-                if card:
-                    out.append(dict(claim="held_off_on_a_yellow", kind="stake_paid", fact_ids=[ca["fact_id"], card[-1]["fact_id"]], confidence=0.8))
-        elif moment["kind"] == "card" and self.meta["team_of"][moment["player"]] == team_id:
-            out.append(dict(claim="booked", kind="stake_opened", fact_ids=moment["fact_ids"], confidence=1.0))
-        elif moment["kind"] == "turning_point":
-            out.append(dict(claim="momentum", kind="state", fact_ids=moment["fact_ids"], confidence=0.6))
+    @staticmethod
+    def _claims(moment):
+        """What this moment lets us say, each with the facts it rests on. Nothing here is a cause: a reason is three instruments
+        pointing at one player, and it is worded as facts side by side."""
+        kind = moment["kind"]
+        if kind == "goal":
+            out = ["goal"] + (["closest_earlier_attempt"] if moment.get("closest_attempt") else []) + (["three_instruments_agree"] if moment.get("reason") else [])
+        else:
+            out = [dict(card="booked", pressure="pressure_change").get(kind, kind)]
         return out
 
     def write_moment(self, moment):
-        """Runs the workflow for one moment, saving a checkpoint after each step so a restart resumes where it stopped."""
         t0 = time.perf_counter()
         t = moment["t"]; key = f"moment:{moment['kind']}:{round(t, 1)}"
         cp = self.ledger.load_checkpoint(key) or {}
         if cp.get("done"):
             return cp
-        if "proposals" not in cp:
-            cp["proposals"] = {r: self._propose(r, moment, t) for r in ("home", "away")}
-            self.ledger.save_checkpoint(key, cp)
         if "decision" not in cp:
-            props = [p for r in ("home", "away") for p in cp["proposals"][r]]
-            if not props:
-                cp.update(done=True, decision=dict(show=False, reason="nothing from either team")); self.ledger.save_checkpoint(key, cp)
-                self.ledger.audit(t, "held_back", dict(form="sentence", reason="neither team agent found anything worth saying", moment=moment["kind"]))
-                return cp
-            ids = sorted({i for p in props for i in p["fact_ids"]})
-            cp["decision"] = dict(show=True, fact_ids=ids, took=[p["claim"] for p in props], when="next_replay" if moment["kind"] == "goal" else "next_pause")
+            cp["decision"] = dict(show=True, fact_ids=sorted(set(moment["fact_ids"])), claims=self._claims(moment), when="next_replay" if moment["kind"] == "goal" else "next_pause")
             self.ledger.save_checkpoint(key, cp)
         facts = [f for f in (self.ledger.get_fact(i) for i in cp["decision"]["fact_ids"]) if f]
         ctx = self._context(moment, facts)
         if "texts" not in cp:
             texts = {}
             for lang in ("en", "ar"):
-                for depth in ("casual", "analyst"):
-                    text, how = self.breaker.call(lambda: self.backend.narrate(moment["kind"], ctx, lang, depth), lambda: self.fallback.narrate(moment["kind"], ctx, lang, depth), timeout=4.0)
-                    want = self.fallback.numbers(moment["kind"], ctx, lang, depth)
-                    ok, why = verify(text, facts, self.names, allowed_numbers=ctx.get("allowed", ()), expected=want)
-                    if not ok:                                              # one rewrite, then the template
-                        self.ledger.audit(t, "verifier_rejected", dict(text=text, reasons=why, lang=lang))
-                        text = self.fallback.narrate(moment["kind"], ctx, lang, depth)
-                        ok, why = verify(text, facts, self.names, allowed_numbers=ctx.get("allowed", ()), expected=want)
-                        how = "template_after_rejection"
-                    if ok and text:
-                        texts[f"{lang}:{depth}"] = dict(text=text, how=how, numbers=want)
+                text, how = self.breaker.call(lambda: self.backend.narrate(moment["kind"], ctx, lang), lambda: self.fallback.narrate(moment["kind"], ctx, lang), timeout=4.0)
+                want = self.fallback.numbers(moment["kind"], ctx, lang); who = self.fallback.who(moment["kind"], ctx)
+                ok, why = verify(text, facts, self.names, allowed_numbers=ctx.get("allowed", ()), expected=want, expected_names=who)
+                if not ok:                                                  # one rewrite, then the template
+                    self.ledger.audit(t, "verifier_rejected", dict(text=text, reasons=why, lang=lang))
+                    text = self.fallback.narrate(moment["kind"], ctx, lang)
+                    ok, why = verify(text, facts, self.names, allowed_numbers=ctx.get("allowed", ()), expected=want, expected_names=who)
+                    how = "template_after_rejection"
+                if ok and text:
+                    texts[lang] = dict(text=text, how=how, numbers=want, names=who, proof=self.fallback.proof(moment["kind"], ctx, lang))
             cp["texts"] = texts; cp["label"] = self.fallback.label(moment["kind"], ctx)
             self.ledger.save_checkpoint(key, cp)
         ids = cp["decision"]["fact_ids"]
-        for k, v in cp["texts"].items():
-            lang, depth = k.split(":")
-            self.cues.propose(t, "sentence", "phone", dict(lang=lang, depth=depth, text=v["text"], how=v["how"], numbers=v["numbers"]), ids, valid_for=20, priority=5, when="now")
+        for lang, v in cp["texts"].items():
+            self.cues.propose(t, "sentence", "phone", dict(lang=lang, text=v["text"], how=v["how"], numbers=v["numbers"], names=v["names"], proof=v["proof"]), ids, valid_for=20, priority=5, when="now")
         if cp["label"] and len(cp["label"].split()) <= 6:
             self.cues.propose(t, "label", "tv", dict(text=cp["label"]), ids, valid_for=5, priority=6, when=cp["decision"]["when"])
         if moment["kind"] == "goal":
@@ -283,8 +310,8 @@ class Writer:
             scene = dict(type="closest_attempt" if ca else "plain", camera=dict(behind=moment["player"]), goal_frame=moment.get("frame"),
                          light=[ca["differing_player"]] if ca else [], earlier_frame=ca.get("earlier_frame") if ca else None, label=cp["label"])
             self.cues.propose(t, "scene", "tv", scene, ids, valid_for=11, priority=8, when="next_replay")
-        if "en:casual" in cp["texts"]:
-            self.cues.propose(t, "sentence", "desk", dict(text=cp["texts"]["en:casual"]["text"], proposals=cp["proposals"], took=cp["decision"]["took"]), ids, valid_for=30, when="now")
+        if "en" in cp["texts"]:
+            self.cues.propose(t, "sentence", "desk", dict(text=cp["texts"]["en"]["text"], claims=cp["decision"]["claims"]), ids, valid_for=30, when="now")
         cp["done"] = True
         self.ledger.save_checkpoint(key, cp)
         self.timings.append(time.perf_counter() - t0)
@@ -292,17 +319,29 @@ class Writer:
 
     def _context(self, moment, facts):
         minute = int(moment["t"] // 60) + 1
-        ctx = dict(names=self.names, minute=minute, player=moment.get("player"), allowed=[minute])
-        by = {f["kind"]: f for f in facts}
+        ctx = dict(names=self.meta["names"], names_ar=self.meta["names_ar"], minute=minute, player=moment.get("player"), allowed=[minute])
+        by = {}
+        for f in facts:
+            if f["kind"] != "card" or f["match_time"] < moment["t"] - 0.01 or moment["kind"] == "card":
+                by[f["kind"]] = f
         if "goal" in by:
             ctx["score"] = by["goal"]["value"]
+        if "shot_speed" in by:
+            ctx["shot_speed"] = dict(fact_id=by["shot_speed"]["fact_id"], value=by["shot_speed"]["value"], percentile=by["shot_speed"].get("percentile"))
         if "closest_attempt" in by:
             f = by["closest_attempt"]
-            ctx["closest"] = dict(differing_player=f["differing_player"], differing_by_m=f["differing_by_m"], gap_m=f["value"], earlier_minute=int(f["earlier_time"] // 60) + 1)
-        if "card" in by and moment["kind"] == "goal":
-            ctx["differing_booked_minute"] = int(by["card"]["match_time"] // 60) + 1
-        if moment["kind"] == "turning_point":
-            ctx["team_name"] = (self.meta["home"], self.meta["away"])[moment["team"]]["name"]
+            ctx["closest"] = dict(fact_id=f["fact_id"], differing_player=f["differing_player"], differing_by_m=f["differing_by_m"], gap_m=f["value"], earlier_minute=int(f["earlier_time"] // 60) + 1)
+        if "ghost_standoff" in by:
+            ctx["ghost"] = dict(fact_id=by["ghost_standoff"]["fact_id"], player=by["ghost_standoff"]["subject"], off_m=by["ghost_standoff"]["value"])
+        if "reason" in by and "card" in by and moment["kind"] == "goal":         # only then is the booking put beside the other two
+            ctx["booked_minute"] = int(by["card"]["match_time"] // 60) + 1; ctx["booked_fact"] = by["card"]["fact_id"]
+        if moment["kind"] == "card":
+            ctx["card_fact"] = by["card"]["fact_id"]
+        if moment["kind"] == "pressure":
+            f = by["pressure"]; teams = (self.meta["home"], self.meta["away"]); me, other = teams[moment["team"]], teams[1 - moment["team"]]
+            ctx["team_name"], ctx["other_name"], ctx["other_name_ar"] = me["name"], other["name"], other["name_ar"]
+            ctx["pressure"] = dict(fact_id=f["fact_id"], now=f["value"], before=f["before"], window_min=f["window_min"], won_high=f["won_high"])
+            ctx["allowed"] = [100, f["before"], f["window_min"]]
         return ctx
 
     # ----- fixed-time cards -----
@@ -316,7 +355,11 @@ class Writer:
             out.append(c)
         return out
 
-    def interval_card(self, t, form, items):
-        """Half time: three things still open. Full time: the three moments that moved the match most."""
-        ids = [i for it in items for i in it["fact_ids"]]
-        return self.cues.propose(t, form, "tv", dict(cards=[dict(title=it["title"], text=it["text"], mark=it.get("mark")) for it in items[:3]]), ids, valid_for=9, priority=8, when="now")
+    def interval_card(self, t, form, items, calls=None):
+        """Half time: three things still open. Full time: the three moments that moved the match most, and what became of
+        the calls made before kick-off."""
+        ids = [i for it in items for i in it["fact_ids"]] + [i for c in (calls or []) for i in c["fact_ids"]]
+        payload = dict(cards=[dict(title=it["title"], text=it["text"], mark=it.get("mark")) for it in items[:3]])
+        if calls:
+            payload["calls"] = [{k: v for k, v in c.items() if k != "fact_ids"} for c in calls]
+        return self.cues.propose(t, form, "tv", payload, ids, valid_for=9, priority=8, when="now")

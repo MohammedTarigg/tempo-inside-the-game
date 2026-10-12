@@ -1,0 +1,288 @@
+[
+ {
+  "horizon_s": 2.0,
+  "matches": [
+   {
+    "match": "1. FC K\u00f6ln:FC Bayern M\u00fcnchen",
+    "samples": 66470,
+    "stay": {
+     "median": 4.65,
+     "mean": 5.04,
+     "p90": 8.92
+    },
+    "keep_pace": {
+     "median": 2.05,
+     "mean": 2.58,
+     "p90": 5.33
+    },
+    "ghost": {
+     "median": 1.4,
+     "mean": 1.69,
+     "p90": 3.28
+    }
+   },
+   {
+    "match": "VfL Bochum 1848:Bayer 04 Leverkusen",
+    "samples": 49600,
+    "stay": {
+     "median": 4.2,
+     "mean": 4.8,
+     "p90": 8.95
+    },
+    "keep_pace": {
+     "median": 1.99,
+     "mean": 2.52,
+     "p90": 5.3
+    },
+    "ghost": {
+     "median": 1.41,
+     "mean": 1.72,
+     "p90": 3.39
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:SSV Jahn Regensburg",
+    "samples": 55430,
+    "stay": {
+     "median": 5.07,
+     "mean": 5.38,
+     "p90": 9.39
+    },
+    "keep_pace": {
+     "median": 2.15,
+     "mean": 2.65,
+     "p90": 5.38
+    },
+    "ghost": {
+     "median": 1.4,
+     "mean": 1.69,
+     "p90": 3.26
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:F.C. Hansa Rostock",
+    "samples": 58440,
+    "stay": {
+     "median": 4.84,
+     "mean": 5.18,
+     "p90": 9.13
+    },
+    "keep_pace": {
+     "median": 2.11,
+     "mean": 2.64,
+     "p90": 5.41
+    },
+    "ghost": {
+     "median": 1.41,
+     "mean": 1.72,
+     "p90": 3.36
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:1. FC N\u00fcrnberg",
+    "samples": 63500,
+    "stay": {
+     "median": 4.63,
+     "mean": 5.08,
+     "p90": 9.19
+    },
+    "keep_pace": {
+     "median": 2.07,
+     "mean": 2.61,
+     "p90": 5.35
+    },
+    "ghost": {
+     "median": 1.39,
+     "mean": 1.68,
+     "p90": 3.26
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:FC St. Pauli",
+    "samples": 65163,
+    "stay": {
+     "median": 4.68,
+     "mean": 5.06,
+     "p90": 9.15
+    },
+    "keep_pace": {
+     "median": 2.12,
+     "mean": 2.65,
+     "p90": 5.42
+    },
+    "ghost": {
+     "median": 1.43,
+     "mean": 1.73,
+     "p90": 3.37
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:1. FC Kaiserslautern",
+    "samples": 66920,
+    "stay": {
+     "median": 3.93,
+     "mean": 4.56,
+     "p90": 8.43
+    },
+    "keep_pace": {
+     "median": 1.91,
+     "mean": 2.44,
+     "p90": 5.09
+    },
+    "ghost": {
+     "median": 1.35,
+     "mean": 1.65,
+     "p90": 3.23
+    }
+   }
+  ],
+  "mean_of_medians": {
+   "stay": 4.57,
+   "keep_pace": 2.06,
+   "ghost": 1.4
+  }
+ },
+ {
+  "horizon_s": 3.0,
+  "matches": [
+   {
+    "match": "1. FC K\u00f6ln:FC Bayern M\u00fcnchen",
+    "samples": 64340,
+    "stay": {
+     "median": 6.62,
+     "mean": 7.23,
+     "p90": 12.79
+    },
+    "keep_pace": {
+     "median": 4.02,
+     "mean": 4.91,
+     "p90": 9.88
+    },
+    "ghost": {
+     "median": 2.31,
+     "mean": 2.74,
+     "p90": 5.25
+    }
+   },
+   {
+    "match": "VfL Bochum 1848:Bayer 04 Leverkusen",
+    "samples": 47556,
+    "stay": {
+     "median": 6.05,
+     "mean": 6.91,
+     "p90": 12.83
+    },
+    "keep_pace": {
+     "median": 3.84,
+     "mean": 4.73,
+     "p90": 9.66
+    },
+    "ghost": {
+     "median": 2.32,
+     "mean": 2.79,
+     "p90": 5.4
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:SSV Jahn Regensburg",
+    "samples": 53380,
+    "stay": {
+     "median": 7.28,
+     "mean": 7.76,
+     "p90": 13.52
+    },
+    "keep_pace": {
+     "median": 4.22,
+     "mean": 5.05,
+     "p90": 9.97
+    },
+    "ghost": {
+     "median": 2.33,
+     "mean": 2.74,
+     "p90": 5.22
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:F.C. Hansa Rostock",
+    "samples": 56130,
+    "stay": {
+     "median": 6.91,
+     "mean": 7.44,
+     "p90": 13.14
+    },
+    "keep_pace": {
+     "median": 4.14,
+     "mean": 5.0,
+     "p90": 10.01
+    },
+    "ghost": {
+     "median": 2.33,
+     "mean": 2.78,
+     "p90": 5.39
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:1. FC N\u00fcrnberg",
+    "samples": 61520,
+    "stay": {
+     "median": 6.62,
+     "mean": 7.3,
+     "p90": 13.22
+    },
+    "keep_pace": {
+     "median": 4.02,
+     "mean": 4.93,
+     "p90": 9.85
+    },
+    "ghost": {
+     "median": 2.26,
+     "mean": 2.71,
+     "p90": 5.17
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:FC St. Pauli",
+    "samples": 63135,
+    "stay": {
+     "median": 6.65,
+     "mean": 7.24,
+     "p90": 13.17
+    },
+    "keep_pace": {
+     "median": 4.12,
+     "mean": 5.0,
+     "p90": 9.98
+    },
+    "ghost": {
+     "median": 2.35,
+     "mean": 2.81,
+     "p90": 5.41
+    }
+   },
+   {
+    "match": "Fortuna D\u00fcsseldorf:1. FC Kaiserslautern",
+    "samples": 65090,
+    "stay": {
+     "median": 5.61,
+     "mean": 6.5,
+     "p90": 12.05
+    },
+    "keep_pace": {
+     "median": 3.68,
+     "mean": 4.58,
+     "p90": 9.28
+    },
+    "ghost": {
+     "median": 2.23,
+     "mean": 2.68,
+     "p90": 5.19
+    }
+   }
+  ],
+  "mean_of_medians": {
+   "stay": 6.53,
+   "keep_pace": 4.01,
+   "ghost": 2.3
+  }
+ }
+]
