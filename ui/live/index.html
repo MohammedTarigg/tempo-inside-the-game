@@ -34,7 +34,11 @@
   <aside id="phone" aria-live="polite">
     <div id="brand"><svg viewBox="0 0 120 120" width="34" height="34" aria-hidden="true"><circle cx="60" cy="60" r="27.5" fill="none" stroke="#fff" stroke-width="13"/><rect x="54.9" y="6" width="10.1" height="26.5" fill="#fff"/><rect x="54.9" y="87.5" width="10.1" height="26.5" fill="#fff"/><circle id="eye" cx="60" cy="60" r="11" fill="#fff"/></svg><b>tempo</b></div>
     <div id="modes"><button data-m="en" aria-pressed="true">English</button><button data-m="ar" aria-pressed="false">عربي</button></div>
+    <div id="follow" role="group" aria-label="Follow"><button data-c="-1" aria-pressed="true">Everyone</button><button data-c="0" aria-pressed="false"></button><button data-c="1" aria-pressed="false"></button></div>
+    <div id="squad" role="group" aria-label="Follow one player"></div>
+    <div id="depth" role="group" aria-label="How much detail"><button data-d="analyst" aria-pressed="true">Analyst</button><button data-d="fan" aria-pressed="false">Fan</button></div>
     <p id="psc"></p>
+    <div id="pfollow"><h3><b id="wnum"></b><span id="wwho"></span><i id="wbook"></i></h3><p id="wclub"></p><dl><div><dt>Distance</dt><dd id="wdist"></dd></div><div><dt>Top speed</dt><dd id="wtop"></dd></div></dl></div>
     <div id="pstake"><h3><i id="pcard"></i><span id="pname"></span></h3><p id="ptext"></p><div id="meter"><i></i></div></div>
     <p id="pbig"></p>
     <div id="proof" aria-label="What stands behind this line"></div>
@@ -53,7 +57,7 @@
   { const v = Date.now(), m = document.createElement('script'), imports = { three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js' };
     const lists = {
       // the match view
-      page: [['util', '../shared/util.js'], ['stage', '../shared/stage.js'], ['marker', '../shared/marker.js'], ['shapes', '../shared/shapes.js'], ['intro', '../brand/intro.js'], ['live/icons', './icons.js'], ['live/match-data', './match-data.js'], ['live/pins', './pins.js'], ['live/marks', './marks.js'], ['live/plates', './plates.js'], ['live/strip', './strip.js'], ['live/phone', './phone.js'], ['live/cards', './cards.js'], ['main', './main.js']],
+      page: [['util', '../shared/util.js'], ['stage', '../shared/stage.js'], ['marker', '../shared/marker.js'], ['shapes', '../shared/shapes.js'], ['intro', '../brand/intro.js'], ['live/icons', './icons.js'], ['live/match-data', './match-data.js'], ['live/pins', './pins.js'], ['live/marks', './marks.js'], ['live/plates', './plates.js'], ['live/strip', './strip.js'], ['live/follow', './follow.js'], ['live/phone', './phone.js'], ['live/cards', './cards.js'], ['main', './main.js']],
       // what the product film adds. Fetched only when the page is opened with ?tour
       film: [['portrait', '../brand/portrait.js'], ['replay/start', '../replay/start.js'], ['tour/icons', '../tour/icons.js'], ['tour/furniture', '../tour/furniture.js'], ['tour/bridge', '../tour/bridge.js'], ['tour/scenes/heads-up', '../tour/scenes/heads-up.js'], ['tour/scenes/thunderbolt', '../tour/scenes/thunderbolt.js'], ['tour/scenes/speak-of-the-devil', '../tour/scenes/speak-of-the-devil.js'], ['tour/scenes/on-a-yellow', '../tour/scenes/on-a-yellow.js'], ['tour/scenes/deja-vu', '../tour/scenes/deja-vu.js'], ['tour/scenes/called-it', '../tour/scenes/called-it.js'], ['tour/scenes/proof', '../tour/scenes/proof.js'], ['tour/scenes/close', '../tour/scenes/close.js'], ['tour/film', '../tour/film.js']],
     };

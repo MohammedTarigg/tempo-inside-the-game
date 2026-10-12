@@ -13,6 +13,7 @@ import { makeKickoffMarks } from '#live/marks';
 import { makePlates } from '#live/plates';
 import { makeStrip } from '#live/strip';
 import { makePhone } from '#live/phone';
+import { makeFollow } from '#live/follow';
 import { makeInterval } from '#live/cards';
 
 const Q = new URLSearchParams(location.search),
@@ -86,7 +87,8 @@ async function main() {
   const strip = makeStrip(match, { seek: (f) => seek(f), getF: () => F }),
     lateSpan = strip.lateSpan,
     interval = makeInterval(M),
-    phone = makePhone(match);
+    follow = makeFollow(match, Q),
+    phone = makePhone(match, follow);
 
   // ---- playback ----
   camera.fov = 30;
@@ -184,9 +186,9 @@ async function main() {
       }
       fig.group.visible = true;
       {
-        const want = DIR.focus && !DIR.focus.has(i) ? 0.28 : 1;
+        const want = DIR.focus ? (DIR.focus.has(i) ? 1 : 0.28) : follow.dim(i);
         fig.dim = (fig.dim ?? 1) + (want - (fig.dim ?? 1)) * (snap ? 1 : 0.1);
-        if (DIR.focus || fig.dim < 0.995) fig.setOpacity(fig.dim);
+        if (DIR.focus || fig.dim < 0.995 || want < 1) fig.setOpacity(fig.dim);
       } // a director can dim everyone but its subject
       const a = pos(F - 3, i) || p,
         c = pos(F + 3, i) || p,
@@ -247,6 +249,12 @@ async function main() {
     } else {
       wantPos.set(b[0] * 0.45, 46, 52);
       wantAim.set(b[0] * 0.8, 0, -b[1] * 0.3 + 4);
+    }
+    // a viewer following one player keeps him in the picture
+    const mine = !kickoff && follow.player >= 0 ? drawn(follow.player) : null;
+    if (mine) {
+      wantPos.set(mine[0], 40, -mine[1] + 34);
+      wantAim.set(mine[0], 0, -mine[1] + 4);
     }
     if (DIR.cam) DIR.cam(wantPos, wantAim, b);
     const kk = snap || (!playing && !DIR.cam) || reduce ? 1 : 1 - Math.exp(-dt * 2.4 * Math.min(4, Math.max(1, speed)));

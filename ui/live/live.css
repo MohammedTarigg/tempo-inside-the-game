@@ -571,11 +571,21 @@ button:focus-visible,
 #brand img {
   border-radius: 8px;
 }
-#modes {
+#modes,
+#follow,
+#depth,
+#squad {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
-#modes button {
+#squad:empty {
+  display: none;
+}
+#modes button,
+#follow button,
+#depth button,
+#squad button {
   background: rgba(255, 255, 255, 0.1);
   color: var(--mist);
   padding: 5px 12px;
@@ -584,7 +594,15 @@ button:focus-visible,
   font: 600 12px var(--font);
   letter-spacing: -0.02em;
 }
-#modes button[aria-pressed='true'] {
+#squad button {
+  min-width: 32px;
+  padding: 5px 0;
+  font-variant-numeric: tabular-nums;
+}
+#modes button[aria-pressed='true'],
+#follow button[aria-pressed='true'],
+#depth button[aria-pressed='true'],
+#squad button[aria-pressed='true'] {
   background: var(--paper);
   color: var(--ink);
 }
@@ -745,4 +763,65 @@ button:focus-visible,
   * {
     transition: none !important;
   }
+}
+
+/* following one player: who he is, and his running numbers from the pipeline's ledger */
+#pfollow {
+  display: none;
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+#pfollow h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font: 700 22px/1 var(--font);
+  letter-spacing: -0.02em;
+}
+#pfollow h3 b {
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+}
+#wbook {
+  display: none;
+  width: 11px;
+  height: 16px;
+  border-radius: 2.5px;
+  background: var(--card);
+}
+#wclub {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: var(--mist);
+}
+#pfollow dl {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 14px 0 0;
+}
+#pfollow dt {
+  font-size: 12px;
+  color: var(--mist);
+}
+#pfollow dd {
+  margin: 3px 0 0;
+  font: 700 18px/1 var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+/* a casual fan gets the line and the picture; the numbers and the facts behind each line are the analyst's */
+body.fan #proof,
+body.fan #note,
+body.fan #meter,
+body.fan #pfollow dl,
+body.fan #counter {
+  display: none;
+}
+body.tour #follow,
+body.tour #depth,
+body.tour #squad {
+  display: none;
 }

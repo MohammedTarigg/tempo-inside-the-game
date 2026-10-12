@@ -4,7 +4,7 @@ import { proofIcon } from '#live/icons';
 
 // Returns draw(F, sc, clk, top), called once a frame: the frame, the score, the clock in seconds, and the player whose stake
 // card is highest right now, if anyone's is on.
-export function makePhone(match) {
+export function makePhone(match, follow) {
   const { M, FPS, name, said } = match;
   let mode = 'en',
     shownProof = null;
@@ -28,7 +28,7 @@ export function makePhone(match) {
           : 'One foul from a red card, and he is in the play';
       $('meter').firstElementChild.style.width = `${Math.min(100, Math.round(top.chance * 100))}%`;
     }
-    const want = (c) => c.payload.lang === mode;
+    const want = (c) => c.payload.lang === mode && follow.wants(c);
     let line = null;
     for (const c of said) {
       if (c.frame > F) break;
@@ -54,7 +54,10 @@ export function makePhone(match) {
       );
     }
     $('pquiet').textContent =
-      fresh || top ? '' : 'Nothing to add right now. The screen stays clear until there is something worth saying';
+      fresh || top
+        ? ''
+        : follow.quiet() || 'Nothing to add right now. The screen stays clear until there is something worth saying';
+    follow.draw(F);
     $('note').textContent = M.stake.provisional
       ? 'Provisional stake model'
       : `Stake card levels at ${M.stake.faint} and ${M.stake.full}`;

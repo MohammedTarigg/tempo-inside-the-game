@@ -237,6 +237,12 @@ class RunOutputs:
             cues=out_cues,
             goals=goals,
             cards=cards,
+            # each player's running numbers, a row a minute, for a viewer who follows one player
+            ledgers=dict(
+                frames=[h[0] for h in self.reflex.ledger_hist],
+                dist=[h[1] for h in self.reflex.ledger_hist],
+                top=[h[2] for h in self.reflex.ledger_hist],
+            ),
             momentum=[[guess(float(t)), float(v)] for t, v in self.reflex.mom_hist],
             event_frames=[frame_of(e["periodId"], e["matchTime"]) for e in md["events"]],
             shown=self.cues.shown,

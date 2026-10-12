@@ -55,6 +55,7 @@ class Reflex:
         self.mom = 0.0
         self.last_turn = -1e9
         self.mom_hist = []
+        self.ledger_hist = []  # once a minute: (frame, metres run by each player, his top speed in m/s)
         # one entry a second for the last ten minutes: 0 ball dead, 1 in the away half, 2 in the home half
         self.terr = []
         self.high_wins = []  # (time, team) for each ball won in the other team's half
@@ -143,6 +144,8 @@ class Reflex:
             self.fast += np.where(ok & (sp > 5.5), step, 0)
             self.top = np.maximum(self.top, np.where(ok, sp, 0))
             self.minutes += (~np.isnan(pos[:, 0])) / HZ / 60
+        if i % (60 * HZ) == 0:
+            self.ledger_hist.append((i, np.round(self.dist).astype(int).tolist(), np.round(self.top, 1).tolist()))
         self.prev = pos.copy()
         if i % HZ == 0:  # momentum, once a second
             if live:
