@@ -1,10 +1,11 @@
-"""Train the stake model on the DFL open matches, estimate its quality fairly, and write the artefacts the product loads.
+"""Train the stake model on the DFL open matches, estimate its quality fairly, and write the artefacts the product
+loads.
 
 Usage: python3 -u -m tempo.stake.train data/dfl-cache
 
-Fair estimate (nested): each match is scored by a model trained on the other six, and the two card thresholds used on that
-match are chosen on those six only, from scores they got from models that had not seen them. Input scaling comes from training
-matches only. Threshold rules, fixed in advance:
+Fair estimate (nested): each match is scored by a model trained on the other six, and the two card thresholds used on
+that match are chosen on those six only, from scores they got from models that had not seen them. Input scaling comes
+from training matches only. Threshold rules, fixed in advance:
   faint = the highest grid value that puts the card on at contact for 85 in 100 of challenges by any defender
   full  = the score at which a challenge follows one time in five
 The shipped model is then trained on all seven, with thresholds chosen by the same rules from the outer scores."""
@@ -14,14 +15,15 @@ import json
 import os
 import sys
 import time
+
 import numpy as np
 import torch
 
+from ..paths import ARTIFACTS
 from . import dfl
-from .features import HIST, HZ, window_features
-from .model import ARTIFACTS, CardState, Net
+from .features import HIST, HZ, STEP, window_features
+from .model import CardState, Net
 
-STEP = 3
 GRID = [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10]
 
 
@@ -86,6 +88,7 @@ def predict(net, mu, sd, X, idx):
 def cards(S, order, M, PID, T, faint, full):
     """Run the card logic over time-ordered samples. Returns {(match, player): [(start, end, full_start or None)]}."""
     out, cur, state = {}, None, None
+    since = last_t = fs = None  # set on a player's first sample, read on his later ones
     for a in order:
         k = (M[a], PID[a])
         if k != cur:
@@ -188,7 +191,8 @@ def main(cache):
         nF = sum(1 for v in sp.values() for s in v if s[2] is not None)
         load_rows.append((nf, nF, sum(e - s for v in sp.values() for s, e, _ in v)))
         print(
-            f"outer match {i + 1}/{NM}: thresholds faint {faint}, full {full}; faint cards {nf}, full {nF}; {time.time() - t_start:.0f} s",
+            f"outer match {i + 1}/{NM}: thresholds faint {faint}, full {full};"
+            f" faint cards {nf}, full {nF}; {time.time() - t_start:.0f} s",
             flush=True,
         )
     lf = np.array([r[0] for r in rows])
@@ -247,7 +251,8 @@ def main(cache):
             full_threshold=full,
             sample_step_frames=STEP,
             metrics=metrics,
-            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177",
+            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, "
+            "https://doi.org/10.6084/m9.figshare.28196177",
             score_quantiles={str(q): float(np.quantile(S_out, q)) for q in (0.5, 0.9, 0.95, 0.99, 0.999)},
         ),
         open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
@@ -257,8 +262,8 @@ def main(cache):
 
 
 def provisional(cache):
-    """A stand-in artefact so the pipeline can be built while the nested run is still going. Same network and data, thresholds
-    from the earlier evaluation, no metrics. The nested run overwrites it."""
+    """A stand-in artefact so the pipeline can be built while the nested run is still going. Same network and data,
+    thresholds from the earlier evaluation, no metrics. The nested run overwrites it."""
     torch.set_num_threads(4)
     matches = dfl.load(cache)
     X, Y, M, PID, T, D = build(matches)
@@ -278,7 +283,8 @@ def provisional(cache):
             faint_threshold=0.05,
             full_threshold=0.20,
             sample_step_frames=STEP,
-            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177",
+            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, "
+            "https://doi.org/10.6084/m9.figshare.28196177",
         ),
         open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
         indent=1,

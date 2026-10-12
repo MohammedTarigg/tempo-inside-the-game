@@ -1,23 +1,25 @@
 """The ghost: where would an average defender be now, given where he stood two seconds ago and how the play has moved?
-One small network and one step of two seconds, after Le, Carr, Yue and Lucey (2017) and NFL Ghosts (2024). It says who is
-standing off the ball more than usual. It cannot say whether that mattered, so the reason rule only uses it beside two other
-instruments.
+One small network and one step of two seconds, after Le, Carr, Yue and Lucey (2017) and NFL Ghosts (2024). It says who
+is standing off the ball more than usual. It cannot say whether that mattered, so the reason rule only uses it beside
+two other instruments.
 
-    python3 -m tempo.ghost          fits it on the generated season and writes artifacts/ghost_model.pt and ghost_meta.json
+    python3 -m tempo.ghost          fits it on the generated season and writes artifacts/ghost_model.pt and
+                                    ghost_meta.json
 """
 
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 
-from .stake.model import ARTIFACTS
+from .constants import HZ, PX, PY
+from .paths import ARTIFACTS
 
-HZ, STEP = 25, 12
+STEP = 12
 H = 2 * HZ  # the ghost looks two seconds ahead
 NA, NT = 4, 3  # nearest attackers and team-mates given to the network
-PX, PY = 52.5, 34.0
 MODEL, META = os.path.join(ARTIFACTS, "ghost_model.pt"), os.path.join(ARTIFACTS, "ghost_meta.json")
 
 
@@ -28,8 +30,9 @@ def network(n_in=13 + 4 * NA + 2 * NT):
 
 
 def features(seg, t, h=H, players=None):
-    """Rows for every defending outfield player at frame t. `seg` holds xy (frames, players, 2), ball, live, poss, team, keeper
-    and own (the x of each team's own goal). Reads nothing after frame t. Returns (X, Y, index, p0, flip) or None."""
+    """Rows for every defending outfield player at frame t. `seg` holds xy (frames, players, 2), ball, live, poss, team,
+    keeper and own (the x of each team's own goal). Reads nothing after frame t. Returns (X, Y, index, p0, flip) or
+    None."""
     xy, ball = seg["xy"], seg["ball"]
     D = 1 - int(seg["poss"][t])
     flip = -1.0 if seg["own"][D] > 0 else 1.0  # turn the pitch so the defending team guards x = -52.5
@@ -145,8 +148,9 @@ def segment(view, keepers, lo, hi, home_dir):
 
 
 def standing_off(net, seg, t1, attacking_team, window_s=6.0, near=10.0):
-    """For the seconds before frame t1 of `seg`: each defender the ghost would have within `near` metres of the ball, with how
-    much further from the ball he really was at the worst moment. Positive means he stood off. Returns {player index: metres}."""
+    """For the seconds before frame t1 of `seg`: each defender the ghost would have within `near` metres of the ball,
+    with how much further from the ball he really was at the worst moment. Positive means he stood off. Returns {player
+    index: metres}."""
     best = {}
     for t in range(max(t1 - int(window_s * HZ), H + 6), t1, 5):
         if seg["poss"][t] != attacking_team or not seg["live"][t - H - 5 : t + 1].all():

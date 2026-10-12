@@ -1,24 +1,25 @@
-"""The checks behind the claims. Each one tests a property the design promises, on the demo match, and the result is written to
-artifacts/checks.json.
+"""The checks behind the claims. Each one tests a property the design promises, on the demo match, and the result is
+written to artifacts/checks.json.
 
 Usage: python3 -m tempo.eval.checks"""
 
 import copy
 import json
 import os
+import re
 import shutil
-import sys
 import tempfile
 import time
+
 import numpy as np
 
 from .. import season as seasonmod
-from ..agents import FactTools, LocalBackend, ScopeError, verify
-from ..contracts import TYPE, event, fact, stable_id
+from ..agents import FactTools, ScopeError, verify
+from ..contracts import TYPE, event, stable_id
 from ..generator.export import from_feed_frame, to_feed_frame
-from ..ledger import Ledger
+from ..paths import ARTIFACTS
 from ..run_match import Pipeline, generate
-from ..stake.model import ARTIFACTS, StakeModel
+from ..stake.model import StakeModel
 
 INTERVAL = ("halftime_card", "fulltime_card")
 
@@ -44,25 +45,8 @@ def cut(md, n):
     return out
 
 
-def main():
-    results = []
-
-    def record(name, ok, detail):
-        results.append(dict(check=name, passed=bool(ok), detail=detail))
-        print(f"{'PASS' if ok else 'FAIL'}  {name}: {detail}", flush=True)
-
-    model = StakeModel()
-    season, _ = seasonmod.load()
-    md = generate()
-    planted = md["planted"]
-    t0 = time.time()
-    full, d_full = fresh(md, season, model, "full")
-    full.run()
-    summary = full.finish(time.time() - t0)
-    ids_full = cue_ids(full)
-    cues_full = full.ledger.cues(md["meta"]["match_id"])
-
-    # 1. no reading ahead: a run that never receives the rest of the match makes the same cues up to that point
+def check_no_reading_ahead(record, md, season, model, cues_full):
+    """No reading ahead: a run that never receives the rest of the match makes the same cues up to that point."""
     for frac in (0.35, 0.8):
         n = int(len(md["clock"]) * frac)
         t_cut = float(md["clock"][n - 1])
@@ -81,11 +65,14 @@ def main():
         record(
             f"no reading ahead, match cut at {frac:.0%}",
             a == b,
-            f"{len(a)} cues with the future removed, {len(b)} in the full run up to minute {t_cut / 60:.0f}, identical: {a == b}",
+            f"{len(a)} cues with the future removed, {len(b)} in the full run up to minute {t_cut / 60:.0f},"
+            f" identical: {a == b}",
         )
         shutil.rmtree(d, ignore_errors=True)
 
-    # 2. recovery: stop the process mid-match, start a new one on the same store, and finish
+
+def check_recovery(record, md, season, model, ids_full):
+    """Recovery: stop the process mid-match, start a new one on the same store, and finish."""
     for frac in (0.3, 0.77):
         stop = int(len(md["clock"]) * frac)
         first, d = fresh(md, season, model, "crash")
@@ -99,11 +86,16 @@ def main():
         record(
             f"recovery after a stop at {frac:.0%}",
             ids == ids_full,
-            f"resumed from frame {start:,} of {len(md['clock']):,}; {len(ids)} cues against {len(ids_full)} uninterrupted; same IDs in the same order: {ids == ids_full}",
+            f"resumed from frame {start:,} of {len(md['clock']):,};"
+            f" {len(ids)} cues against {len(ids_full)} uninterrupted;"
+            f" same IDs in the same order: {ids == ids_full}",
         )
         shutil.rmtree(d, ignore_errors=True)
 
-    # 3. the storyline that was planted is what the pipeline reports
+
+def check_planted_story(record, md, planted, full, cues_full):
+    """The storyline that was planted is what the pipeline reports. Returns the planted booking, which the withdrawn
+    booking check takes back."""
     facts = full.ledger.facts(md["meta"]["match_id"], 1e9)
     ca = [f for f in facts if f["kind"] == "closest_attempt"]
     booking = next(p for p in planted if p["kind"] == "booking")
@@ -119,7 +111,9 @@ def main():
     record(
         "the planted story is found",
         ok,
-        f"booking at {card[0]['match_time'] / 60:.1f}' (planted {booking['matchTime'] / 60:.1f}'); closest earlier attempt at {ca[0]['earlier_time'] / 60:.1f}' (planted {step['restart'] / 60:.1f}'); first relevant difference {ca[0]['differing_player']} by {ca[0]['differing_by_m']} m"
+        f"booking at {card[0]['match_time'] / 60:.1f}' (planted {booking['matchTime'] / 60:.1f}');"
+        f" closest earlier attempt at {ca[0]['earlier_time'] / 60:.1f}' (planted {step['restart'] / 60:.1f}');"
+        f" first relevant difference {ca[0]['differing_player']} by {ca[0]['differing_by_m']} m"
         if ca and card
         else "missing",
     )
@@ -131,10 +125,14 @@ def main():
     record(
         "no stake card before the booking",
         all(c["match_time"] >= booking["matchTime"] for c in skoles_cards) and len(skoles_cards) > 0,
-        f"{len(skoles_cards)} card changes for the booked player, the first at {min(c['match_time'] for c in skoles_cards) / 60:.1f}'",
+        f"{len(skoles_cards)} card changes for the booked player,"
+        f" the first at {min(c['match_time'] for c in skoles_cards) / 60:.1f}'",
     )
+    return booking
 
-    # 4. the verifier against planted errors
+
+def check_verifier(record, md, full, cues_full, rng):
+    """The verifier against planted errors."""
     names = {
         pid: (nm, md["meta"]["names_ar"][pid]) for pid, nm in md["meta"]["names"].items()
     }  # a player is known by either spelling
@@ -149,15 +147,12 @@ def main():
         for c in cues_full
         if c["form"] == "sentence" and c["screen"] == "phone"
     ]
-    rng = np.random.default_rng(0)
     clean_ok = sum(
         verify(t, [f for f in fs if f], names, allowed_numbers=want, expected=want, expected_names=who)[0]
         for t, fs, _, want, who in sents
     )
     caught = total = 0
     kinds = {"number": 0, "name": 0, "overclaim": 0, "arabic digit": 0}
-    import re
-
     for text, fs, lang, want, who in sents * 12:
         fs = [f for f in fs if f]
         nums = re.findall(r"\d+(?:\.\d+)?", text)
@@ -190,8 +185,9 @@ def main():
     )
     record("verifier rejects planted errors", caught == total and total >= 100, f"{caught} of {total} caught ({kinds})")
 
-    # 5. agent scoping, enforced by identity
-    L = full.ledger
+
+def check_agent_scoping(record, md, L):
+    """Agent scoping, enforced by identity."""
     t_end = float(md["clock"][-1])
     home = FactTools(L, md["meta"], "home", md["meta"]["home"]["id"], t_end)
     refused = 0
@@ -212,10 +208,13 @@ def main():
     record(
         "agent tools refuse out-of-scope reads",
         refused == 3 and not leak,
-        f"{refused} of 3 refused (other team's player, one second after the moment, the Director's tool); facts leaked from after the moment: {len(leak)}",
+        f"{refused} of 3 refused (other team's player, one second after the moment, the Director's tool);"
+        f" facts leaked from after the moment: {len(leak)}",
     )
 
-    # 6. a yellow card taken back by the feed 40 seconds later
+
+def check_withdrawn_booking(record, md, season, model, booking):
+    """A yellow card taken back by the feed 40 seconds later."""
     md2 = copy.copy(md)
     ev = list(md["events"])
     k = next(i for i, e in enumerate(ev) if e["typeId"] == TYPE["card"] and e["playerId"] == booking["player"])
@@ -260,11 +259,14 @@ def main():
     record(
         "a withdrawn booking withdraws its cards",
         not after and all(c["status"] == "withdrawn" for c in before) and len(before) > 0 and clean,
-        f"{len(before)} cues resting on the card were withdrawn; cards on him afterwards: {len(after)}; the goal's sentence no longer says he had been booked: {clean} ({len(goal_sent)} sentences checked)",
+        f"{len(before)} cues resting on the card were withdrawn; cards on him afterwards: {len(after)};"
+        f" the goal's sentence no longer says he had been booked: {clean} ({len(goal_sent)} sentences checked)",
     )
     shutil.rmtree(d, ignore_errors=True)
 
-    # 7. feed contract: a frame survives the trip through the provider's shape
+
+def check_feed_shape(record, md, rng):
+    """Feed contract: a frame survives the trip through the provider's shape."""
     ok = True
     for i in rng.integers(0, len(md["clock"]), 200):
         pos, ball, live, poss = from_feed_frame(to_feed_frame(md, int(i)), md["meta"]["ids"])
@@ -278,29 +280,67 @@ def main():
         "tracking survives the feed shape", ok, "200 random frames written in the Second Spectrum shape and read back"
     )
 
-    # 8. speed
+
+def check_speed(record, summary):
+    """Speed: the reflex path inside a frame, the writing path inside the replay window."""
     fm = summary["frame_ms"]
     wm = summary["writer_ms"]
     record(
         "reflex path under 10 ms a frame",
         fm["p99"] < 10,
-        f"p50 {fm['p50']} ms, p95 {fm['p95']} ms, p99 {fm['p99']} ms, slowest {fm['max']} ms, features and network included",
+        f"p50 {fm['p50']} ms, p95 {fm['p95']} ms, p99 {fm['p99']} ms,"
+        f" slowest {fm['max']} ms, features and network included",
     )
     record(
         "writing path well inside the replay window",
         max(wm) < 10000,
-        f"{len(wm)} moments, slowest {max(wm):.1f} ms with the local backend (a cloud model will be slower; the limit is 10 s)",
+        f"{len(wm)} moments, slowest {max(wm):.1f} ms with the local backend"
+        f" (a cloud model will be slower; the limit is 10 s)",
     )
 
-    # 9. load and counts
+
+def check_load_and_counts(record, full, cues_full, summary):
+    """Load and counts: full stake cards stay within the cap for a match."""
     sc = summary["stake_cards"]
     issued_full = sum(1 for c in cues_full if c["form"] == "stake_card" and c["payload"]["level"] == 2)
     cap = full.cues.rules["stake_full_cap_per_match"]
     record(
         "full stake cards issued stay within the match cap",
         issued_full <= cap,
-        f"{issued_full} full cards issued against a cap of {cap}. The model wanted {sc['full']} across {len(sc['players'])} booked players, with {sc['appearances']} card appearances in all, which is above the real rate (see the realism check)",
+        f"{issued_full} full cards issued against a cap of {cap}."
+        f" The model wanted {sc['full']} across {len(sc['players'])} booked players,"
+        f" with {sc['appearances']} card appearances in all, which is above the real rate (see the realism check)",
     )
+
+
+def main():
+    results = []
+
+    def record(name, ok, detail):
+        results.append(dict(check=name, passed=bool(ok), detail=detail))
+        print(f"{'PASS' if ok else 'FAIL'}  {name}: {detail}", flush=True)
+
+    model = StakeModel()
+    season, _ = seasonmod.load()
+    md = generate()
+    planted = md["planted"]
+    t0 = time.time()
+    full, d_full = fresh(md, season, model, "full")
+    full.run()
+    summary = full.finish(time.time() - t0)
+    ids_full = cue_ids(full)
+    cues_full = full.ledger.cues(md["meta"]["match_id"])
+
+    rng = np.random.default_rng(0)  # one generator for the verifier and feed checks, drawn from in that order
+    check_no_reading_ahead(record, md, season, model, cues_full)
+    check_recovery(record, md, season, model, ids_full)
+    booking = check_planted_story(record, md, planted, full, cues_full)
+    check_verifier(record, md, full, cues_full, rng)
+    check_agent_scoping(record, md, full.ledger)
+    check_withdrawn_booking(record, md, season, model, booking)
+    check_feed_shape(record, md, rng)
+    check_speed(record, summary)
+    check_load_and_counts(record, full, cues_full, summary)
     shutil.rmtree(d_full, ignore_errors=True)
     out = dict(
         ran_at=time.strftime("%Y-%m-%d %H:%M"),

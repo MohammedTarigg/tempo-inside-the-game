@@ -1,13 +1,14 @@
-"""The stake network and the two-level card logic. One implementation, used in training, evaluation and the live service."""
+"""The stake network and the two-level card logic. One implementation, used in training, evaluation and the live
+service."""
 
 import json
 import os
+
 import numpy as np
 import torch
 
+from ..paths import ARTIFACTS
 from .features import LAGS, N_FEAT
-
-ARTIFACTS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "artifacts")
 
 
 class Net(torch.nn.Module):

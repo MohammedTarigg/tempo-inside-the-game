@@ -1,9 +1,15 @@
-"""Does the generated match move like a real one? Scans the ball and the players frame by frame for motion that cannot happen."""
+"""Does the generated match move like a real one? Scans the ball and the players frame by frame for motion that cannot
+happen."""
 
-import sys, json
+import json
+import os
+import sys
+
 import numpy as np
-from ..generator.sim import Sim, PX, PY
+
+from ..generator.sim import PX, PY, Sim
 from ..generator.story import DemoStory
+from ..paths import ARTIFACTS
 
 
 def scan(s):
@@ -17,7 +23,6 @@ def scan(s):
     d = np.diff(ball, axis=0)
     step = np.linalg.norm(d[:, :2], axis=1)
     v = step / DT
-    acc = np.abs(np.diff(v)) / DT
     out = {}
     out["ball jumps over 2 m in one frame"] = int(((step > 2.0) & same).sum())
     stop = np.where(live[:-1] & ~live[1:])[0]
@@ -127,4 +132,4 @@ if __name__ == "__main__":
     r = scan(s)
     for k, v in r.items():
         print(f"  {k}: {v if not isinstance(v, float) else round(v, 2)}")
-    json.dump(r, open("artifacts/physics.json", "w"), indent=1)
+    json.dump(r, open(os.path.join(ARTIFACTS, "physics.json"), "w"), indent=1)

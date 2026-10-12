@@ -1,13 +1,16 @@
-"""The closest earlier attempt. For a goal or a big chance, find the earlier attack by the same team that looked most alike and
-ended differently, and say where the two differed most.
+"""The closest earlier attempt. For a goal or a big chance, find the earlier attack by the same team that looked most
+alike and ended differently, and say where the two differed most.
 
-Tested on real football (01-architecture.md section 9): true twins are rare, so this never claims "the same move". It reports the
-average gap in metres and only passes when the gap is under both a percentile of all pairs and an absolute limit."""
+Tested on real football (01-architecture.md section 9): true twins are rare, so this never claims "the same move". It
+reports the average gap in metres and only passes when the gap is under both a percentile of all pairs and an absolute
+limit."""
 
 import itertools
+
 import numpy as np
 
-HZ = 25
+from .constants import HZ
+
 OFFS = list(range(0, 126, 5))  # from the start of the attack: 0 to 5 seconds, every 0.2 s
 ALIKE = 9  # the first 1.6 seconds decide whether two attacks start alike
 K = 4  # players a side, nearest the ball when the attack starts
@@ -19,7 +22,8 @@ NEAR_BALL_M = 12.0  # a differing defender only counts if he is this close to th
 
 
 def attack_start(live, poss, shot_frame):
-    """The frame this attack began: the last restart or change of possession before the shot, at most 12 seconds back."""
+    """The frame this attack began: the last restart or change of possession before the shot, at most 12 seconds
+    back."""
     lo = max(shot_frame - MAX_BACK, 1)
     for i in range(shot_frame, lo, -1):
         if not live[i - 1] or poss[i] != poss[i - 1]:
@@ -28,8 +32,8 @@ def attack_start(live, poss, shot_frame):
 
 
 def attack_vector(frames, start, shot_frame, team, dir_of_team, keepers):
-    """The ball and the K nearest players a side, from the start of the attack. Moments after the shot repeat the shot frame.
-    Returns None when the attack is shorter than the alike part. Reads nothing after the shot."""
+    """The ball and the K nearest players a side, from the start of the attack. Moments after the shot repeat the shot
+    frame. Returns None when the attack is shorter than the alike part. Reads nothing after the shot."""
     if shot_frame - start < OFFS[ALIKE - 1]:
         return None
     fr = np.minimum(start + np.array(OFFS), shot_frame)
@@ -80,7 +84,8 @@ class TwinSearch:
         self.archive.append(dict(vec=vec, team=team, match_id=match_id, t=t, outcome=outcome, meta=meta or {}))
 
     def closest_earlier(self, vec, team, match_id, t, outcome):
-        """The nearest earlier attack by the same team with a different result. Returns None when nothing is close enough."""
+        """The nearest earlier attack by the same team with a different result. Returns None when nothing is close
+        enough."""
         cands = [
             o
             for o in self.archive
@@ -95,8 +100,8 @@ class TwinSearch:
             return dict(found=False, gap_m=res["gap_m"], closer_than=1 - pct)
         last = min(vec["n_real"], o["vec"]["n_real"]) - 1  # the last moment both attacks were still running
         per = res["D"]["per"][:, : last + 1]  # defenders of the new attack against their pairs
-        # the first defender to stand differently, counting only one who is near the ball in either attack at that moment:
-        # a striker drifting on the far side is a difference, and it explains nothing
+        # the first defender to stand differently, counting only one who is near the ball in either attack at that
+        # moment: a striker drifting on the far side is a difference, and it explains nothing
         pb = o["vec"]["D"][res["D"]["perm"]]
         near = (np.linalg.norm(vec["D"][:, : last + 1] - vec["ball"][None, : last + 1], axis=-1) < NEAR_BALL_M) | (
             np.linalg.norm(pb[:, : last + 1] - o["vec"]["ball"][None, : last + 1], axis=-1) < NEAR_BALL_M

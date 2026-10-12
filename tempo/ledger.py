@@ -1,5 +1,5 @@
-"""Fact ledger, cue store and checkpoints. SQLite locally; the same four tables map onto Azure Cosmos DB containers partitioned by match.
-Writes are idempotent by ID, so replaying a stretch of match after a failure changes nothing."""
+"""Fact ledger, cue store and checkpoints. SQLite locally; the same four tables map onto Azure Cosmos DB containers
+partitioned by match. Writes are idempotent by ID, so replaying a stretch of match after a failure changes nothing."""
 
 import json
 import sqlite3
@@ -53,7 +53,8 @@ class Ledger:
         return json.loads(row[0]) if row and not row[1] else None
 
     def facts(self, match_id, as_of, kind=None, subject=None, since=0.0):
-        """Facts that existed at match time `as_of`. Nothing later can be read: this is the no-peeking rule for everything downstream."""
+        """Facts that existed at match time `as_of`. Nothing later can be read: this is the no-peeking rule for
+        everything downstream."""
         q, args = (
             "select body from facts where match_id=? and match_time<=? and match_time>=? and withdrawn=0",
             [match_id, as_of, since],

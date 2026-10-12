@@ -1,12 +1,10 @@
-"""The storyline of the demo match. A generated match is otherwise unscripted; this layer plants the few things the demo is built on
-and records each one, so the evaluation can check the pipeline finds what was planted.
+"""The storyline of the demo match. A generated match is otherwise unscripted; this layer plants the few things the demo
+is built on and records each one, so the evaluation can check the pipeline finds what was planted.
 
-Planted: Skoles (Harbour City 6) is booked at 47 minutes. The same Northgate attack is run at 12 and at 71 minutes: at 12 Skoles steps
-in and the move ends in a saved shot from wide; at 71, on a yellow, he holds off and Roonay scores."""
+Planted: Skoles (Harbour City 6) is booked at 47 minutes. The same Northgate attack is run at 12 and at 71 minutes: at
+12 Skoles steps in and the move ends in a saved shot from wide; at 71, on a yellow, he holds off and Roonay scores."""
 
 import numpy as np
-
-from .sim import PX
 
 ROONAY, KESSLER, OKOYE = 7, 6, 8  # Northgate 10, 8, 7 (indices into the 22)
 SKOLES = 11 + 5  # Harbour City 6
@@ -123,7 +121,8 @@ class DemoStory:
             self.planted.append(dict(kind="attack", variant=arg, restart=round(sim.clock + 14.0, 1)))
 
     def allow_booking(self, sim, dfn):
-        """The demo match is about one booked player. Chance gives at most one other yellow, so the card on screen means something."""
+        """The demo match is about one booked player. Chance gives at most one other yellow, so the card on screen means
+        something."""
         return dfn != SKOLES and int(sim.booked.sum()) - int(sim.booked[SKOLES]) < 1
 
     def duel_override(self, sim, dfn, car):
@@ -146,10 +145,10 @@ VARGA = 15  # Harbour City's number 3, a full back
 
 
 class SustainedStory:
-    """A change that lasts, for testing whether an investigator can find one. Nothing is staged: one player's own numbers change
-    from a given minute and the match plays on. Measured on six seeds on 11 October: the change shows in the player's own
-    numbers (Varga's top speed falls from about 6.4 to 4.5 m/s) and does not move the match, because full backs here are
-    rarely run at. So these matches cannot yet answer "why did the match turn".
+    """A change that lasts, for testing whether an investigator can find one. Nothing is staged: one player's own
+    numbers change from a given minute and the match plays on. Measured on six seeds on 11 October: the change shows in
+    the player's own numbers (Varga's top speed falls from about 6.4 to 4.5 m/s) and does not move the match, because
+    full backs here are rarely run at. So these matches cannot yet answer "why did the match turn".
       fades           Varga loses pace from minute 50, down to 70 in 100 of his top speed by minute 62
       stops_tackling  Skoles is booked at his first duel after minute 47 and then goes into far fewer challenges
       none            nothing changes, as a control"""

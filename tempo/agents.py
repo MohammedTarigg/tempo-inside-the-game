@@ -1,17 +1,15 @@
 """The writing path and its checks.
 
-Which facts belong to a moment is decided by code. A writer turns them into one sentence per language, and the Verifier holds
-every sentence to the facts before it leaves. FactTools are the read-only tools an agent gets: nothing after the moment's own
-match time, and scope taken from who is calling. The agents themselves (two investigators and a gate, for a turn nobody
-scripted) are described in 01-architecture.md section 6 and are not in this build.
+Which facts belong to a moment is decided by code. A writer turns them into one sentence per language, and the Verifier
+holds every sentence to the facts before it leaves. FactTools are the read-only tools an agent gets: nothing after the
+moment's own match time, and scope taken from who is calling. The agents themselves (two investigators and a gate, for a
+turn nobody scripted) are described in 01-architecture.md section 6 and are not in this build.
 
-Model calls go through a Backend. LocalBackend writes from templates, so the whole pipeline runs with no cloud and serves as the
-fallback when a model is slow or down. FoundryBackend is the seam for a model on Azure AI Foundry."""
+Model calls go through a Backend. LocalBackend writes from templates, so the whole pipeline runs with no cloud and
+serves as the fallback when a model is slow or down. FoundryBackend is the seam for a model on Azure AI Foundry."""
 
 import re
 import time
-
-from .contracts import fact
 
 
 class ScopeError(Exception):
@@ -79,8 +77,8 @@ AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
 
 class LocalBackend:
-    """Deterministic writer. Every sentence is assembled from the facts it is given, so it passes the Verifier by construction.
-    A sentence states facts side by side. It never says one caused another."""
+    """Deterministic writer. Every sentence is assembled from the facts it is given, so it passes the Verifier by
+    construction. A sentence states facts side by side. It never says one caused another."""
 
     name = "local-templates"
 
@@ -126,8 +124,15 @@ class LocalBackend:
         if kind == "pressure":
             pr = ctx["pressure"]
             if lang == "ar":
-                return f"خلال آخر {pr['window_min']} دقائق كان {pr['now']} من كل 100 من اللعب في نصف ملعب {ctx['other_name_ar']}، مقابل {pr['before']} قبلها."
-            return f"{ctx['team_name']} have had {pr['now']} in 100 of the play in {ctx['other_name']}'s half over the last {pr['window_min']} minutes, up from {pr['before']}."
+                return (
+                    f"خلال آخر {pr['window_min']} دقائق كان {pr['now']} من كل 100 من اللعب"
+                    f" في نصف ملعب {ctx['other_name_ar']}"
+                    f"، مقابل {pr['before']} قبلها."
+                )
+            return (
+                f"{ctx['team_name']} have had {pr['now']} in 100 of the play in {ctx['other_name']}'s half"
+                f" over the last {pr['window_min']} minutes, up from {pr['before']}."
+            )
         if kind == "form":
             p = n[ctx["player"]]
             return {
@@ -138,8 +143,8 @@ class LocalBackend:
 
     @staticmethod
     def numbers(kind, ctx, lang="en"):
-        """The numbers a sentence of this kind must contain, in order, taken from the facts. The Verifier holds the text to this
-        list, so a number that is real but belongs to a different fact is still caught."""
+        """The numbers a sentence of this kind must contain, in order, taken from the facts. The Verifier holds the text
+        to this list, so a number that is real but belongs to a different fact is still caught."""
         if kind == "card":
             return [ctx["minute"]]
         if kind == "pressure":
@@ -163,8 +168,8 @@ class LocalBackend:
 
     @staticmethod
     def who(kind, ctx):
-        """The players a sentence of this kind must name, in order. As with numbers, the Verifier holds the text to this list:
-        a player who is in a cited fact but does not belong in this sentence is still caught."""
+        """The players a sentence of this kind must name, in order. As with numbers, the Verifier holds the text to this
+        list: a player who is in a cited fact but does not belong in this sentence is still caught."""
         if kind in ("card", "form"):
             return [ctx["player"]]
         if kind == "goal":
@@ -173,8 +178,8 @@ class LocalBackend:
 
     @staticmethod
     def proof(kind, ctx, lang="en"):
-        """What stands behind the line, as data and not prose: each item is one fact with its number. This is what a viewer who
-        wants more gets, in place of a longer sentence."""
+        """What stands behind the line, as data and not prose: each item is one fact with its number. This is what a
+        viewer who wants more gets, in place of a longer sentence."""
         ar = lang == "ar"
         n = ctx["names_ar"] if ar else ctx.get("names", {})
         m_unit = "م" if ar else "m"
@@ -283,7 +288,8 @@ class LocalBackend:
 
 
 class FoundryBackend:
-    """Seam for Microsoft Agent Framework on Azure AI Foundry. Not wired in this local build: it needs the subscription."""
+    """Seam for Microsoft Agent Framework on Azure AI Foundry. Not wired in this local build: it needs the
+    subscription."""
 
     name = "foundry"
 
@@ -294,7 +300,8 @@ class FoundryBackend:
 
 
 class Breaker:
-    """Three failures or timeouts inside 60 seconds open it for 120. While open no call is tried. Then one probe is let through."""
+    """Three failures or timeouts inside 60 seconds open it for 120. While open no call is tried. Then one probe is let
+    through."""
 
     def __init__(self, limit=3, window=60.0, cool=120.0):
         self.limit, self.window, self.cool, self.fails, self.open_until = limit, window, cool, [], 0.0
@@ -324,10 +331,11 @@ def _numbers(text):
 def verify(text, facts, names, allowed_numbers=(), expected=None, expected_names=None):
     """Code check. Returns (ok, reasons).
     - Every number in the text must come from a cited fact.
-    - When `expected` is given (the ordered numbers the facts dictate for this sentence), the text must contain exactly those,
-      in that order. This catches a real number used in the wrong place.
+    - When `expected` is given (the ordered numbers the facts dictate for this sentence), the text must contain exactly
+      those, in that order. This catches a real number used in the wrong place.
     - Every player named must be in a cited fact. When `expected_names` is given (the players the facts dictate for this
-      sentence, in order), the text must name exactly those, in that order. This catches a real player named in the wrong place.
+      sentence, in order), the text must name exactly those, in that order. This catches a real player named in the
+      wrong place.
     - No wording may claim more than a fact holds."""
     pool = set(float(x) for x in allowed_numbers)
     people = set()
@@ -379,8 +387,9 @@ def verify(text, facts, names, allowed_numbers=(), expected=None, expected_names
 
 # ---------------- the workflow ----------------
 class Writer:
-    """The writing path for a moment whose kind is known: which facts belong together is decided by code, the sentence is one
-    writer call per language, and every sentence is checked before it leaves. A checkpoint after each step lets a restart resume."""
+    """The writing path for a moment whose kind is known: which facts belong together is decided by code, the sentence
+    is one writer call per language, and every sentence is checked before it leaves. A checkpoint after each step lets a
+    restart resume."""
 
     def __init__(self, ledger, cues, meta, backend=None):
         self.ledger, self.cues, self.meta = ledger, cues, meta
@@ -392,8 +401,8 @@ class Writer:
 
     @staticmethod
     def _claims(moment):
-        """What this moment lets us say, each with the facts it rests on. Nothing here is a cause: a reason is three instruments
-        pointing at one player, and it is worded as facts side by side."""
+        """What this moment lets us say, each with the facts it rests on. Nothing here is a cause: a reason is three
+        instruments pointing at one player, and it is worded as facts side by side."""
         kind = moment["kind"]
         if kind == "goal":
             out = (
@@ -560,7 +569,8 @@ class Writer:
 
     # ----- fixed-time cards -----
     def kickoff(self, habits):
-        """Three things to watch, drawn on the pitch as marks before the whistle. Each is a season habit with its sample size."""
+        """Three things to watch, drawn on the pitch as marks before the whistle. Each is a season habit with its sample
+        size."""
         out = []
         for h in habits[:3]:
             c = self.cues.propose(
@@ -586,8 +596,8 @@ class Writer:
         return out
 
     def interval_card(self, t, form, items, calls=None):
-        """Half time: three things still open. Full time: the three moments that moved the match most, and what became of
-        the calls made before kick-off."""
+        """Half time: three things still open. Full time: the three moments that moved the match most, and what became
+        of the calls made before kick-off."""
         ids = [i for it in items for i in it["fact_ids"]] + [i for c in (calls or []) for i in c["fact_ids"]]
         payload = dict(cards=[dict(title=it["title"], text=it["text"], mark=it.get("mark")) for it in items[:3]])
         if calls:

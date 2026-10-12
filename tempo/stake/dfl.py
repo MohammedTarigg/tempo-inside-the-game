@@ -1,12 +1,14 @@
-"""Reader for the DFL open tracking set (Bassek et al. 2025, CC BY 4.0), from the compact cache made by spike/real-data/convert.py.
-Used only to train and evaluate the stake model and to check the generator. The product never ingests it."""
+"""Reader for the DFL open tracking set (Bassek et al. 2025, CC BY 4.0), from the compact cache made by
+spike/real-data/convert.py. Used only to train and evaluate the stake model and to check the generator. The product
+never ingests it."""
 
 import glob
 import json
 import os
+
 import numpy as np
 
-HZ = 25
+from ..constants import HZ
 
 
 def load(cache):

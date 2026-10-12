@@ -1,9 +1,13 @@
-"""Draws the Tempo mark (black and white) and the two club crests (in club colours) as SVG. Everything is built from measured
-shapes, so a change of proportion is a change of one number. Run: python3 ui/brand/make.py"""
+"""Draws the Tempo mark (black and white) and the two club crests (in club colours) as SVG. Everything is built from
+measured shapes, so a change of proportion is a change of one number. The files are written to ui/brand/.
 
-import math, os
+    python3 tools/brand_marks.py"""
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+import math
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BRAND = os.path.join(ROOT, "ui", "brand")
 BLACK, WHITE = "#000", "#fff"
 ORANGE, SKY, NAVY = "#FF8A3D", "#7FD0F5", "#12233A"
 pts = lambda p: " ".join(f"{x:.1f},{y:.1f}" for x, y in p)
@@ -19,7 +23,8 @@ def mark(c, Ro=34, w=13, stub=20, rp=11, dx=7, cx=60, cy=60):
     sw = w * 0.78
     return (
         f'<circle cx="{cx}" cy="{cy}" r="{Ro - w / 2}" fill="none" stroke="{c}" stroke-width="{w}"/>'
-        f'<rect x="{cx - sw / 2}" y="{cy - Ro - stub}" width="{sw}" height="{stub + w / 2}" fill="{c}"/><rect x="{cx - sw / 2}" y="{cy + Ro - w / 2}" width="{sw}" height="{stub + w / 2}" fill="{c}"/>'
+        f'<rect x="{cx - sw / 2}" y="{cy - Ro - stub}" width="{sw}" height="{stub + w / 2}" fill="{c}"/>'
+        f'<rect x="{cx - sw / 2}" y="{cy + Ro - w / 2}" width="{sw}" height="{stub + w / 2}" fill="{c}"/>'
         f'<circle cx="{cx + dx}" cy="{cy}" r="{rp}" fill="{c}"/>'
     )
 
@@ -36,8 +41,11 @@ def northgate():
         f'<rect x="34" y="{y - 2.5}" width="52" height="5"/>' for y in (70, 86, 102)
     )
     return svg(
-        f'<defs><clipPath id="g"><path d="{inner}"/></clipPath></defs><path d="{outer}" fill="{ORANGE}" stroke="{WHITE}" stroke-width="5" stroke-linejoin="round"/><path d="{inner}" fill="{NAVY}"/>'
-        f'<g clip-path="url(#g)" fill="{ORANGE}">{bars}</g><polygon points="{pts([(60, 17), (51, 36), (60, 31), (69, 36)])}" fill="{NAVY}"/>',
+        f'<defs><clipPath id="g"><path d="{inner}"/></clipPath></defs>'
+        f'<path d="{outer}" fill="{ORANGE}" stroke="{WHITE}" stroke-width="5" stroke-linejoin="round"/>'
+        f'<path d="{inner}" fill="{NAVY}"/>'
+        f'<g clip-path="url(#g)" fill="{ORANGE}">{bars}</g>'
+        f'<polygon points="{pts([(60, 17), (51, 36), (60, 31), (69, 36)])}" fill="{NAVY}"/>',
         "Northgate crest",
     )
 
@@ -51,11 +59,18 @@ def harbour():
         f'<polygon points="{pts([(60 + s * 6, 42), (60 + s * 56, 24), (60 + s * 56, 52)])}"/>' for s in (-1, 1)
     )
     return svg(
-        f'<defs><clipPath id="r"><circle cx="{c}" cy="{c}" r="{r}"/></clipPath><clipPath id="t"><polygon points="{tower}"/></clipPath></defs>'
-        f'<circle cx="{c}" cy="{c}" r="{r}" fill="{SKY}"/><g clip-path="url(#r)"><g fill="{WHITE}" opacity=".6">{beams}</g><rect x="0" y="86" width="120" height="40" fill="{NAVY}"/>'
-        f'<polyline points="{wave(96)}" fill="none" stroke="{SKY}" stroke-width="3.5" stroke-linecap="round"/><polyline points="{wave(106)}" fill="none" stroke="{SKY}" stroke-width="3.5" stroke-linecap="round" opacity=".6"/></g>'
-        f'<polygon points="{tower}" fill="{WHITE}"/><g clip-path="url(#t)" fill="{NAVY}"><rect x="40" y="56" width="40" height="9"/><rect x="40" y="72" width="40" height="9"/></g>'
-        f'<rect x="52" y="37" width="16" height="11" rx="1.5" fill="{WHITE}" stroke="{NAVY}" stroke-width="3"/><polygon points="{pts([(49, 37), (71, 37), (60, 25)])}" fill="{NAVY}"/>'
+        f'<defs><clipPath id="r"><circle cx="{c}" cy="{c}" r="{r}"/></clipPath><clipPath id="t">'
+        f'<polygon points="{tower}"/></clipPath></defs>'
+        f'<circle cx="{c}" cy="{c}" r="{r}" fill="{SKY}"/><g clip-path="url(#r)">'
+        f'<g fill="{WHITE}" opacity=".6">{beams}</g><rect x="0" y="86" width="120" height="40" fill="{NAVY}"/>'
+        f'<polyline points="{wave(96)}" fill="none" stroke="{SKY}" stroke-width="3.5" stroke-linecap="round"/>'
+        f'<polyline points="{wave(106)}" fill="none" stroke="{SKY}" stroke-width="3.5"'
+        f' stroke-linecap="round" opacity=".6"/>'
+        f"</g>"
+        f'<polygon points="{tower}" fill="{WHITE}"/><g clip-path="url(#t)" fill="{NAVY}">'
+        f'<rect x="40" y="56" width="40" height="9"/><rect x="40" y="72" width="40" height="9"/></g>'
+        f'<rect x="52" y="37" width="16" height="11" rx="1.5" fill="{WHITE}" stroke="{NAVY}" stroke-width="3"/>'
+        f'<polygon points="{pts([(49, 37), (71, 37), (60, 25)])}" fill="{NAVY}"/>'
         f'<circle cx="{c}" cy="{c}" r="{r}" fill="none" stroke="{WHITE}" stroke-width="5"/>',
         "Harbour City crest",
     )
@@ -75,6 +90,13 @@ FILES = {
     "northgate.svg": northgate(),
     "harbour-city.svg": harbour(),
 }
-for name, body in FILES.items():
-    open(os.path.join(HERE, name), "w").write(body)
-print("wrote", ", ".join(FILES))
+
+
+def main():
+    for name, body in FILES.items():
+        open(os.path.join(BRAND, name), "w").write(body)
+    print("wrote", ", ".join(FILES))
+
+
+if __name__ == "__main__":
+    main()

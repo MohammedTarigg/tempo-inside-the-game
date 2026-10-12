@@ -7,16 +7,16 @@ import bisect
 import json
 import os
 import sys
+
 import numpy as np
 
 from ..contracts import DEFENDING_CHALLENGE
 from ..generator.export import match_data
 from ..generator.sim import Sim
+from ..paths import ARTIFACTS
 from ..stake import dfl
-from ..stake.features import HIST, HZ, window_features
-from ..stake.model import ARTIFACTS, CardState, StakeModel
-
-STEP = 3
+from ..stake.features import HIST, HZ, STEP, window_features
+from ..stake.model import CardState, StakeModel
 
 
 def halves_of_generated(md):
@@ -68,7 +68,6 @@ def measure(match, model, keepers_by_pos=None):
         step = np.linalg.norm(np.diff(xy, axis=1), axis=2)
         sp = step * HZ
         lv = live[1:]
-        mins = lv.sum() / HZ / 60
         r["live_s"] += lv.sum() / HZ
         for j in range(n):
             if j in gk or np.isnan(xy[j, :, 0]).mean() > 0.5:

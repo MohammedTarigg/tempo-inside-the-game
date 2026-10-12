@@ -1,5 +1,6 @@
-"""Data contracts. Events follow the Opta feed's shape, tracking follows the Second Spectrum shape, and facts and cues are ours.
-IDs are deterministic: the same stretch of match always yields the same IDs, so a replay after a failure cannot show anything twice."""
+"""Data contracts. Events follow the Opta feed's shape, tracking follows the Second Spectrum shape, and facts and cues
+are ours. IDs are deterministic: the same stretch of match always yields the same IDs, so a replay after a failure
+cannot show anything twice."""
 
 import hashlib
 import json
@@ -100,7 +101,8 @@ VARIANT_KEYS = ("lang", "depth", "player", "level", "defender", "attacker", "mar
 
 
 def cue(match_id, match_time, form, screen, payload, fact_ids, valid_for=2.0, priority=5, when="now"):
-    # the ID covers what makes this cue this cue: two languages of one sentence are two cues, a replay of the same one is not
+    # the ID covers what makes this cue this cue: two languages of one sentence are two cues, a replay of the same one
+    # is not
     variant = [str(payload.get(k)) for k in VARIANT_KEYS if k in payload]
     return dict(
         cue_id=stable_id("c", match_id, form, screen, sorted(fact_ids), round(float(match_time), 1), variant),

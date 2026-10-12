@@ -1,5 +1,5 @@
 {
- "ran_at": "2026-10-12 18:08",
+ "ran_at": "2026-10-12 20:14",
  "stake_model_provisional": false,
  "passed": 14,
  "total": 14,
@@ -62,12 +62,12 @@
   {
    "check": "reflex path under 10 ms a frame",
    "passed": true,
-   "detail": "p50 0.017 ms, p95 0.375 ms, p99 0.442 ms, slowest 46.6 ms, features and network included"
+   "detail": "p50 0.018 ms, p95 0.408 ms, p99 0.598 ms, slowest 15.1 ms, features and network included"
   },
   {
    "check": "writing path well inside the replay window",
    "passed": true,
-   "detail": "7 moments, slowest 0.6 ms with the local backend (a cloud model will be slower; the limit is 10 s)"
+   "detail": "7 moments, slowest 0.7 ms with the local backend (a cloud model will be slower; the limit is 10 s)"
   },
   {
    "check": "full stake cards issued stay within the match cap",
@@ -110,21 +110,21 @@
   },
   "verifier_rejections": 0,
   "frame_ms": {
-   "p50": 0.017,
-   "p95": 0.375,
-   "p99": 0.442,
-   "max": 46.6
+   "p50": 0.018,
+   "p95": 0.408,
+   "p99": 0.598,
+   "max": 15.1
   },
   "writer_ms": [
-   0.61,
-   0.29,
-   0.27,
-   0.32,
-   0.52,
-   0.43,
-   0.29
+   0.67,
+   0.3,
+   0.3,
+   0.31,
+   0.56,
+   0.42,
+   0.35
   ],
-  "wall_seconds": 11.0,
+  "wall_seconds": 12.0,
   "writer_backend": "local-templates",
   "stake_model": {
    "provisional": false,

@@ -1,5 +1,6 @@
-"""Listener. In production this is Azure AI Speech transcribing the commentary feed with the squad names as its phrase list. Locally it
-reads the generator's commentary lines. Either way its output is the same: a player was named at this match time."""
+"""Listener. In production this is Azure AI Speech transcribing the commentary feed with the squad names as its phrase
+list. Locally it reads the generator's commentary lines. Either way its output is the same: a player was named at this
+match time."""
 
 
 class Listener:

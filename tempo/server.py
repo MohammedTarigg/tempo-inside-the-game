@@ -6,9 +6,11 @@
     GET /replay               positions at 5 frames a second, as JSON
     GET /cues                 every cue, in match-time order
     GET /facts/<fact_id>      one fact, for the evidence drawer
-    GET /stream?speed=20      server-sent events: each cue when the match clock reaches it, `speed` times faster than real time
+    GET /stream?speed=20      server-sent events: each cue when the match clock reaches it, `speed` times faster than
+                              real time
 
-In production the cues arrive over Azure Web PubSub and each screen releases them by its own picture's match time. The payloads are the same."""
+In production the cues arrive over Azure Web PubSub and each screen releases them by its own picture's match time. The
+payloads are the same."""
 
 import json
 import os
@@ -19,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from .paths import RUNS
 
 
 def make_handler(run_dir):
@@ -86,7 +88,7 @@ def make_handler(run_dir):
 def main(argv):
     run = argv[0] if argv else "m_demo"
     port = int(argv[1]) if len(argv) > 1 else 8765
-    srv = ThreadingHTTPServer(("127.0.0.1", port), make_handler(os.path.join(ROOT, "runs", run)))
+    srv = ThreadingHTTPServer(("127.0.0.1", port), make_handler(os.path.join(RUNS, run)))
     print(f"serving runs/{run} on http://127.0.0.1:{port}  (meta, replay, cues, facts/<id>, stream?speed=20)")
     srv.serve_forever()
 

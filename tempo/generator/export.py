@@ -1,5 +1,6 @@
-"""Turns a finished simulation into what a data provider would deliver: a tracking stream in the Second Spectrum shape and an event
-stream in the Opta shape, joined on player IDs, plus match metadata. Also the reverse adapter the pipeline uses to read tracking."""
+"""Turns a finished simulation into what a data provider would deliver: a tracking stream in the Second Spectrum shape
+and an event stream in the Opta shape, joined on player IDs, plus match metadata. Also the reverse adapter the pipeline
+uses to read tracking."""
 
 import numpy as np
 
@@ -66,7 +67,8 @@ def to_feed_frame(md, i):
 
 
 def from_feed_frame(frame, ids):
-    """A feed frame back to arrays: positions in the order of `ids` (NaN when a player is absent), ball, live, possession."""
+    """A feed frame back to arrays: positions in the order of `ids` (NaN when a player is absent), ball, live,
+    possession."""
     pos = np.full((len(ids), 2), np.nan)
     where = {p: k for k, p in enumerate(ids)}
     for side in ("homePlayers", "awayPlayers"):

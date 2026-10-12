@@ -1,19 +1,19 @@
 """Reflex service: everything that must be decided inside a tracking frame, in plain code plus one small network.
 
-It keeps a ledger for each player, scores the stake model for players near the ball, runs the two-level card for anyone carrying
-a booking, turns events into facts, and reports the moments the slower writing path should look at. It reads frames strictly in
-order and never looks ahead."""
+It keeps a ledger for each player, scores the stake model for players near the ball, runs the two-level card for anyone
+carrying a booking, turns events into facts, and reports the moments the slower writing path should look at. It reads
+frames strictly in order and never looks ahead."""
 
 import math
+
 import numpy as np
 
 from . import twin as twinmod
+from .contracts import Q_SECOND_YELLOW, Q_YELLOW, TYPE, fact
 from .ghost import Ghost
-from .contracts import Q_RED, Q_SECOND_YELLOW, Q_YELLOW, TYPE, fact
-from .stake.features import HIST, HZ, window_features
+from .stake.features import HIST, HZ, STEP, window_features
 from .stake.model import CardState
 
-STEP = 3
 PRESS_S = 300  # a pressure change compares the last five minutes with the five before
 
 
@@ -55,7 +55,8 @@ class Reflex:
         self.mom = 0.0
         self.last_turn = -1e9
         self.mom_hist = []
-        self.terr = []  # one entry a second for the last ten minutes: 0 ball dead, 1 in the away half, 2 in the home half
+        # one entry a second for the last ten minutes: 0 ball dead, 1 in the away half, 2 in the home half
+        self.terr = []
         self.high_wins = []  # (time, team) for each ball won in the other team's half
         self.duels = {}  # (defender, attacker) -> [defender wins, attacker wins]
         self.pending_duel = None
@@ -93,7 +94,8 @@ class Reflex:
         )
 
     def restore(self, s, frames, upto):
-        """Reload a snapshot and refill the frame window from the feed log, which is how a restarted replica catches up."""
+        """Reload a snapshot and refill the frame window from the feed log, which is how a restarted replica catches
+        up."""
         self.frame_no, self.score = s["frame_no"], list(s["score"])
         self.dist, self.fast, self.top, self.minutes = (np.array(s[k]) for k in ("dist", "fast", "top", "minutes"))
         self.mom, self.last_turn = s["mom"], s["last_turn"]
@@ -170,8 +172,9 @@ class Reflex:
         return moments
 
     def _pressure(self, t, team):
-        """A change of pressure towards `team`: at least 70 in 100 of the play in the other team's half over the last five minutes,
-        and at least 30 more than in the five before. Everything here is behind `t`, so nothing is read ahead."""
+        """A change of pressure towards `team`: at least 70 in 100 of the play in the other team's half over the last
+        five minutes, and at least 30 more than in the five before. Everything here is behind `t`, so nothing is read
+        ahead."""
         want = 1 if team == 0 else 2  # the code for the half this team attacks
         now, before = self.terr[-PRESS_S:], self.terr[-2 * PRESS_S : -PRESS_S]
         live_now, live_before = sum(1 for x in now if x), sum(1 for x in before if x)
@@ -212,9 +215,10 @@ class Reflex:
         return dict(kind="pressure", t=t, fact_ids=[f["fact_id"]], team=team, now=a, before=b, won_high=won)
 
     def _reason(self, t, m, frames_view, shot_frame, team, home_dir):
-        """The reason rule. Three instruments that do not share a method have to point at the same defender: the earlier attempt
-        (he stood differently then), the ghost (he is further off the ball than an average defender), and the ledger (a yellow
-        card from before the goal). The ghost says who and cannot say whether, so it never names a reason alone."""
+        """The reason rule. Three instruments that do not share a method have to point at the same defender: the earlier
+        attempt (he stood differently then), the ghost (he is further off the ball than an average defender), and the
+        ledger (a yellow card from before the goal). The ghost says who and cannot say whether, so it never names a
+        reason alone."""
         if self.ghost is None or frames_view is None or shot_frame is None:
             return
         off = self.ghost.at_shot(frames_view, self.meta["keepers"], shot_frame, team, home_dir)
@@ -465,13 +469,14 @@ class Reflex:
         return None if ref is None else float(np.mean(np.asarray(ref) <= value) * 100)
 
     def _scale(self, kind, rare_pct):
-        """What is usual for this measure in the season so far, and the value at which it counts as rare. A front end draws
-        the new value against these two marks, so nobody has to read a percentile."""
+        """What is usual for this measure in the season so far, and the value at which it counts as rare. A front end
+        draws the new value against these two marks, so nobody has to read a percentile."""
         ref = np.asarray(self.base[kind], float)
         return dict(usual=round(float(np.median(ref)), 1), rare=round(float(np.percentile(ref, rare_pct)), 1))
 
     def running_facts(self, t):
-        """Each player's running so far, against the season's usual for his position. Plain numbers, no claim about tiredness."""
+        """Each player's running so far, against the season's usual for his position. Plain numbers, no claim about
+        tiredness."""
         out = []
         usual = self.base.get("distance_per_minute")
         for p, pid in enumerate(self.ids):

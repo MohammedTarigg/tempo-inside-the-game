@@ -1,16 +1,16 @@
 """Match generator. Simulates 22 players and a ball at 25 frames a second and logs events as a data provider would.
 
-It is a behaviour model, written to be checked against real football: tempo/eval/realism.py runs the stake model, trained on
-real tracking, over its output. Everything it emits is synthetic. Clubs and players are fictional."""
+It is a behaviour model, written to be checked against real football: tempo/eval/realism.py runs the stake model,
+trained on real tracking, over its output. Everything it emits is synthetic. Clubs and players are fictional."""
 
 import math
+
 import numpy as np
 
-from ..contracts import Q_RED, Q_SECOND_YELLOW, Q_YELLOW, event
+from ..constants import HZ, PX, PY
+from ..contracts import Q_SECOND_YELLOW, Q_YELLOW, event
 
-HZ = 25
 DT = 1.0 / HZ
-PX, PY = 52.5, 34.0
 G = 9.81
 # 4-3-3 anchors: x from own goal (0) to most advanced (1), y from the team's right (-0.5) to left (0.5)
 ANCHOR = np.array(
@@ -175,8 +175,8 @@ class Sim:
 
     @staticmethod
     def ground_kick(d, arrive):
-        """How hard to strike a ball along the ground so that it covers d metres and is still doing `arrive` m/s when it gets
-        there. Returns the speed off the boot and the time it takes."""
+        """How hard to strike a ball along the ground so that it covers d metres and is still doing `arrive` m/s when it
+        gets there. Returns the speed off the boot and the time it takes."""
         lo, hi = arrive, 42.0
         for _ in range(16):
             v0 = (lo + hi) / 2
@@ -208,7 +208,8 @@ class Sim:
         self.bvz = 0.0  # a first touch takes most of the pace off it
 
     def dead(self, kind, spot, team, seconds, taker=None, has=False):
-        """Play stops. The ball is not moved: it carries on rolling, and the taker fetches it and brings it to the spot."""
+        """Play stops. The ball is not moved: it carries on rolling, and the taker fetches it and brings it to the
+        spot."""
         self.state = "dead"
         self.restart = dict(
             kind=kind,
@@ -440,7 +441,6 @@ class Sim:
         self.clock += DT
         if self.story:
             self.story.on_frame(self)
-        live = self.state != "dead"
         # where everyone wants to be
         tgt = np.zeros((22, 2))
         urgent = np.zeros(22, bool)
@@ -519,8 +519,8 @@ class Sim:
         elif self.state == "carried":
             p = self.carrier
             t = self.team[p]
-            # The ball only changes pace when it is at someone's feet. Within a metre he has it under control and keeps it
-            # just ahead of him, the way a dribbler does with small touches. Further away he has to run to it first.
+            # The ball only changes pace when it is at someone's feet. Within a metre he has it under control and keeps
+            # it just ahead of him, the way a dribbler does with small touches. Further away he has to run to it first.
             reach = float(np.linalg.norm(self.ball[:2] - self.pos[p]))
             self.controlled = reach <= 1.0 and self.ball[2] < 0.6
             if self.controlled:
@@ -700,8 +700,8 @@ class Sim:
         )
 
     def bodies(self):
-        """Two players cannot stand in the same place. Where two bodies overlap they are moved apart along the line between
-        them and lose the speed they were closing at, so a man runs into another and not through him."""
+        """Two players cannot stand in the same place. Where two bodies overlap they are moved apart along the line
+        between them and lose the speed they were closing at, so a man runs into another and not through him."""
         on = np.flatnonzero(~self.off)
         P = self.pos[on]
         D = P[:, None, :] - P[None, :, :]
@@ -721,7 +721,8 @@ class Sim:
                 self.vel[j] += n * closing / 2
 
     def finish_shot(self):
-        """The shot has reached the goal, the keeper or a defender. Nothing is moved by hand: the ball keeps its own motion."""
+        """The shot has reached the goal, the keeper or a defender. Nothing is moved by hand: the ball keeps its own
+        motion."""
         p, out = self.shooter, self.shot_outcome
         t = self.team[p]
         gk = 11 * (1 - t)
@@ -760,8 +761,9 @@ class Sim:
                 self.bvz = self.rng.uniform(0.5, 3)
 
     def kickoff_marks(self, where, team, taker, mate=None):
-        """Where everyone may stand for a kick-off, written into `where` (22 by 2). The two men at the ball are both from the
-        side taking it. Everyone is in his own half, and the other side stays out of the centre circle until the ball is played."""
+        """Where everyone may stand for a kick-off, written into `where` (22 by 2). The two men at the ball are both
+        from the side taking it. Everyone is in his own half, and the other side stays out of the centre circle until
+        the ball is played."""
         for i in range(22):
             if self.off[i]:
                 continue

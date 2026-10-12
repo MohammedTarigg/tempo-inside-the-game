@@ -1,5 +1,6 @@
-"""Cue service. Applies the producer's rules, one-per-slot priorities, cooldowns and caps, then stores and publishes each cue.
-Every decision, shown or held back, is written to the audit log with its reason, which is what the desk and the held-back counter read."""
+"""Cue service. Applies the producer's rules, one-per-slot priorities, cooldowns and caps, then stores and publishes
+each cue. Every decision, shown or held back, is written to the audit log with its reason, which is what the desk and
+the held-back counter read."""
 
 from .contracts import cue
 

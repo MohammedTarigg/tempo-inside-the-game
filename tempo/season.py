@@ -1,17 +1,19 @@
-"""The season behind a match: what is usual, each team's habits, and the archive of earlier attacks that twin search looks through.
+"""The season behind a match: what is usual, each team's habits, and the archive of earlier attacks that twin search
+looks through.
 
-Built by running the generator. The default is a small sample so a laptop finishes in a couple of minutes; pass a larger n for more.
-Every habit carries the number of matches it rests on."""
+Built by running the generator. The default is a small sample so a laptop finishes in a couple of minutes; pass a larger
+n for more. Every habit carries the number of matches it rests on."""
 
 import json
 import os
+
 import numpy as np
 
 from . import twin
 from .contracts import TYPE
 from .generator.export import match_data
 from .generator.sim import AWAY, HOME, HZ, Sim
-from .stake.model import ARTIFACTS
+from .paths import ARTIFACTS
 
 PATH = os.path.join(ARTIFACTS, "season.json")
 

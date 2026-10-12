@@ -1,11 +1,14 @@
-"""The one feature path for the stake model. Training and live scoring both call window_features, so they cannot drift apart.
+"""The one feature path for the stake model. Training and live scoring both call window_features, so they cannot drift
+apart.
 
 A window is the last HIST tracking frames. Nothing after the last frame is read."""
 
 import numpy as np
 
-HZ = 25
+from ..constants import HZ
+
 LAGS = [0, 2, 4, 7, 10, 15, 20, 30, 40, 50]  # frames back from now: two seconds of history
+STEP = 3  # the model is scored on every third frame, in training, in evaluation and live
 HIST = 62  # frames a window must hold (longest lag + smoothing + velocity)
 NEAR = 12.0  # a defender is scored only within this distance of a live ball
 N_FEAT = 20
