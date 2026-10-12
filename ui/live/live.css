@@ -573,7 +573,6 @@ button:focus-visible,
 }
 #modes,
 #follow,
-#depth,
 #squad {
   display: flex;
   flex-wrap: wrap;
@@ -584,7 +583,6 @@ button:focus-visible,
 }
 #modes button,
 #follow button,
-#depth button,
 #squad button {
   background: rgba(255, 255, 255, 0.1);
   color: var(--mist);
@@ -601,7 +599,6 @@ button:focus-visible,
 }
 #modes button[aria-pressed='true'],
 #follow button[aria-pressed='true'],
-#depth button[aria-pressed='true'],
 #squad button[aria-pressed='true'] {
   background: var(--paper);
   color: var(--ink);
@@ -812,16 +809,7 @@ button:focus-visible,
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-/* a casual fan gets the line and the picture; the numbers and the facts behind each line are the analyst's */
-body.fan #proof,
-body.fan #note,
-body.fan #meter,
-body.fan #pfollow dl,
-body.fan #counter {
-  display: none;
-}
 body.tour #follow,
-body.tour #depth,
 body.tour #squad {
   display: none;
 }

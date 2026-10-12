@@ -1,0 +1,417 @@
+{
+ "matches": 12,
+ "first_seed": 200,
+ "season_seeds": "100 to 105",
+ "held": 13,
+ "tested": 25,
+ "by_call": {
+  "channels": {
+   "said": "Northgate shoot through the middle",
+   "held": 8,
+   "failed": 4,
+   "untested": 0
+  },
+  "zone": {
+   "said": "If Skoles is booked, this space opens",
+   "held": 1,
+   "failed": 0,
+   "untested": 11
+  },
+  "window": {
+   "said": "Harbour City give up chances late",
+   "held": 4,
+   "failed": 8,
+   "untested": 0
+  }
+ },
+ "per_match": [
+  {
+   "seed": 200,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "3 of 5 shots",
+     "value": [
+      3,
+      5
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": true,
+     "line": "2 of 5 shots against came after minute 70",
+     "value": [
+      2,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 201,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "2 of 3 shots",
+     "value": [
+      2,
+      3
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "0 of 3 shots against came after minute 70",
+     "value": [
+      0,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 202,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": false,
+     "line": "2 of 4 shots",
+     "value": [
+      2,
+      4
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "1 of 4 shots against came after minute 70",
+     "value": [
+      1,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 203,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": false,
+     "line": "0 of 1 shots",
+     "value": [
+      0,
+      1
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "0 of 1 shots against came after minute 70",
+     "value": [
+      0,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 204,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "8 of 11 shots",
+     "value": [
+      8,
+      11
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "1 of 11 shots against came after minute 70",
+     "value": [
+      1,
+      11
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 205,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": false,
+     "line": "2 of 4 shots",
+     "value": [
+      2,
+      4
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "0 of 4 shots against came after minute 70",
+     "value": [
+      0,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 206,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "9 of 11 shots",
+     "value": [
+      9,
+      11
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": true,
+     "line": "4 of 11 shots against came after minute 70",
+     "value": [
+      4,
+      11
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 207,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "4 of 6 shots",
+     "value": [
+      4,
+      6
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "1 of 6 shots against came after minute 70",
+     "value": [
+      1,
+      6
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 208,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "4 of 5 shots",
+     "value": [
+      4,
+      5
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "1 of 5 shots against came after minute 70",
+     "value": [
+      1,
+      5
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 209,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "3 of 4 shots",
+     "value": [
+      3,
+      4
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": true,
+     "line": "7 challenges before his card, 2 after",
+     "value": [
+      7,
+      2
+     ]
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": true,
+     "line": "2 of 4 shots against came after minute 70",
+     "value": [
+      2,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 210,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": false,
+     "line": "2 of 7 shots",
+     "value": [
+      2,
+      7
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": false,
+     "line": "2 of 7 shots against came after minute 70",
+     "value": [
+      2,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "seed": 211,
+   "calls": [
+    {
+     "mark": "channels",
+     "said": "Northgate shoot through the middle",
+     "came_true": true,
+     "line": "7 of 12 shots",
+     "value": [
+      7,
+      12
+     ]
+    },
+    {
+     "mark": "zone",
+     "said": "If Skoles is booked, this space opens",
+     "came_true": null,
+     "line": "Skoles was not booked",
+     "value": null
+    },
+    {
+     "mark": "window",
+     "said": "Harbour City give up chances late",
+     "came_true": true,
+     "line": "Goal, minute 80",
+     "value": [
+      2,
+      12
+     ]
+    }
+   ]
+  }
+ ],
+ "seconds": 279.1
+}

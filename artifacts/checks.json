@@ -1,5 +1,5 @@
 {
- "ran_at": "2026-10-12 20:14",
+ "ran_at": "2026-10-12 21:37",
  "stake_model_provisional": false,
  "passed": 14,
  "total": 14,
@@ -62,7 +62,7 @@
   {
    "check": "reflex path under 10 ms a frame",
    "passed": true,
-   "detail": "p50 0.018 ms, p95 0.408 ms, p99 0.598 ms, slowest 15.1 ms, features and network included"
+   "detail": "p50 0.018 ms, p95 0.39 ms, p99 0.514 ms, slowest 41.2 ms, features and network included"
   },
   {
    "check": "writing path well inside the replay window",
@@ -111,20 +111,20 @@
   "verifier_rejections": 0,
   "frame_ms": {
    "p50": 0.018,
-   "p95": 0.408,
-   "p99": 0.598,
-   "max": 15.1
+   "p95": 0.39,
+   "p99": 0.514,
+   "max": 41.2
   },
   "writer_ms": [
-   0.67,
+   0.71,
+   0.32,
    0.3,
-   0.3,
-   0.31,
-   0.56,
-   0.42,
-   0.35
+   0.72,
+   0.29,
+   0.48,
+   0.3
   ],
-  "wall_seconds": 12.0,
+  "wall_seconds": 11.7,
   "writer_backend": "local-templates",
   "stake_model": {
    "provisional": false,

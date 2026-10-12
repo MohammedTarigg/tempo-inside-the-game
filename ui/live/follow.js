@@ -1,10 +1,11 @@
-// Following: the viewer picks a club or one player and how much detail they want, and the picture, the camera and the phone
-// take that side. The same match and the same checked lines reach an analyst and a casual fan as two different things.
+// Following: the viewer picks a club or one player, and the picture, the camera and the phone take that side. The same
+// match and the same checked lines reach two viewers as two different things. There is no casual and analyst switch: that
+// was tried and dropped, because the two versions barely differed and every line already carries its proof.
 // Every number on the followed player's card is the pipeline's: his running ledger, a row a minute.
 import { $, el, upper } from '#util';
 
 // Returns what the match view asks each frame: how bright to draw a player, where the camera should sit, whether a line on the
-// phone is for this viewer, and a draw(F) for the card. `asked` is the page's query string: ?follow=nor, ?follow=p_har_6, ?view=fan.
+// phone is for this viewer, and a draw(F) for the card. `asked` is the page's query string: ?follow=nor or ?follow=p_har_6.
 export function makeFollow(match, asked) {
   const { M, name, index } = match;
   const clubs = [M.home, M.away],
@@ -44,22 +45,12 @@ export function makeFollow(match, asked) {
     if (k > 0) b.textContent = clubs[k - 1].name;
     b.onclick = () => choose(+b.dataset.c);
   });
-  $('depth')
-    .querySelectorAll('button')
-    .forEach((b) => {
-      b.onclick = () => {
-        document.body.classList.toggle('fan', b.dataset.d === 'fan');
-        press($('depth'), (x) => x === b);
-      };
-    });
-
   // what the address asked for
   const want = (asked.get('follow') || '').toLowerCase(),
     c0 = clubs.findIndex((c) => c.short.toLowerCase() === want),
     p0 = index(want);
   if (p0 >= 0) choose(M.team[p0], p0);
   else if (c0 >= 0) choose(c0);
-  if (asked.get('view') === 'fan') $('depth').querySelector('[data-d="fan"]').click();
 
   return {
     get player() {

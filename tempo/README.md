@@ -63,6 +63,7 @@ The match view (`ui/live/`) plays the whole match. Positions come from `runs/m_d
 - **A tag** over a player for an unusual number, with what is normal beneath it, and **a duel count** between two players.
 - **The label** at the next stoppage, **the form card** when the commentator names a player, and **the half-time and full-time cards.**
 - **At a goal,** a Replay tag, with a link to the replay view when a close earlier attempt exists.
+- **Follow:** on the phone, pick a club and then, if you like, one of its players. The rest of the picture dims, the camera stays with a followed player, the phone keeps only the lines about him or his club, and a card shows his distance and top speed so far. `?follow=nor` or `?follow=p_har_6` opens it that way.
 - **The strip under the picture:** momentum for each side, bookings, goals and the playhead, with minute marks at 0, 45 and 90. The bracket over the late window appears at kick-off and again when the clock enters it. Click or drag it to move through the match. Next moment and Back jump between the things worth seeing; the speed button plays at 1, 4 or 16 times.
 - **The phone** says the same moment in words, in English or Arabic, with the facts behind the line listed under it.
 
