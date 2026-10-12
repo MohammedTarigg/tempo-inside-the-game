@@ -8,6 +8,7 @@ matches only. Threshold rules, fixed in advance:
   faint = the highest grid value that puts the card on at contact for 85 in 100 of challenges by any defender
   full  = the score at which a challenge follows one time in five
 The shipped model is then trained on all seven, with thresholds chosen by the same rules from the outer scores."""
+
 import bisect
 import json
 import os
@@ -32,7 +33,9 @@ def build(matches):
                 if not H["live"][f]:
                     continue
                 sl = slice(f - HIST + 1, f + 1)
-                idx, feats, dist = window_features(H["xy"][:, sl], H["ball"][sl], H["team"], H["own"], H["poss"][sl], H["live"][sl])
+                idx, feats, dist = window_features(
+                    H["xy"][:, sl], H["ball"][sl], H["team"], H["own"], H["poss"][sl], H["live"][sl]
+                )
                 if not len(idx):
                     continue
                 t = H["t0"] + f / HZ
@@ -42,7 +45,10 @@ def build(matches):
                     j = bisect.bisect_left([a for a, _ in lab], t - 0.05)
                     Y.append(1.0 if j < len(lab) and lab[j][0] - t <= 1.5 else 0.0)
                     PID.append(pid)
-                X.append(feats); M += [mi] * len(idx); T += [t] * len(idx); D.append(dist)
+                X.append(feats)
+                M += [mi] * len(idx)
+                T += [t] * len(idx)
+                D.append(dist)
         print(f"  features: match {mi + 1}/{len(matches)} done", flush=True)
     return np.concatenate(X), np.array(Y, np.float32), np.array(M), np.array(PID), np.array(T), np.concatenate(D)
 
@@ -59,9 +65,11 @@ def fit(X, Y, train_idx, epochs=4, seed=0):
     for _ in range(epochs):
         rng.shuffle(idx)
         for k in range(0, len(idx), 4096):
-            b = idx[k:k + 4096]
+            b = idx[k : k + 4096]
             opt.zero_grad()
-            torch.nn.functional.binary_cross_entropy_with_logits(net(torch.from_numpy((X[b] - mu) / sd)), yt[torch.from_numpy(b)]).backward()
+            torch.nn.functional.binary_cross_entropy_with_logits(
+                net(torch.from_numpy((X[b] - mu) / sd)), yt[torch.from_numpy(b)]
+            ).backward()
             opt.step()
     net.eval()
     return net, mu, sd
@@ -71,7 +79,7 @@ def predict(net, mu, sd, X, idx):
     out = np.zeros(len(idx), np.float32)
     with torch.no_grad():
         for k in range(0, len(idx), 20000):
-            out[k:k + 20000] = torch.sigmoid(net(torch.from_numpy((X[idx[k:k + 20000]] - mu) / sd))).numpy()
+            out[k : k + 20000] = torch.sigmoid(net(torch.from_numpy((X[idx[k : k + 20000]] - mu) / sd))).numpy()
     return out
 
 
@@ -86,7 +94,8 @@ def cards(S, order, M, PID, T, faint, full):
             cur, state, fs, was = k, CardState(faint, full), None, 0
         lvl = state.update(T[a], float(S[a]))
         if was and not lvl:
-            out.setdefault(k, []).append((since, last_t + 0.3, fs)); fs = None
+            out.setdefault(k, []).append((since, last_t + 0.3, fs))
+            fs = None
         if lvl == 2 and fs is None:
             fs = T[a]
         if lvl:
@@ -119,17 +128,23 @@ def choose_thresholds(S, Y, mask, M, PID, T, matches, match_ids):
     for g in np.arange(0.10, 0.45, 0.01):
         k = mask & (S >= g) & (S < g + 0.04)
         if k.sum() > 200 and Y[k].mean() >= 0.20:
-            full = float(round(g, 2)); break
+            full = float(round(g, 2))
+            break
     return faint, full
 
 
 def auc(p, y):
-    o = np.argsort(p, kind="stable"); r = np.empty(len(p)); r[o] = np.arange(len(p)); n1 = y.sum(); n0 = len(y) - n1
+    o = np.argsort(p, kind="stable")
+    r = np.empty(len(p))
+    r[o] = np.arange(len(p))
+    n1 = y.sum()
+    n0 = len(y) - n1
     return float((r[y > 0].sum() - n1 * (n1 - 1) / 2) / (n1 * n0))
 
 
 def avg_precision(p, y):
-    o = np.argsort(-p, kind="stable"); yy = y[o]
+    o = np.argsort(-p, kind="stable")
+    yy = y[o]
     return float((np.cumsum(yy) / np.arange(1, len(yy) + 1))[yy > 0].mean())
 
 
@@ -141,59 +156,103 @@ def main(cache):
     print(f"loaded {NM} matches; building features with the shared path", flush=True)
     X, Y, M, PID, T, D = build(matches)
     print(f"samples {len(X):,}, positives {int(Y.sum()):,} ({Y.mean():.2%}), {time.time() - t_start:.0f} s", flush=True)
-    booked = np.array([PID[i] in matches[M[i]]["booked"] and T[i] > matches[M[i]]["booked"][PID[i]] for i in range(len(M))])
+    booked = np.array(
+        [PID[i] in matches[M[i]]["booked"] and T[i] > matches[M[i]]["booked"][PID[i]] for i in range(len(M))]
+    )
     S_out = np.zeros(len(X), np.float32)
     chosen, rows, load_rows = [], [], []
     for i in range(NM):
         train = [j for j in range(NM) if j != i]
         S_in = np.zeros(len(X), np.float32)
-        for j in train:                                                           # inner loop: fair scores for the six training matches
-            tr = np.flatnonzero(np.isin(M, [k for k in train if k != j])); te = np.flatnonzero(M == j)
+        for j in train:  # inner loop: fair scores for the six training matches
+            tr = np.flatnonzero(np.isin(M, [k for k in train if k != j]))
+            te = np.flatnonzero(M == j)
             net, mu, sd = fit(X, Y, tr, epochs=3)
             S_in[te] = predict(net, mu, sd, X, te)
         tr_mask = np.isin(M, train)
         faint, full = choose_thresholds(S_in, Y, tr_mask, M, PID, T, matches, train)
-        tr = np.flatnonzero(tr_mask); te = np.flatnonzero(M == i)
+        tr = np.flatnonzero(tr_mask)
+        te = np.flatnonzero(M == i)
         net, mu, sd = fit(X, Y, tr)
         S_out[te] = predict(net, mu, sd, X, te)
         chosen.append((faint, full))
-        order = np.lexsort((T, PID, M)); order = order[(M[order] == i) & booked[order]]
+        order = np.lexsort((T, PID, M))
+        order = order[(M[order] == i) & booked[order]]
         sp = cards(S_out, order, M, PID, T, faint, full)
         for p, v in matches[i]["labels"].items():
             if p in matches[i]["booked"]:
                 for a, foul in v:
                     if a > matches[i]["booked"][p]:
                         rows.append((lead(sp, (i, p), a), lead(sp, (i, p), a, full=True), foul))
-        nf = sum(len(v) for v in sp.values()); nF = sum(1 for v in sp.values() for s in v if s[2] is not None)
+        nf = sum(len(v) for v in sp.values())
+        nF = sum(1 for v in sp.values() for s in v if s[2] is not None)
         load_rows.append((nf, nF, sum(e - s for v in sp.values() for s, e, _ in v)))
-        print(f"outer match {i + 1}/{NM}: thresholds faint {faint}, full {full}; faint cards {nf}, full {nF}; {time.time() - t_start:.0f} s", flush=True)
-    lf = np.array([r[0] for r in rows]); lF = np.array([r[1] for r in rows]); fl = np.array([r[2] for r in rows])
+        print(
+            f"outer match {i + 1}/{NM}: thresholds faint {faint}, full {full}; faint cards {nf}, full {nF}; {time.time() - t_start:.0f} s",
+            flush=True,
+        )
+    lf = np.array([r[0] for r in rows])
+    lF = np.array([r[1] for r in rows])
+    fl = np.array([r[2] for r in rows])
     rng = np.random.default_rng(0)
+
     def ci(x):
         b = [rng.choice(x, len(x)).mean() for _ in range(4000)]
         return [float(np.percentile(b, 2.5)), float(np.percentile(b, 97.5))]
-    edges = [0, .01, .02, .05, .1, .2, .3, .5, 1.01]
-    ece = sum(((S_out >= a) & (S_out < b)).mean() * abs(S_out[(S_out >= a) & (S_out < b)].mean() - Y[(S_out >= a) & (S_out < b)].mean())
-              for a, b in zip(edges[:-1], edges[1:]) if ((S_out >= a) & (S_out < b)).any())
+
+    edges = [0, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 1.01]
+    ece = sum(
+        ((S_out >= a) & (S_out < b)).mean()
+        * abs(S_out[(S_out >= a) & (S_out < b)].mean() - Y[(S_out >= a) & (S_out < b)].mean())
+        for a, b in zip(edges[:-1], edges[1:])
+        if ((S_out >= a) & (S_out < b)).any()
+    )
     metrics = dict(
-        method="nested: thresholds and scaling chosen on training matches only", matches=NM, samples=int(len(X)), positives=int(Y.sum()),
-        roc_auc=auc(S_out, Y), average_precision=avg_precision(S_out, Y), base_rate=float(Y.mean()), calibration_error=float(ece),
-        thresholds_per_outer_match=chosen, challenges_by_booked=int(len(rows)),
-        faint_on_at_contact=float(np.mean(lf >= 0)), faint_ci=ci((lf >= 0).astype(float)), faint_half_second_before=float(np.mean(lf >= 0.5)),
-        faint_one_second_before=float(np.mean(lf >= 1.0)), faint_median_lead=float(np.median(lf[lf >= 0])) if (lf >= 0).any() else None,
-        full_on_at_contact=float(np.mean(lF >= 0)), full_ci=ci((lF >= 0).astype(float)), full_median_lead=float(np.median(lF[lF >= 0])) if (lF >= 0).any() else None,
-        fouls_faint=int((fl & (lf >= 0)).sum()), fouls_full=int((fl & (lF >= 0)).sum()), fouls=int(fl.sum()),
-        faint_per_match=[r[0] for r in load_rows], full_per_match=[r[1] for r in load_rows], faint_seconds_per_match=[round(r[2]) for r in load_rows])
+        method="nested: thresholds and scaling chosen on training matches only",
+        matches=NM,
+        samples=int(len(X)),
+        positives=int(Y.sum()),
+        roc_auc=auc(S_out, Y),
+        average_precision=avg_precision(S_out, Y),
+        base_rate=float(Y.mean()),
+        calibration_error=float(ece),
+        thresholds_per_outer_match=chosen,
+        challenges_by_booked=int(len(rows)),
+        faint_on_at_contact=float(np.mean(lf >= 0)),
+        faint_ci=ci((lf >= 0).astype(float)),
+        faint_half_second_before=float(np.mean(lf >= 0.5)),
+        faint_one_second_before=float(np.mean(lf >= 1.0)),
+        faint_median_lead=float(np.median(lf[lf >= 0])) if (lf >= 0).any() else None,
+        full_on_at_contact=float(np.mean(lF >= 0)),
+        full_ci=ci((lF >= 0).astype(float)),
+        full_median_lead=float(np.median(lF[lF >= 0])) if (lF >= 0).any() else None,
+        fouls_faint=int((fl & (lf >= 0)).sum()),
+        fouls_full=int((fl & (lF >= 0)).sum()),
+        fouls=int(fl.sum()),
+        faint_per_match=[r[0] for r in load_rows],
+        full_per_match=[r[1] for r in load_rows],
+        faint_seconds_per_match=[round(r[2]) for r in load_rows],
+    )
     print(json.dumps(metrics, indent=1), flush=True)
     # the shipped model: all seven matches, thresholds by the same rules from the outer scores
     faint, full = choose_thresholds(S_out, Y, np.ones(len(X), bool), M, PID, T, matches, list(range(NM)))
     net, mu, sd = fit(X, Y, np.arange(len(X)))
     os.makedirs(ARTIFACTS, exist_ok=True)
     torch.save(net.state_dict(), os.path.join(ARTIFACTS, "stake_model.pt"))
-    json.dump(dict(mu=mu.ravel().tolist(), sd=sd.ravel().tolist(), faint_threshold=faint, full_threshold=full, sample_step_frames=STEP, metrics=metrics,
-                   trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177",
-                   score_quantiles={str(q): float(np.quantile(S_out, q)) for q in (0.5, 0.9, 0.95, 0.99, 0.999)}),
-              open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"), indent=1)
+    json.dump(
+        dict(
+            mu=mu.ravel().tolist(),
+            sd=sd.ravel().tolist(),
+            faint_threshold=faint,
+            full_threshold=full,
+            sample_step_frames=STEP,
+            metrics=metrics,
+            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177",
+            score_quantiles={str(q): float(np.quantile(S_out, q)) for q in (0.5, 0.9, 0.95, 0.99, 0.999)},
+        ),
+        open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
+        indent=1,
+    )
     print(f"shipped model saved: faint {faint}, full {full}; total {time.time() - t_start:.0f} s", flush=True)
 
 
@@ -205,12 +264,25 @@ def provisional(cache):
     X, Y, M, PID, T, D = build(matches)
     net, mu, sd = fit(X, Y, np.arange(len(X)))
     os.makedirs(ARTIFACTS, exist_ok=True)
-    if os.path.exists(os.path.join(ARTIFACTS, "stake_meta.json")) and not json.load(open(os.path.join(ARTIFACTS, "stake_meta.json"))).get("provisional"):
-        print("a final artefact already exists; leaving it alone"); return
+    if os.path.exists(os.path.join(ARTIFACTS, "stake_meta.json")) and not json.load(
+        open(os.path.join(ARTIFACTS, "stake_meta.json"))
+    ).get("provisional"):
+        print("a final artefact already exists; leaving it alone")
+        return
     torch.save(net.state_dict(), os.path.join(ARTIFACTS, "stake_model.pt"))
-    json.dump(dict(provisional=True, mu=mu.ravel().tolist(), sd=sd.ravel().tolist(), faint_threshold=0.05, full_threshold=0.20, sample_step_frames=STEP,
-                   trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177"),
-              open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"), indent=1)
+    json.dump(
+        dict(
+            provisional=True,
+            mu=mu.ravel().tolist(),
+            sd=sd.ravel().tolist(),
+            faint_threshold=0.05,
+            full_threshold=0.20,
+            sample_step_frames=STEP,
+            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, https://doi.org/10.6084/m9.figshare.28196177",
+        ),
+        open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
+        indent=1,
+    )
     print("provisional model saved", flush=True)
 
 

@@ -5,6 +5,7 @@
 
 Feeds go in at the front in the providers' shapes; cues come out at the back, stamped with match time. Everything lands in
 runs/<match_id>/: cues.jsonl, facts.jsonl, audit.jsonl, replay.npz for a front end, and summary.json."""
+
 import json
 import os
 import sys
@@ -35,7 +36,9 @@ class Pipeline:
         self.bus = LocalBus(out_dir)
         self.cues = CueService(self.meta["match_id"], self.ledger, self.bus, rules)
         self.season = season or {}
-        self.reflex = Reflex(self.meta, md["team"], self.ledger, self.cues, model or StakeModel(), baselines=self.season, search=search)
+        self.reflex = Reflex(
+            self.meta, md["team"], self.ledger, self.cues, model or StakeModel(), baselines=self.season, search=search
+        )
         self.writer = Writer(self.ledger, self.cues, self.meta)
         self.listener = Listener(self.meta)
         self.view = dict(pos=md["pos"], ball=md["ball"], live=md["live"], poss=md["poss"], team=md["team"])
@@ -44,26 +47,65 @@ class Pipeline:
 
     # ----- recovery -----
     def checkpoint(self, i):
-        self.ledger.save_checkpoint("pipeline", dict(frame=i, ev_i=self.ev_i, cm_i=self.cm_i, reflex=self.reflex.snapshot(), cues=self.cues.state(),
-                                                     halftime_done=self.halftime_done, swings=self.swings, pressures=self.pressures, shots=[(a["t"], a["meta"].get("frame")) for a in self.reflex.search.archive if a["match_id"] == self.meta["match_id"]]))
+        self.ledger.save_checkpoint(
+            "pipeline",
+            dict(
+                frame=i,
+                ev_i=self.ev_i,
+                cm_i=self.cm_i,
+                reflex=self.reflex.snapshot(),
+                cues=self.cues.state(),
+                halftime_done=self.halftime_done,
+                swings=self.swings,
+                pressures=self.pressures,
+                shots=[
+                    (a["t"], a["meta"].get("frame"))
+                    for a in self.reflex.search.archive
+                    if a["match_id"] == self.meta["match_id"]
+                ],
+            ),
+        )
         self.ledger.commit()
 
     def resume(self):
         cp = self.ledger.load_checkpoint("pipeline")
         if not cp:
             return 0
-        self.ev_i, self.cm_i, self.halftime_done, self.swings, self.pressures = cp["ev_i"], cp["cm_i"], cp["halftime_done"], cp["swings"], cp["pressures"]
+        self.ev_i, self.cm_i, self.halftime_done, self.swings, self.pressures = (
+            cp["ev_i"],
+            cp["cm_i"],
+            cp["halftime_done"],
+            cp["swings"],
+            cp["pressures"],
+        )
         self.cues.restore(cp["cues"])
         self.reflex.restore(cp["reflex"], self.md, cp["frame"])
         from . import twin
-        for e in self.md["events"][:self.ev_i]:                                # rebuild this match's part of the attack archive
+
+        for e in self.md["events"][: self.ev_i]:  # rebuild this match's part of the attack archive
             if e["typeId"] in (TYPE["goal"], TYPE["attempt_saved"], TYPE["miss"]):
                 fr = next((f for t, f in cp["shots"] if abs(t - e["matchTime"]) < 1e-6), None)
                 if fr is not None:
-                    p = self.meta["ids"].index(e["playerId"]); team = int(self.md["team"][p]); d = self.md["home_dir"][fr] if team == 0 else -self.md["home_dir"][fr]
-                    vec = twin.attack_vector(self.view, twin.attack_start(self.view["live"], self.view["poss"], fr), fr, team, d, self.meta["keepers"])
+                    p = self.meta["ids"].index(e["playerId"])
+                    team = int(self.md["team"][p])
+                    d = self.md["home_dir"][fr] if team == 0 else -self.md["home_dir"][fr]
+                    vec = twin.attack_vector(
+                        self.view,
+                        twin.attack_start(self.view["live"], self.view["poss"], fr),
+                        fr,
+                        team,
+                        d,
+                        self.meta["keepers"],
+                    )
                     if vec is not None:
-                        self.reflex.search.add(vec, team, self.meta["match_id"], e["matchTime"], "goal" if e["typeId"] == TYPE["goal"] else "no_goal", meta=dict(player=e["playerId"], frame=fr))
+                        self.reflex.search.add(
+                            vec,
+                            team,
+                            self.meta["match_id"],
+                            e["matchTime"],
+                            "goal" if e["typeId"] == TYPE["goal"] else "no_goal",
+                            meta=dict(player=e["playerId"], frame=fr),
+                        )
         return cp["frame"] + 1
 
     # ----- the run -----
@@ -75,30 +117,49 @@ class Pipeline:
         last_cp = md["clock"][start] if start < n else 0
         for i in range(start, n):
             if stop_at is not None and i >= stop_at:
-                return False                                                    # a simulated crash: nothing after the last checkpoint is saved
+                return False  # a simulated crash: nothing after the last checkpoint is saved
             t, period = float(md["clock"][i]), int(md["period"][i])
             self.cues.frame = i
             if period == 2 and not self.halftime_done:
-                self.halftime(45 * 60.0); self.halftime_done = True
+                self.halftime(45 * 60.0)
+                self.halftime_done = True
             t0 = time.perf_counter()
-            while self.ev_i < len(md["events"]) and md["events"][self.ev_i]["periodId"] <= period and md["events"][self.ev_i]["matchTime"] <= t:
-                e = md["events"][self.ev_i]; self.ev_i += 1
+            while (
+                self.ev_i < len(md["events"])
+                and md["events"][self.ev_i]["periodId"] <= period
+                and md["events"][self.ev_i]["matchTime"] <= t
+            ):
+                e = md["events"][self.ev_i]
+                self.ev_i += 1
                 before = win_chance(R.score, 90 - t / 60)
                 for m in R.on_event(e, self.view, i, md["home_dir"][i]):
                     if m["kind"] == "goal":
                         after = win_chance(R.score, 90 - t / 60)
-                        f = self.ledger.put_fact(fact(self.meta["match_id"], t, "win_chance", "match", after, "home, draw, away"))
-                        self.swings.append(dict(t=t, swing=round(abs(after[0] - before[0]) + abs(after[2] - before[2]), 3), moment=m, fact_id=f["fact_id"]))
+                        f = self.ledger.put_fact(
+                            fact(self.meta["match_id"], t, "win_chance", "match", after, "home, draw, away")
+                        )
+                        self.swings.append(
+                            dict(
+                                t=t,
+                                swing=round(abs(after[0] - before[0]) + abs(after[2] - before[2]), 3),
+                                moment=m,
+                                fact_id=f["fact_id"],
+                            )
+                        )
                     self.writer.write_moment(m)
             while self.cm_i < len(md["commentary"]) and md["commentary"][self.cm_i]["matchTime"] <= t:
-                self.on_commentary(md["commentary"][self.cm_i]); self.cm_i += 1
-            for m in R.on_frame(i, t, period, md["pos"][i], md["ball"][i], bool(md["live"][i]), int(md["poss"][i]), md["home_dir"][i]):
+                self.on_commentary(md["commentary"][self.cm_i])
+                self.cm_i += 1
+            for m in R.on_frame(
+                i, t, period, md["pos"][i], md["ball"][i], bool(md["live"][i]), int(md["poss"][i]), md["home_dir"][i]
+            ):
                 if m["kind"] == "pressure":
                     self.pressures.append(m)
                 self.writer.write_moment(m)
             self.frame_ms.append((time.perf_counter() - t0) * 1000)
             if t - last_cp >= checkpoint_every_s:
-                self.checkpoint(i); last_cp = t
+                self.checkpoint(i)
+                last_cp = t
         self.fulltime(float(md["clock"][-1]))
         self.checkpoint(n - 1)
         return True
@@ -106,7 +167,18 @@ class Pipeline:
     def kickoff(self):
         habits = []
         for h in self.season.get("habits", []):
-            f = self.ledger.put_fact(fact(self.meta["match_id"], 0.0, "habit", h["subject"], h["value"], h["unit"], sample_matches=h["sample"], habit=h["kind"]))
+            f = self.ledger.put_fact(
+                fact(
+                    self.meta["match_id"],
+                    0.0,
+                    "habit",
+                    h["subject"],
+                    h["value"],
+                    h["unit"],
+                    sample_matches=h["sample"],
+                    habit=h["kind"],
+                )
+            )
             habits.append(dict(h, fact_id=f["fact_id"]))
         self.writer.kickoff(habits)
 
@@ -118,25 +190,72 @@ class Pipeline:
             if not facts:
                 continue
             f = facts[0]
-            ctx = dict(names=self.meta["names"], names_ar=self.meta["names_ar"], player=pid, per_minute=f["value"], top_speed=f["top_speed"])
+            ctx = dict(
+                names=self.meta["names"],
+                names_ar=self.meta["names_ar"],
+                player=pid,
+                per_minute=f["value"],
+                top_speed=f["top_speed"],
+            )
             text = self.writer.fallback.narrate("form", ctx)
-            if self.listener.already_said(line["text"], [f["value"]]) or not verify(text, [f], self.meta["names"], expected=self.writer.fallback.numbers("form", ctx))[0]:
-                self.ledger.audit(t, "held_back", dict(form="form_card", reason="the commentator has just said it, or the line failed the check")); continue
-            self.cues.propose(t, "form_card", "tv", dict(player=pid, per_minute=f["value"], usual_percentile=f["percentile"], top_speed=f["top_speed"], heard=line["text"]), [f["fact_id"]], valid_for=4.5, priority=5)
+            if (
+                self.listener.already_said(line["text"], [f["value"]])
+                or not verify(text, [f], self.meta["names"], expected=self.writer.fallback.numbers("form", ctx))[0]
+            ):
+                self.ledger.audit(
+                    t,
+                    "held_back",
+                    dict(form="form_card", reason="the commentator has just said it, or the line failed the check"),
+                )
+                continue
+            self.cues.propose(
+                t,
+                "form_card",
+                "tv",
+                dict(
+                    player=pid,
+                    per_minute=f["value"],
+                    usual_percentile=f["percentile"],
+                    top_speed=f["top_speed"],
+                    heard=line["text"],
+                ),
+                [f["fact_id"]],
+                valid_for=4.5,
+                priority=5,
+            )
 
     def halftime(self, t):
         names = self.meta["names"]
         items = []
         booked = [f for f in self.ledger.facts(self.meta["match_id"], t, kind="card") if f["value"] == "yellow"]
         if booked:
-            items.append(dict(title="On a yellow", text=", ".join(names[f["subject"]] for f in booked[:3]) + ": one foul from a red card", fact_ids=[f["fact_id"] for f in booked[:3]], mark="card"))
+            items.append(
+                dict(
+                    title="On a yellow",
+                    text=", ".join(names[f["subject"]] for f in booked[:3]) + ": one foul from a red card",
+                    fact_ids=[f["fact_id"] for f in booked[:3]],
+                    mark="card",
+                )
+            )
         for h in self.ledger.facts(self.meta["match_id"], t, kind="habit"):
             if h.get("habit") == "late_shots_against":
-                items.append(dict(title="Still to come", text=f"{h['value']} {h['unit']}", fact_ids=[h["fact_id"]], mark="window"))
+                items.append(
+                    dict(
+                        title="Still to come", text=f"{h['value']} {h['unit']}", fact_ids=[h["fact_id"]], mark="window"
+                    )
+                )
         duels = self.ledger.facts(self.meta["match_id"], t, kind="duel_count")
         if duels:
-            d = duels[-1]; a, b = d["subject"].split("|")
-            items.append(dict(title="A running duel", text=f"{names[a]} against {names[b]}: {d['value'][0]} to {d['value'][1]}", fact_ids=[d["fact_id"]], mark="duel"))
+            d = duels[-1]
+            a, b = d["subject"].split("|")
+            items.append(
+                dict(
+                    title="A running duel",
+                    text=f"{names[a]} against {names[b]}: {d['value'][0]} to {d['value'][1]}",
+                    fact_ids=[d["fact_id"]],
+                    mark="duel",
+                )
+            )
         self.reflex.running_facts(t)
         if items:
             self.writer.interval_card(t, "halftime_card", items)
@@ -145,14 +264,33 @@ class Pipeline:
         names = self.meta["names"]
         items = []
         for s in sorted(self.swings, key=lambda s: -s["swing"])[:3]:
-            m = s["moment"]; minute = int(m["t"] // 60) + 1
-            ca = m.get("closest_attempt")
-            text = f"{names[m['player']]} scores in minute {minute}" + (f". Closest earlier attempt: minute {int(ca['earlier_time'] // 60) + 1}" if ca else "")
-            items.append(dict(title=f"Minute {minute}", text=text, fact_ids=m["fact_ids"] + [s["fact_id"]], mark="closest_attempt" if ca else "goal"))
-        teams = (self.meta["home"]["name"], self.meta["away"]["name"])
-        for m in sorted(self.pressures, key=lambda m: m["before"] - m["now"])[:3 - len(items)]:      # goals first, then the clearest changes of pressure
+            m = s["moment"]
             minute = int(m["t"] // 60) + 1
-            items.append(dict(title=f"Minute {minute}", text=f"{teams[m['team']]} took the play: {m['now']} in 100 in {teams[1 - m['team']]}'s half, up from {m['before']}", fact_ids=m["fact_ids"], mark="pressure"))
+            ca = m.get("closest_attempt")
+            text = f"{names[m['player']]} scores in minute {minute}" + (
+                f". Closest earlier attempt: minute {int(ca['earlier_time'] // 60) + 1}" if ca else ""
+            )
+            items.append(
+                dict(
+                    title=f"Minute {minute}",
+                    text=text,
+                    fact_ids=m["fact_ids"] + [s["fact_id"]],
+                    mark="closest_attempt" if ca else "goal",
+                )
+            )
+        teams = (self.meta["home"]["name"], self.meta["away"]["name"])
+        for m in sorted(self.pressures, key=lambda m: m["before"] - m["now"])[
+            : 3 - len(items)
+        ]:  # goals first, then the clearest changes of pressure
+            minute = int(m["t"] // 60) + 1
+            items.append(
+                dict(
+                    title=f"Minute {minute}",
+                    text=f"{teams[m['team']]} took the play: {m['now']} in 100 in {teams[1 - m['team']]}'s half, up from {m['before']}",
+                    fact_ids=m["fact_ids"],
+                    mark="pressure",
+                )
+            )
         if items:
             self.writer.interval_card(t, "fulltime_card", items, calls=self.calls(t))
 
@@ -172,6 +310,7 @@ class Pipeline:
         def frame_of(e):
             idx = np.nonzero(period == e["periodId"])[0]
             return int(idx[min(int(np.searchsorted(clock[idx], e["matchTime"])), len(idx) - 1)])
+
         ev = [e for e in self.md["events"] if e["matchTime"] <= t]
         shots = [e for e in ev if e["typeId"] in (TYPE["goal"], TYPE["attempt_saved"], TYPE["miss"])]
         facts = {(f["subject"], f.get("habit")): f for f in self.ledger.facts(mid, t, kind="habit")}
@@ -180,67 +319,174 @@ class Pipeline:
             kind, subj, came, line, detail, value, extra = h["kind"], h["subject"], None, "", "", None, {}
             tix = 0 if subj == self.meta["home"]["id"] else 1
             if kind == "shot_channel":
-                mine = [e for e in shots if side(e) == tix]; wide = [abs(e["y"] - 50) > 18 for e in mine]
-                inside = wide if h["zone"] == "wide" else [not w for w in wide]; k, n = sum(inside), len(mine)
-                came = bool(n) and k / n > 0.5; value = [k, n]
+                mine = [e for e in shots if side(e) == tix]
+                wide = [abs(e["y"] - 50) > 18 for e in mine]
+                inside = wide if h["zone"] == "wide" else [not w for w in wide]
+                k, n = sum(inside), len(mine)
+                came = bool(n) and k / n > 0.5
+                value = [k, n]
                 line, detail = f"{k} of {n} shots", f"Their usual is {h['value']} in 100"
                 pts = []
-                for e, ins in zip(mine, inside):                             # every shot, turned to attack the same end, so one picture holds both halves
-                    fr = frame_of(e); d = float(hd[fr]) * (1 if tix == 0 else -1); xy = self.md["pos"][fr][ids.index(e["playerId"])]
-                    pts.append(dict(frame=fr, x=round(float(xy[0]) * d, 1), y=round(float(xy[1]) * d, 1), inside=bool(ins)))
+                for e, ins in zip(
+                    mine, inside
+                ):  # every shot, turned to attack the same end, so one picture holds both halves
+                    fr = frame_of(e)
+                    d = float(hd[fr]) * (1 if tix == 0 else -1)
+                    xy = self.md["pos"][fr][ids.index(e["playerId"])]
+                    pts.append(
+                        dict(frame=fr, x=round(float(xy[0]) * d, 1), y=round(float(xy[1]) * d, 1), inside=bool(ins))
+                    )
                 extra = dict(zone=h["zone"], points=pts)
             elif kind == "late_shots_against":
-                w0 = h["window"][0]; against = [e for e in shots if side(e) != tix]; late = [e for e in against if e["matchTime"] >= w0 * 60]
-                goal = next((e for e in late if e["typeId"] == TYPE["goal"]), None); k, n = len(late), len(against)
-                came = goal is not None or (bool(n) and 100 * k / n >= h["value"]); value = [k, n]
+                w0 = h["window"][0]
+                against = [e for e in shots if side(e) != tix]
+                late = [e for e in against if e["matchTime"] >= w0 * 60]
+                goal = next((e for e in late if e["typeId"] == TYPE["goal"]), None)
+                k, n = len(late), len(against)
+                came = goal is not None or (bool(n) and 100 * k / n >= h["value"])
+                value = [k, n]
                 share = f"{k} of {n} shots against came after minute {w0}"
-                line, detail = (f"Goal, minute {int(goal['matchTime'] // 60) + 1}", share) if goal else (share, f"The usual is {h['value']} in 100")
-                extra = dict(window=h["window"], points=[dict(frame=frame_of(e), inside=e["matchTime"] >= w0 * 60, goal=e["typeId"] == TYPE["goal"]) for e in against])
+                line, detail = (
+                    (f"Goal, minute {int(goal['matchTime'] // 60) + 1}", share)
+                    if goal
+                    else (share, f"The usual is {h['value']} in 100")
+                )
+                extra = dict(
+                    window=h["window"],
+                    points=[
+                        dict(frame=frame_of(e), inside=e["matchTime"] >= w0 * 60, goal=e["typeId"] == TYPE["goal"])
+                        for e in against
+                    ],
+                )
             elif kind == "challenges_per_match":
                 card = next((f for f in self.ledger.facts(mid, t, kind="card") if f["subject"] == subj), None)
                 if card is None:
                     line, detail = f"{names[subj]} was not booked", "So this one was never tested"
                 else:
-                    tc = card["match_time"]; went = [e for e in ev if e["playerId"] == subj and (e["typeId"] in (TYPE["tackle"], TYPE["challenge"]) or (e["typeId"] == TYPE["foul"] and e["outcome"] == 0))]
-                    went = [e for i, e in enumerate(went) if i == 0 or e["matchTime"] - went[i - 1]["matchTime"] > 2.0]      # one challenge is often written as two or three events (the challenge, the tackle, the foul); count it once
-                    b = sum(e["matchTime"] < tc for e in went); a = len(went) - b
-                    came = a / max(t - tc, 1.0) < b / max(tc, 1.0); value = [b, a]
+                    tc = card["match_time"]
+                    went = [
+                        e
+                        for e in ev
+                        if e["playerId"] == subj
+                        and (
+                            e["typeId"] in (TYPE["tackle"], TYPE["challenge"])
+                            or (e["typeId"] == TYPE["foul"] and e["outcome"] == 0)
+                        )
+                    ]
+                    went = [
+                        e for i, e in enumerate(went) if i == 0 or e["matchTime"] - went[i - 1]["matchTime"] > 2.0
+                    ]  # one challenge is often written as two or three events (the challenge, the tackle, the foul); count it once
+                    b = sum(e["matchTime"] < tc for e in went)
+                    a = len(went) - b
+                    came = a / max(t - tc, 1.0) < b / max(tc, 1.0)
+                    value = [b, a]
                     line, detail = f"{b} challenges before his card, {a} after", f"Booked in minute {int(tc // 60) + 1}"
-                    extra = dict(before=b, after=a, player=subj, points=[dict(frame=frame_of(e), inside=e["matchTime"] >= tc) for e in went])
+                    extra = dict(
+                        before=b,
+                        after=a,
+                        player=subj,
+                        points=[dict(frame=frame_of(e), inside=e["matchTime"] >= tc) for e in went],
+                    )
             else:
                 continue
-            f = self.ledger.put_fact(fact(mid, t, "call_outcome", subj, value, "what became of a call made before kick-off", habit=kind, came_true=came))
-            out.append(dict(mark=h["mark"], said=h["text"], came_true=came, line=line, detail=detail, value=value, **extra,
-                            fact_ids=[f["fact_id"]] + ([facts[(subj, kind)]["fact_id"]] if (subj, kind) in facts else [])))
+            f = self.ledger.put_fact(
+                fact(
+                    mid,
+                    t,
+                    "call_outcome",
+                    subj,
+                    value,
+                    "what became of a call made before kick-off",
+                    habit=kind,
+                    came_true=came,
+                )
+            )
+            out.append(
+                dict(
+                    mark=h["mark"],
+                    said=h["text"],
+                    came_true=came,
+                    line=line,
+                    detail=detail,
+                    value=value,
+                    **extra,
+                    fact_ids=[f["fact_id"]] + ([facts[(subj, kind)]["fact_id"]] if (subj, kind) in facts else []),
+                )
+            )
         return out
 
     def scenes(self, cues):
         """Full-rate positions for every replay scene, both attempts turned to run the same way, so a front end can lay one over the other."""
         from . import twin
+
         md, out = self.md, []
         for c in cues:
             if c["form"] != "scene" or c["payload"]["type"] != "closest_attempt":
                 continue
-            f = next(x for x in (self.ledger.get_fact(i) for i in c["fact_ids"]) if x and x["kind"] == "closest_attempt")
-            card = next((x for x in (self.ledger.get_fact(i) for i in c["fact_ids"]) if x and x["kind"] == "card"), None)
+            f = next(
+                x for x in (self.ledger.get_fact(i) for i in c["fact_ids"]) if x and x["kind"] == "closest_attempt"
+            )
+            card = next(
+                (x for x in (self.ledger.get_fact(i) for i in c["fact_ids"]) if x and x["kind"] == "card"), None
+            )
             clips = {}
             for name, shot in (("goal", c["payload"]["goal_frame"]), ("earlier", c["payload"]["earlier_frame"])):
                 start = twin.attack_start(md["live"], md["poss"], shot)
                 a, b = max(start - 25, 0), min(shot + 75, len(md["clock"]) - 1)
                 scorer = self.meta["ids"].index(c["payload"]["camera"]["behind"])
-                sgn = md["home_dir"][shot] if md["team"][scorer] == 0 else -md["home_dir"][shot]      # the attack runs towards +x in both clips
-                pos = np.round(md["pos"][a:b + 1] * sgn, 2)
-                ball = md["ball"][a:b + 1].copy(); ball[:, :2] *= sgn
+                sgn = (
+                    md["home_dir"][shot] if md["team"][scorer] == 0 else -md["home_dir"][shot]
+                )  # the attack runs towards +x in both clips
+                pos = np.round(md["pos"][a : b + 1] * sgn, 2)
+                ball = md["ball"][a : b + 1].copy()
+                ball[:, :2] *= sgn
                 per, t_a, t_b = int(md["period"][shot]), float(md["clock"][a]), float(md["clock"][b])
-                kinds = {TYPE["pass"]: "pass", TYPE["goal"]: "shot", TYPE["attempt_saved"]: "shot", TYPE["miss"]: "shot", TYPE["tackle"]: "tackle", TYPE["challenge"]: "tackle"}
-                acts = [dict(kind=kinds[e["typeId"]], player=self.meta["ids"].index(e["playerId"]), frame=int(round((e["matchTime"] - t_a) * 25)))
-                        for e in md["events"] if e["periodId"] == per and t_a <= e["matchTime"] <= t_b and e["typeId"] in kinds]      # who strikes the ball, and when
-                clips[name] = dict(start_offset=int(start - a), shot_offset=int(shot - a), minute=int(md["clock"][shot] // 60) + 1, clock=float(md["clock"][start]),
-                                   pos=np.where(np.isnan(pos), None, pos).tolist(), ball=np.round(ball, 2).tolist(), actions=acts)
-            out.append(dict(cue_id=c["cue_id"], fps=25, label=c["payload"]["label"], scorer=c["payload"]["camera"]["behind"], differing_player=f["differing_player"],
-                            differing_by_m=f["differing_by_m"], parting_s=f["parting_s"], gap_m=f["value"], booked_minute=int(card["match_time"] // 60) + 1 if card else None,
-                            ids=self.meta["ids"], numbers=self.meta["numbers"], names=self.meta["names"], team=md["team"].tolist(),
-                            home=self.meta["home"]["short"], away=self.meta["away"]["short"], clips=clips))
+                kinds = {
+                    TYPE["pass"]: "pass",
+                    TYPE["goal"]: "shot",
+                    TYPE["attempt_saved"]: "shot",
+                    TYPE["miss"]: "shot",
+                    TYPE["tackle"]: "tackle",
+                    TYPE["challenge"]: "tackle",
+                }
+                acts = [
+                    dict(
+                        kind=kinds[e["typeId"]],
+                        player=self.meta["ids"].index(e["playerId"]),
+                        frame=int(round((e["matchTime"] - t_a) * 25)),
+                    )
+                    for e in md["events"]
+                    if e["periodId"] == per and t_a <= e["matchTime"] <= t_b and e["typeId"] in kinds
+                ]  # who strikes the ball, and when
+                clips[name] = dict(
+                    start_offset=int(start - a),
+                    shot_offset=int(shot - a),
+                    minute=int(md["clock"][shot] // 60) + 1,
+                    clock=float(md["clock"][start]),
+                    pos=np.where(np.isnan(pos), None, pos).tolist(),
+                    ball=np.round(ball, 2).tolist(),
+                    actions=acts,
+                )
+            out.append(
+                dict(
+                    cue_id=c["cue_id"],
+                    fps=25,
+                    label=c["payload"]["label"],
+                    scorer=c["payload"]["camera"]["behind"],
+                    differing_player=f["differing_player"],
+                    differing_by_m=f["differing_by_m"],
+                    parting_s=f["parting_s"],
+                    gap_m=f["value"],
+                    booked_minute=int(card["match_time"] // 60) + 1 if card else None,
+                    ids=self.meta["ids"],
+                    numbers=self.meta["numbers"],
+                    names=self.meta["names"],
+                    team=md["team"].tolist(),
+                    home=self.meta["home"]["short"],
+                    away=self.meta["away"]["short"],
+                    clips=clips,
+                )
+            )
         return out
 
     def match_view(self, cues):
@@ -248,52 +494,168 @@ class Pipeline:
         ball's x, y and height, as whole centimetres (-32768 where a player is off). Everything else is returned for match.json:
         every cue with the frame it was issued on, who plays the ball and when, goals, bookings and the momentum record."""
         md, mid = self.md, self.meta["match_id"]
-        n = len(md["clock"]); period, clock = md["period"], md["clock"]
+        n = len(md["clock"])
+        period, clock = md["period"], md["clock"]
         q = np.full((n, 47), -32768, np.int16)
-        xy = np.round(md["pos"].reshape(n, 44) * 100); ok = ~np.isnan(xy); q[:, :44][ok] = xy[ok].astype(np.int16)
+        xy = np.round(md["pos"].reshape(n, 44) * 100)
+        ok = ~np.isnan(xy)
+        q[:, :44][ok] = xy[ok].astype(np.int16)
         q[:, 44:] = np.round(md["ball"] * 100).astype(np.int16)
         q.tofile(os.path.join(self.out, "match.bin"))
         spans = []
         for p in sorted(set(period.tolist())):
             idx = np.flatnonzero(period == p)
-            spans.append(dict(period=int(p), first=int(idx[0]), last=int(idx[-1]), clock0=float(clock[idx[0]]), home_attacks=float(md["home_dir"][idx[0]])))
+            spans.append(
+                dict(
+                    period=int(p),
+                    first=int(idx[0]),
+                    last=int(idx[-1]),
+                    clock0=float(clock[idx[0]]),
+                    home_attacks=float(md["home_dir"][idx[0]]),
+                )
+            )
 
         def frame_of(per, t):
             sp = next(x for x in spans if x["period"] == per)
             return int(np.clip(sp["first"] + round((t - sp["clock0"]) * 25), sp["first"], sp["last"]))
 
-        def guess(t):                                                           # only for cues issued before a restart from a checkpoint
+        def guess(t):  # only for cues issued before a restart from a checkpoint
             return frame_of(2 if t >= 45 * 60 and len(spans) > 1 else 1, t)
-        kinds = {TYPE["pass"]: "pass", TYPE["goal"]: "shot", TYPE["attempt_saved"]: "shot", TYPE["miss"]: "shot", TYPE["tackle"]: "tackle", TYPE["challenge"]: "tackle",
-                 TYPE["foul"]: "foul", TYPE["interception"]: "interception", TYPE["clearance"]: "clearance", TYPE["save"]: "save"}
+
+        kinds = {
+            TYPE["pass"]: "pass",
+            TYPE["goal"]: "shot",
+            TYPE["attempt_saved"]: "shot",
+            TYPE["miss"]: "shot",
+            TYPE["tackle"]: "tackle",
+            TYPE["challenge"]: "tackle",
+            TYPE["foul"]: "foul",
+            TYPE["interception"]: "interception",
+            TYPE["clearance"]: "clearance",
+            TYPE["save"]: "save",
+        }
         ix = self.meta["ids"].index
-        acts = [dict(kind=kinds[e["typeId"]], player=ix(e["playerId"]), frame=frame_of(e["periodId"], e["matchTime"]), outcome=e["outcome"], **({"other": ix(e["other"])} if e.get("other") else {}))
-                for e in md["events"] if e["typeId"] in kinds and not (e["typeId"] == TYPE["foul"] and e["outcome"] == 1)]
-        acts += [dict(kind="down", player=ix(e["playerId"]), frame=frame_of(e["periodId"], e["matchTime"]), seconds=e["down_s"]) for e in md["events"] if e.get("down_s")]       # a fouled player on the ground
+        acts = [
+            dict(
+                kind=kinds[e["typeId"]],
+                player=ix(e["playerId"]),
+                frame=frame_of(e["periodId"], e["matchTime"]),
+                outcome=e["outcome"],
+                **({"other": ix(e["other"])} if e.get("other") else {}),
+            )
+            for e in md["events"]
+            if e["typeId"] in kinds and not (e["typeId"] == TYPE["foul"] and e["outcome"] == 1)
+        ]
+        acts += [
+            dict(
+                kind="down",
+                player=ix(e["playerId"]),
+                frame=frame_of(e["periodId"], e["matchTime"]),
+                seconds=e["down_s"],
+            )
+            for e in md["events"]
+            if e.get("down_s")
+        ]  # a fouled player on the ground
         acts.sort(key=lambda a: a["frame"])
         live = md["live"].astype(bool)
         flips = (np.flatnonzero(live[1:] != live[:-1]) + 1).tolist()
-        out_cues = [dict(id=c["cue_id"], frame=self.cues.frame_of.get(c["cue_id"], guess(c["match_time"])), t=c["match_time"], form=c["form"], screen=c["screen"], when=c["when"],
-                         valid_for=c["valid_for"], priority=c["priority"], payload=c["payload"], status=c["status"]) for c in cues]
-        goals = [dict(frame=guess(f["match_time"]), score=f["value"], player=f["subject"], minute=int(f["match_time"] // 60) + 1) for f in self.ledger.facts(mid, 1e9, kind="goal")]
-        cards = [dict(frame=guess(f["match_time"]), player=f["subject"], colour=f["value"], minute=int(f["match_time"] // 60) + 1) for f in self.ledger.facts(mid, 1e9, kind="card")]
+        out_cues = [
+            dict(
+                id=c["cue_id"],
+                frame=self.cues.frame_of.get(c["cue_id"], guess(c["match_time"])),
+                t=c["match_time"],
+                form=c["form"],
+                screen=c["screen"],
+                when=c["when"],
+                valid_for=c["valid_for"],
+                priority=c["priority"],
+                payload=c["payload"],
+                status=c["status"],
+            )
+            for c in cues
+        ]
+        goals = [
+            dict(
+                frame=guess(f["match_time"]),
+                score=f["value"],
+                player=f["subject"],
+                minute=int(f["match_time"] // 60) + 1,
+            )
+            for f in self.ledger.facts(mid, 1e9, kind="goal")
+        ]
+        cards = [
+            dict(
+                frame=guess(f["match_time"]),
+                player=f["subject"],
+                colour=f["value"],
+                minute=int(f["match_time"] // 60) + 1,
+            )
+            for f in self.ledger.facts(mid, 1e9, kind="card")
+        ]
         # what the reason rule saw at each goal: where each of its three instruments pointed, and whether they agreed
-        F = lambda kind: self.ledger.facts(mid, 1e9, kind=kind); at = lambda fs, t: next((f for f in fs if abs(f["match_time"] - t) < 0.01), None)
+        F = lambda kind: self.ledger.facts(mid, 1e9, kind=kind)
+        at = lambda fs, t: next((f for f in fs if abs(f["match_time"] - t) < 0.01), None)
         reasons = []
         for g in F("goal"):
-            t = g["match_time"]; gh, ca, rs = at(F("ghost_standoff"), t), at(F("closest_attempt"), t), at(F("reason"), t)
-            card = lambda pid: next((f for f in F("card") if f["subject"] == pid and f["value"] == "yellow" and f["match_time"] < t), None)
-            who = (ca or {}).get("differing_player") or (gh or {}).get("subject"); bk = card(who) if who else None
-            reasons.append(dict(frame=guess(t), minute=int(t // 60) + 1, scorer=g["subject"], agreed=bool(rs),
-                                earlier=dict(player=ca["differing_player"], by_m=ca["differing_by_m"], minute=int(ca["earlier_time"] // 60) + 1) if ca else None,
-                                ghost=dict(player=gh["subject"], off_m=gh["value"]) if gh else None,
-                                booked=dict(player=who, minute=int(bk["match_time"] // 60) + 1) if bk else None))
-        return dict(match_id=mid, fps=25, frames=n, row=47, unit="cm", periods=spans, reasons=reasons, live0=bool(live[0]), live_flips=flips, actions=acts, cues=out_cues, goals=goals, cards=cards,
-                    momentum=[[guess(float(t)), float(v)] for t, v in self.reflex.mom_hist], event_frames=[frame_of(e["periodId"], e["matchTime"]) for e in md["events"]],
-                    shown=self.cues.shown, held=self.cues.held,
-                    ids=self.meta["ids"], numbers=self.meta["numbers"], names=self.meta["names"], team=md["team"].tolist(),
-                    names_ar=self.meta["names_ar"], home=dict(short=self.meta["home"]["short"], name=self.meta["home"]["name"], name_ar=self.meta["home"]["name_ar"]), away=dict(short=self.meta["away"]["short"], name=self.meta["away"]["name"], name_ar=self.meta["away"]["name_ar"]),
-                    stake=dict(faint=self.reflex.model.faint, full=self.reflex.model.full, provisional=bool(self.reflex.model.meta.get("provisional"))))
+            t = g["match_time"]
+            gh, ca, rs = at(F("ghost_standoff"), t), at(F("closest_attempt"), t), at(F("reason"), t)
+            card = lambda pid: next(
+                (f for f in F("card") if f["subject"] == pid and f["value"] == "yellow" and f["match_time"] < t), None
+            )
+            who = (ca or {}).get("differing_player") or (gh or {}).get("subject")
+            bk = card(who) if who else None
+            reasons.append(
+                dict(
+                    frame=guess(t),
+                    minute=int(t // 60) + 1,
+                    scorer=g["subject"],
+                    agreed=bool(rs),
+                    earlier=dict(
+                        player=ca["differing_player"],
+                        by_m=ca["differing_by_m"],
+                        minute=int(ca["earlier_time"] // 60) + 1,
+                    )
+                    if ca
+                    else None,
+                    ghost=dict(player=gh["subject"], off_m=gh["value"]) if gh else None,
+                    booked=dict(player=who, minute=int(bk["match_time"] // 60) + 1) if bk else None,
+                )
+            )
+        return dict(
+            match_id=mid,
+            fps=25,
+            frames=n,
+            row=47,
+            unit="cm",
+            periods=spans,
+            reasons=reasons,
+            live0=bool(live[0]),
+            live_flips=flips,
+            actions=acts,
+            cues=out_cues,
+            goals=goals,
+            cards=cards,
+            momentum=[[guess(float(t)), float(v)] for t, v in self.reflex.mom_hist],
+            event_frames=[frame_of(e["periodId"], e["matchTime"]) for e in md["events"]],
+            shown=self.cues.shown,
+            held=self.cues.held,
+            ids=self.meta["ids"],
+            numbers=self.meta["numbers"],
+            names=self.meta["names"],
+            team=md["team"].tolist(),
+            names_ar=self.meta["names_ar"],
+            home=dict(
+                short=self.meta["home"]["short"], name=self.meta["home"]["name"], name_ar=self.meta["home"]["name_ar"]
+            ),
+            away=dict(
+                short=self.meta["away"]["short"], name=self.meta["away"]["name"], name_ar=self.meta["away"]["name_ar"]
+            ),
+            stake=dict(
+                faint=self.reflex.model.faint,
+                full=self.reflex.model.full,
+                provisional=bool(self.reflex.model.meta.get("provisional")),
+            ),
+        )
 
     @staticmethod
     def stake_counts(log):
@@ -321,9 +683,21 @@ class Pipeline:
             for t, k, b in self.ledger.audit_rows():
                 f.write(json.dumps(dict(match_time=t, kind=k, **b), default=float) + "\n")
         md = self.md
-        np.savez_compressed(os.path.join(self.out, "replay.npz"), pos=md["pos"][::5].astype(np.float32), ball=md["ball"][::5].astype(np.float32), clock=md["clock"][::5],
-                            period=md["period"][::5], live=md["live"][::5], momentum=np.array(self.reflex.mom_hist))
-        json.dump(dict(self.meta, events=len(md["events"])), open(os.path.join(self.out, "meta.json"), "w"), default=float, indent=1)
+        np.savez_compressed(
+            os.path.join(self.out, "replay.npz"),
+            pos=md["pos"][::5].astype(np.float32),
+            ball=md["ball"][::5].astype(np.float32),
+            clock=md["clock"][::5],
+            period=md["period"][::5],
+            live=md["live"][::5],
+            momentum=np.array(self.reflex.mom_hist),
+        )
+        json.dump(
+            dict(self.meta, events=len(md["events"])),
+            open(os.path.join(self.out, "meta.json"), "w"),
+            default=float,
+            indent=1,
+        )
         json.dump(self.scenes(cues), open(os.path.join(self.out, "scenes.json"), "w"), default=float)
         json.dump(self.match_view(cues), open(os.path.join(self.out, "match.json"), "w"), default=float)
         forms = {}
@@ -331,13 +705,32 @@ class Pipeline:
             forms[c["form"]] = forms.get(c["form"], 0) + 1
         levels = [x for x in self.reflex.stake_log]
         fm = np.array(self.frame_ms) if self.frame_ms else np.zeros(1)
-        summary = dict(match_id=mid, final_score=self.reflex.score, frames=len(md["clock"]), events_read=len(md["events"]), cues_by_form=forms,
-                       things_shown=self.cues.shown, held_back=self.cues.held, facts=len(self.ledger.facts(mid, 1e9)),
-                       stake_cards=self.stake_counts(levels),
-                       verifier_rejections=len(self.ledger.audit_rows("verifier_rejected")),
-                       frame_ms=dict(p50=round(float(np.percentile(fm, 50)), 3), p95=round(float(np.percentile(fm, 95)), 3), p99=round(float(np.percentile(fm, 99)), 3), max=round(float(fm.max()), 1)),
-                       writer_ms=[round(x * 1000, 2) for x in self.writer.timings], wall_seconds=round(wall_s, 1), writer_backend=self.writer.backend.name,
-                       stake_model=dict(provisional=bool(self.reflex.model.meta.get("provisional")), faint=self.reflex.model.faint, full=self.reflex.model.full))
+        summary = dict(
+            match_id=mid,
+            final_score=self.reflex.score,
+            frames=len(md["clock"]),
+            events_read=len(md["events"]),
+            cues_by_form=forms,
+            things_shown=self.cues.shown,
+            held_back=self.cues.held,
+            facts=len(self.ledger.facts(mid, 1e9)),
+            stake_cards=self.stake_counts(levels),
+            verifier_rejections=len(self.ledger.audit_rows("verifier_rejected")),
+            frame_ms=dict(
+                p50=round(float(np.percentile(fm, 50)), 3),
+                p95=round(float(np.percentile(fm, 95)), 3),
+                p99=round(float(np.percentile(fm, 99)), 3),
+                max=round(float(fm.max()), 1),
+            ),
+            writer_ms=[round(x * 1000, 2) for x in self.writer.timings],
+            wall_seconds=round(wall_s, 1),
+            writer_backend=self.writer.backend.name,
+            stake_model=dict(
+                provisional=bool(self.reflex.model.meta.get("provisional")),
+                faint=self.reflex.model.faint,
+                full=self.reflex.model.full,
+            ),
+        )
         json.dump(summary, open(os.path.join(self.out, "summary.json"), "w"), indent=1, default=float)
         return summary
 
@@ -346,9 +739,11 @@ def generate(plain_seed=None):
     if plain_seed is None:
         story = DemoStory()
         sim = Sim(seed=7, match_id="m_demo", story=story).run()
-        md = match_data(sim); md["planted"] = story.planted
+        md = match_data(sim)
+        md["planted"] = story.planted
     else:
-        md = match_data(Sim(seed=plain_seed, match_id=f"m_{plain_seed}").run()); md["planted"] = []
+        md = match_data(Sim(seed=plain_seed, match_id=f"m_{plain_seed}").run())
+        md["planted"] = []
     return md
 
 

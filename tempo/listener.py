@@ -11,7 +11,11 @@ class Listener:
 
     def mentions(self, text):
         low = text.lower()
-        return [pid for nm, pid in self.names.items() if nm in low.replace(",", " ").replace(".", " ").split() and self.counts[nm] == 1]
+        return [
+            pid
+            for nm, pid in self.names.items()
+            if nm in low.replace(",", " ").replace(".", " ").split() and self.counts[nm] == 1
+        ]
 
     @staticmethod
     def already_said(text, numbers):

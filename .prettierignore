@@ -1,0 +1,11 @@
+data/
+private/
+runs/
+artifacts/
+reports/
+research/
+spike/
+*.md
+*.html
+*.svg
+*.json

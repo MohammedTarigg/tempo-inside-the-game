@@ -1,0 +1,22 @@
+[project]
+name = "tempo"
+version = "0.1.0"
+description = "Tempo: before the moment, the stake; after it, the reason. A football broadcast layer built on synthetic match data."
+requires-python = ">=3.11"
+dependencies = ["numpy>=2.0", "torch>=2.2"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["tempo*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["data", "private", "spike", "runs", "artifacts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501", "E741", "E731"]

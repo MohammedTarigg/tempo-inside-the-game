@@ -3,18 +3,19 @@ ended differently, and say where the two differed most.
 
 Tested on real football (01-architecture.md section 9): true twins are rare, so this never claims "the same move". It reports the
 average gap in metres and only passes when the gap is under both a percentile of all pairs and an absolute limit."""
+
 import itertools
 import numpy as np
 
 HZ = 25
-OFFS = list(range(0, 126, 5))                # from the start of the attack: 0 to 5 seconds, every 0.2 s
-ALIKE = 9                                    # the first 1.6 seconds decide whether two attacks start alike
-K = 4                                        # players a side, nearest the ball when the attack starts
+OFFS = list(range(0, 126, 5))  # from the start of the attack: 0 to 5 seconds, every 0.2 s
+ALIKE = 9  # the first 1.6 seconds decide whether two attacks start alike
+K = 4  # players a side, nearest the ball when the attack starts
 PERMS = np.array(list(itertools.permutations(range(K))))
-LIMIT_M = 4.0                                # absolute limit on the average gap over the alike part
-DIFF_M = 3.0                                 # a player "stood differently" beyond this
+LIMIT_M = 4.0  # absolute limit on the average gap over the alike part
+DIFF_M = 3.0  # a player "stood differently" beyond this
 MAX_BACK = 12 * HZ
-NEAR_BALL_M = 12.0                           # a differing defender only counts if he is this close to the ball
+NEAR_BALL_M = 12.0  # a differing defender only counts if he is this close to the ball
 
 
 def attack_start(live, poss, shot_frame):
@@ -49,7 +50,8 @@ def attack_vector(frames, start, shot_frame, team, dir_of_team, keepers):
         v = pos[:, idx].transpose(1, 0, 2) * sgn
         v[..., 0] -= 52.5
         v[..., 1] *= flip
-        out[key] = v; out[key + "_idx"] = [int(x) for x in idx]
+        out[key] = v
+        out[key + "_idx"] = [int(x) for x in idx]
     return out
 
 
@@ -62,14 +64,14 @@ def compare(a, b):
         cost = C[np.arange(K), PERMS].sum(1)
         k = cost.argmin()
         gap += cost[k] / K
-        res[key] = dict(perm=PERMS[k], per=np.linalg.norm(a[key] - b[key][PERMS[k]], axis=-1))      # (K, moments)
+        res[key] = dict(perm=PERMS[k], per=np.linalg.norm(a[key] - b[key][PERMS[k]], axis=-1))  # (K, moments)
     res["gap_m"] = float(gap / 3)
     return res
 
 
 class TwinSearch:
     def __init__(self):
-        self.archive = []                      # dict(vec, team, match_id, t, outcome, meta)
+        self.archive = []  # dict(vec, team, match_id, t, outcome, meta)
         self._pairs = []
 
     def add(self, vec, team, match_id, t, outcome, meta=None):
@@ -79,7 +81,11 @@ class TwinSearch:
 
     def closest_earlier(self, vec, team, match_id, t, outcome):
         """The nearest earlier attack by the same team with a different result. Returns None when nothing is close enough."""
-        cands = [o for o in self.archive if o["team"] == team and o["outcome"] != outcome and (o["match_id"] != match_id or o["t"] < t - 20)]
+        cands = [
+            o
+            for o in self.archive
+            if o["team"] == team and o["outcome"] != outcome and (o["match_id"] != match_id or o["t"] < t - 20)
+        ]
         if not cands or len(self._pairs) < 30:
             return None
         scored = [(compare(vec, o["vec"]), o) for o in cands]
@@ -87,19 +93,29 @@ class TwinSearch:
         pct = float(np.mean(np.array(self._pairs) < res["gap_m"]))
         if res["gap_m"] > LIMIT_M or pct > 0.05:
             return dict(found=False, gap_m=res["gap_m"], closer_than=1 - pct)
-        last = min(vec["n_real"], o["vec"]["n_real"]) - 1                    # the last moment both attacks were still running
-        per = res["D"]["per"][:, :last + 1]                                   # defenders of the new attack against their pairs
+        last = min(vec["n_real"], o["vec"]["n_real"]) - 1  # the last moment both attacks were still running
+        per = res["D"]["per"][:, : last + 1]  # defenders of the new attack against their pairs
         # the first defender to stand differently, counting only one who is near the ball in either attack at that moment:
         # a striker drifting on the far side is a difference, and it explains nothing
         pb = o["vec"]["D"][res["D"]["perm"]]
-        near = (np.linalg.norm(vec["D"][:, :last + 1] - vec["ball"][None, :last + 1], axis=-1) < NEAR_BALL_M) | \
-               (np.linalg.norm(pb[:, :last + 1] - o["vec"]["ball"][None, :last + 1], axis=-1) < NEAR_BALL_M)
+        near = (np.linalg.norm(vec["D"][:, : last + 1] - vec["ball"][None, : last + 1], axis=-1) < NEAR_BALL_M) | (
+            np.linalg.norm(pb[:, : last + 1] - o["vec"]["ball"][None, : last + 1], axis=-1) < NEAR_BALL_M
+        )
         hit = (per > DIFF_M) & near
         k_part = next((k for k in range(per.shape[1]) if hit[:, k].any()), None)
-        if k_part is None:                                                    # no relevant difference: nothing to point at
+        if k_part is None:  # no relevant difference: nothing to point at
             return dict(found=False, gap_m=res["gap_m"], closer_than=1 - pct)
         worst = int(np.where(hit[:, k_part], per[:, k_part], -1).argmax())
         differing = [int(j) for j in np.flatnonzero(hit[:, k_part])]
         part = OFFS[k_part] / HZ
-        return dict(found=True, gap_m=res["gap_m"], closer_than=1 - pct, earlier=o, biggest_difference=vec["D_idx"][worst], biggest_difference_m=float(per[worst, min(k_part + 10, per.shape[1] - 1)]),      # two seconds after they part
-                    earlier_player=o["vec"]["D_idx"][int(res["D"]["perm"][worst])], n_differing=len(differing), parting_s=part)
+        return dict(
+            found=True,
+            gap_m=res["gap_m"],
+            closer_than=1 - pct,
+            earlier=o,
+            biggest_difference=vec["D_idx"][worst],
+            biggest_difference_m=float(per[worst, min(k_part + 10, per.shape[1] - 1)]),  # two seconds after they part
+            earlier_player=o["vec"]["D_idx"][int(res["D"]["perm"][worst])],
+            n_differing=len(differing),
+            parting_s=part,
+        )

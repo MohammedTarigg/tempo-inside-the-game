@@ -1,4 +1,5 @@
 """The stake network and the two-level card logic. One implementation, used in training, evaluation and the live service."""
+
 import json
 import os
 import numpy as np
@@ -12,8 +13,12 @@ ARTIFACTS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path
 class Net(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.c = torch.nn.Sequential(torch.nn.Conv1d(N_FEAT, 64, 3, padding=1), torch.nn.ReLU(),
-                                     torch.nn.Conv1d(64, 64, 3, padding=1), torch.nn.ReLU())
+        self.c = torch.nn.Sequential(
+            torch.nn.Conv1d(N_FEAT, 64, 3, padding=1),
+            torch.nn.ReLU(),
+            torch.nn.Conv1d(64, 64, 3, padding=1),
+            torch.nn.ReLU(),
+        )
         self.f = torch.nn.Sequential(torch.nn.Linear(64 * len(LAGS), 128), torch.nn.ReLU(), torch.nn.Linear(128, 1))
 
     def forward(self, x):
@@ -51,7 +56,7 @@ class CardState:
     def __init__(self, faint, full, hold=2.0, absent=1.0, min_full=1.2):
         self.faint, self.full, self.hold, self.absent, self.min_full = faint, full, hold, absent, min_full
         self.level = 0
-        self.since = None           # when the current appearance began
+        self.since = None  # when the current appearance began
         self._below = None
         self._last_t = None
         self._prev_hi = False

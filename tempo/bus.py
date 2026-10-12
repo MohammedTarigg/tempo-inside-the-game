@@ -1,5 +1,6 @@
 """Message bus. LocalBus keeps every topic as an append-only log with offsets, which is the property the pipeline relies on from
 Azure Event Hubs: a consumer that restarts reads again from its saved offset. An Event Hubs adapter implements the same three methods."""
+
 import json
 import os
 
