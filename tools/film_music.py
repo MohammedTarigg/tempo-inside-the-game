@@ -30,8 +30,8 @@ What the edit does:
   dulls it for the close and cuts it at the blink
 
 The sources are read from ui/tour/music/. For each track it writes ui/tour/tempo-theme[-name].m4a and a .json of the
-same name, which tour.js reads for its timings. The moments named here (the shot 'strike' beats into Thunderbolt, the
-card 'lit' beats into On a yellow, the blink in the close) are the film's. If one moves in tour.js, move it here."""
+same name, which ui/tour/film.js reads for its timings. The moments named here (the shot 'strike' beats into Thunderbolt, the
+card 'lit' beats into On a yellow, the blink in the close) are the film's. If one moves in ui/tour/film.js, move it here."""
 
 import json
 import os

@@ -3,8 +3,9 @@
 // the word, where it stays. Nothing jumps and nothing shakes.
 // playIntro(host) draws into `host` (give it a black background and white text colour) and resolves when it has finished, with
 // the drawing and the exact box of the finished logo inside it, so a page can carry that same drawing to wherever its logo lives.
-const NS = 'http://www.w3.org/2000/svg',
-  FONT = '"Hanken Grotesk", system-ui, sans-serif';
+import { svgEl, seg, lerp, outCubic, inOutCubic, outBack } from '#util';
+
+const FONT = '"Hanken Grotesk", system-ui, sans-serif';
 const W = 800,
   H = 300,
   FS = 150,
@@ -17,15 +18,9 @@ const RO = 40,
   LOOK = 8.2; // the mark: ring, line and spot, in the logo's proportions
 const END = 4.45;
 
-const clamp = (x) => Math.min(1, Math.max(0, x)),
-  seg = (t, a, b) => clamp((t - a) / (b - a)),
-  lerp = (a, b, u) => a + (b - a) * u;
-const outCubic = (u) => 1 - (1 - u) ** 3,
-  inOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
-const outBack = (u) => 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
 const bump = (t, at, half) => Math.max(0, 1 - Math.abs(t - at) / half); // 0, up to 1 at `at`, back to 0
 // where the eye looks, as a share of its full sideways travel: a calm look left, then right, where it rests
-const glance = (t) => (t < 2.45 ? -inOut(seg(t, 1.95, 2.3)) : lerp(-1, 1, inOut(seg(t, 2.6, 3.0))));
+const glance = (t) => (t < 2.45 ? -inOutCubic(seg(t, 1.95, 2.3)) : lerp(-1, 1, inOutCubic(seg(t, 2.6, 3.0))));
 
 // Pass `at` (seconds) to draw one still moment instead, for checking a frame.
 export const MARK = { RO, RW, SW, STUB };
@@ -74,13 +69,7 @@ export function softTails() {
 
 export async function playIntro(host, { hold = 0.8, at = null } = {}) {
   await Promise.all([document.fonts.load(`600 ${FS}px ${FONT}`)]).catch(() => {});
-  const el = (tag, attrs, parent) => {
-    const e = document.createElementNS(NS, tag);
-    for (const k in attrs) e.setAttribute(k, attrs[k]);
-    parent.appendChild(e);
-    return e;
-  };
-  const svg = el(
+  const svg = svgEl(
     'svg',
     {
       viewBox: `0 0 ${W} ${H}`,
@@ -98,15 +87,15 @@ export async function playIntro(host, { hold = 0.8, at = null } = {}) {
     fill: 'currentColor',
     y: BASE,
   };
-  const temp = el('text', type, svg),
-    oh = el('text', { ...type, opacity: 0 }, svg);
+  const temp = svgEl('text', type, svg),
+    oh = svgEl('text', { ...type, opacity: 0 }, svg);
   temp.textContent = 'temp';
   oh.textContent = 'o';
-  const ring = el('ellipse', { fill: 'none', stroke: 'currentColor', 'stroke-width': RW }, svg);
+  const ring = svgEl('ellipse', { fill: 'none', stroke: 'currentColor', 'stroke-width': RW }, svg);
   const soft = { fill: 'none', stroke: 'currentColor', 'stroke-width': SW, 'stroke-linecap': 'round' },
-    top = el('path', { ...soft, 'data-limb': 'top' }, svg),
-    bot = el('path', { ...soft, 'data-limb': 'bot' }, svg),
-    spot = el('ellipse', { fill: 'currentColor' }, svg);
+    top = svgEl('path', { ...soft, 'data-limb': 'top' }, svg),
+    bot = svgEl('path', { ...soft, 'data-limb': 'bot' }, svg),
+    spot = svgEl('ellipse', { fill: 'currentColor' }, svg);
   const tails = softTails();
   let before = null;
   const L4 = temp.getComputedTextLength(),
@@ -129,7 +118,7 @@ export async function playIntro(host, { hold = 0.8, at = null } = {}) {
     const appear = outCubic(seg(t, 0.15, 0.8)),
       limb = Math.max(0, outBack(seg(t, 0.95, 1.4))),
       open = Math.max(0, outBack(seg(t, 1.45, 1.72)));
-    const move = inOut(seg(t, 3.56, 4.18)),
+    const move = inOutCubic(seg(t, 3.56, 4.18)),
       blink = bump(t, 3.22, 0.09);
     const x = lerp(markA, markB, move),
       y = CY + (1 - appear) * 14,
@@ -152,7 +141,7 @@ export async function playIntro(host, { hold = 0.8, at = null } = {}) {
     // word, and dead straight again by the last frame, which is the logo the page keeps
     const dt = before === null ? 0 : t - before;
     before = t;
-    const [dTop, dBot] = tails.step(x, y, len, dt, { settle: inOut(seg(t, END - 0.2, END)) });
+    const [dTop, dBot] = tails.step(x, y, len, dt, { settle: inOutCubic(seg(t, END - 0.2, END)) });
     top.setAttribute('d', dTop);
     bot.setAttribute('d', dBot);
     spot.setAttribute('cx', x + glance(t) * LOOK);

@@ -52,9 +52,9 @@ python3 -m http.server 8771
 
 Then open `http://localhost:8771/ui/live/index.html` or `http://localhost:8771/ui/replay/index.html`. Both need a connection for three.js and the fonts.
 
-Both draw the same stage (`ui/stage.js`): a green pitch at a broadcast tilt, 105 by 68 m with markings to the laws of the game, a numbered marker for each player and the ball. Colour appears only where it carries meaning: the green of the pitch, a colour for each team and the yellow of a card. Panels, type and everything the system draws on the pitch are black, white or grey. A marker shows only what the tracking feed knows: where the player is, which way his body faces (a wedge that watches the ball and turns towards his run as he speeds up) and how fast he is going (a streak once he sprints).
+Both draw the same stage (`ui/shared/stage.js`): a green pitch at a broadcast tilt, 105 by 68 m with markings to the laws of the game, a numbered marker for each player and the ball. Colour appears only where it carries meaning: the green of the pitch, a colour for each team and the yellow of a card. Panels, type and everything the system draws on the pitch are black, white or grey. A marker shows only what the tracking feed knows: where the player is, which way his body faces (a wedge that watches the ball and turns towards his run as he speeds up) and how fast he is going (a streak once he sprints).
 
-The Tempo mark, the app icon and the two club crests are drawn by `ui/brand/make.py`; `ui/brand/preview.html` shows them. `ui/brand/intro.html` plays the intro, which also runs over the match view when it loads (`?intro=0` skips it).
+The Tempo mark, the app icon and the two club crests are drawn by `tools/brand_marks.py`; `ui/brand/preview.html` shows them. `ui/brand/intro.html` plays the intro, which also runs over the match view when it loads (`?intro=0` skips it).
 
 The match view (`ui/live/`) plays the whole match. Positions come from `runs/m_demo/match.bin` (25 frames a second, whole centimetres) and everything else from `runs/m_demo/match.json`, where each cue carries the frame it was issued on. The page decides nothing. It draws:
 
@@ -70,7 +70,7 @@ The replay view (`ui/replay/`) plays the closest-earlier-attempt scene from `run
 
 In the match view add `?m=49` to open paused at a minute, `?f=` for a frame, or `?run=<match_id>` for another run. In the replay add `?t=20`. Add `?bench=1` to either to time the drawing itself; the result is in `window.__tempo.bench`. On the development laptop the match view drew a frame in 4.6 ms at the median.
 
-**The product film** is at `http://localhost:8771/ui/tour/`. Its music is a public-domain (CC0) recording, "With You" by Soft and Furious, in `ui/tour/music/`, cut to the film by `python3 ui/tour/music.py` (numpy and ffmpeg), which also mixes in a public-domain crowd recording and the commentator's line, spoken by an invented voice; sources and licences are in `ui/tour/music/README.md`. Add `?mute=1` to run it silent. It runs for about 94 seconds on its own: the intro, the logo settling into a corner, the pitch drawing itself, then six features in match order and a proof card, each with a number, a sentence and small chips saying what powers it. It is the match view above driven by a director script (`ui/tour/tour.js`), playing the real run. A dashed chip marks something that is planned and not built. Add `?at=42` to start at a second and `?hold=1` to stay on that feature.
+**The product film** is at `http://localhost:8771/ui/tour/`. Its music is a public-domain (CC0) recording, "With You" by Soft and Furious, in `ui/tour/music/`, cut to the film by `python3 tools/film_music.py` (numpy and ffmpeg), which also mixes in a public-domain crowd recording and the commentator's line, spoken by an invented voice; sources and licences are in `ui/tour/music/README.md`. Add `?mute=1` to run it silent. It runs for about 94 seconds on its own: the intro, the logo settling into a corner, the pitch drawing itself, then six features in match order and a proof card, each with a number, a sentence and small chips saying what powers it. It is the match view above driven by a director script (`ui/tour/film.js`), playing the real run. A dashed chip marks something that is planned and not built. Add `?at=42` to start at a second and `?hold=1` to stay on that feature.
 
 An earlier 3D version with figures built in code is on the `3d-figures` branch.
 
@@ -124,7 +124,7 @@ An earlier 3D version with figures built in code is on the `3d-figures` branch.
 | Agents, Verifier | `agents.py` | Microsoft Agent Framework on Foundry, through `FoundryBackend` |
 | Listener | `listener.py` | Azure AI Speech |
 | Season | `season.py` | The league archive |
-| Runner | `run_match.py` | |
+| Runner | `run_match.py`, exporters in `outputs.py` | |
 | Checks | `eval/checks.py`, `eval/realism.py`, `eval/physics.py` | GitHub Actions gate |
 
 ## Not in this build

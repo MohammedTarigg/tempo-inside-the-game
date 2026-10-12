@@ -21,21 +21,19 @@ body.tour #strip {
   display: none;
 } /* the film has no strip: nothing in it needs one, and a graph always on screen asks to be read */
 body.tour #phone,
-body.tour #controls,
-body.tour #moment,
 body.tour #counter,
 body.tour #replaytag,
 body.tour #kmhead {
   display: none !important;
 }
-body.tour #strip {
-  grid-template-columns: 1fr;
-  padding: 2px 28px 8px;
-}
 body.tour #board {
   left: auto;
   right: 26px;
   top: 22px;
+  transform-origin: 100% 0;
+  transition:
+    opacity 0.5s,
+    transform 0.55s cubic-bezier(0.3, 0, 0.2, 1);
 }
 body.tour #lower {
   left: auto;
@@ -43,28 +41,14 @@ body.tour #lower {
   bottom: 22px;
   align-items: flex-end;
 }
-body.tour #board,
-body.tour #track {
-  transition:
-    opacity 0.6s,
-    clip-path 1.1s cubic-bezier(0.6, 0, 0.2, 1);
-}
 body.topen #board,
 body.topen #lower,
 body.topen #pins {
   opacity: 0;
 }
-body.topen #track {
-  clip-path: inset(0 100% 0 0);
-}
 body.topen.tdrawn #board {
   opacity: 1;
 }
-body.topen.tdrawn #track,
-body.tour:not(.topen) #track {
-  clip-path: inset(0 0 0 0);
-}
-
 .tlogo {
   position: absolute;
   left: 26px;
@@ -75,7 +59,7 @@ body.tour:not(.topen) #track {
   font: 600 23px/1 var(--font);
   letter-spacing: -0.045em;
   opacity: 0;
-  z-index: 4;
+  z-index: 6;
   transition:
     left 0.9s cubic-bezier(0.7, 0, 0.2, 1),
     top 0.9s cubic-bezier(0.7, 0, 0.2, 1),
@@ -95,12 +79,6 @@ body.tour:not(.topen) #track {
   top: 50%;
   transform: translate(-50%, -50%) scale(3.4);
 }
-#teye {
-  transition:
-    cx 0.35s,
-    cy 0.35s;
-}
-
 .tcap {
   position: absolute;
   left: 26px;
@@ -109,7 +87,7 @@ body.tour:not(.topen) #track {
   gap: 22px;
   align-items: flex-end;
   max-width: 760px;
-  z-index: 3;
+  z-index: 6;
   opacity: 0;
   transform: translateY(14px);
   pointer-events: none;
@@ -133,10 +111,10 @@ body.tour:not(.topen) #track {
   margin: 0 0 8px;
 }
 .tcap p {
-  margin: 0 0 14px;
-  font-size: 19px;
+  margin: 0 0 16px;
+  font-size: 22px;
   line-height: 1.38;
-  color: #d9d9d9;
+  color: #fff;
   max-width: 46ch;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.8);
 }
@@ -152,7 +130,7 @@ body.tour:not(.topen) #track {
   background: rgba(0, 0, 0, 0.86);
   border-radius: 999px;
   padding: 7px 14px 7px 10px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .tchips b {
   font-weight: 500;
@@ -168,7 +146,6 @@ body.tour:not(.topen) #track {
   font-size: 12px;
   color: #9a9a9a;
 }
-
 .tside {
   position: absolute;
   right: 40px;
@@ -187,9 +164,6 @@ body.tour:not(.topen) #track {
   opacity: 1;
   transform: translate(0, -50%);
 }
-.tside:has(.twords) {
-  width: auto;
-}
 .tside.wide,
 .tside.wide.on {
   left: 0;
@@ -202,80 +176,11 @@ body.tour:not(.topen) #track {
   place-items: center;
   transform: none;
 }
-.twords {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  width: 640px;
-  margin-left: auto;
-}
-.twords article {
-  background: rgba(0, 0, 0, 0.9);
-  border-radius: 14px;
-  padding: 13px 16px 14px;
-}
-.twords h3 {
-  margin: 0 0 5px;
-  font: 600 13px var(--font);
-  color: #9a9a9a;
-}
-.twords p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.42;
-}
-.twords [dir='rtl'] p {
-  font-family: 'Noto Sans Arabic', sans-serif;
-}
-.twords .bad {
-  outline: 1.5px dashed rgba(255, 255, 255, 0.55);
-  outline-offset: -1.5px;
-  background: rgba(0, 0, 0, 0.7);
-}
-.twords .bad s {
-  color: #9a9a9a;
-}
-.twords .bad small {
-  display: block;
-  margin-top: 8px;
-  color: #9a9a9a;
-}
-.tstop {
-  background: rgba(0, 0, 0, 0.86);
-  border-radius: 18px;
-  padding: 22px 26px;
-  display: grid;
-  gap: 6px;
-}
-.tstop b {
-  font: 600 44px/1 var(--font);
-  letter-spacing: -0.035em;
-}
-.tstop span {
-  color: #bdbdbd;
-  line-height: 1.4;
-}
-.tend {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 260px));
-  gap: 44px;
-}
-.tend b {
-  display: block;
-  font: 600 64px/1 var(--font);
-  letter-spacing: -0.045em;
-  margin-bottom: 10px;
-}
-.tend span {
-  color: #bdbdbd;
-  line-height: 1.4;
-}
-
 .tscrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 5;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 17%),
     linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.5) 22%, rgba(0, 0, 0, 0) 46%);
 }
@@ -306,10 +211,8 @@ body.tour:not(.topen) #track {
 }
 .tframe.on {
   transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
-} /* in: a slow dissolve. Out stays quick */
-.tframe.on {
   opacity: 1;
-}
+} /* in: a slow dissolve. Out stays quick */
 @media (prefers-reduced-motion: reduce) {
   .tlogo,
   .tcap,
@@ -321,29 +224,6 @@ body.tour:not(.topen) #track {
 }
 
 /* pictures the features draw while the match plays */
-.tdots {
-  display: block;
-  width: 400px;
-  height: 244px;
-  margin-left: auto;
-  background: rgba(0, 0, 0, 0.72);
-  border-radius: 16px;
-  padding: 14px;
-  box-sizing: content-box;
-}
-.tside:has(.tdots),
-.tside:has(.trows),
-.tside:has(.tcheck) {
-  width: auto;
-}
-.trows {
-  display: block;
-  width: 400px;
-  height: 150px;
-  margin-left: auto;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 16px;
-}
 .tgauge {
   width: 9px;
   height: 68px;
@@ -369,182 +249,7 @@ body.tour:not(.topen) #track {
   height: 2px;
   background: #fff;
 }
-.tbars {
-  position: absolute;
-  right: 60px;
-  bottom: 150px;
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  height: 70px;
-  opacity: 0;
-  transition: opacity 0.35s;
-  z-index: 3;
-}
-.tbars.on {
-  opacity: 1;
-}
-.tbars i {
-  width: 8px;
-  height: 100%;
-  border-radius: 4px;
-  background: #fff;
-  transform-origin: center;
-  animation: tbar 0.7s ease-in-out infinite alternate;
-}
-.tbars i:nth-child(1) {
-  animation-delay: -0.1s;
-}
-.tbars i:nth-child(2) {
-  animation-delay: -0.45s;
-}
-.tbars i:nth-child(3) {
-  animation-delay: -0.2s;
-}
-.tbars i:nth-child(4) {
-  animation-delay: -0.6s;
-}
-.tbars i:nth-child(5) {
-  animation-delay: -0.3s;
-}
-@keyframes tbar {
-  from {
-    transform: scaleY(0.18);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-.tpause {
-  position: absolute;
-  left: 50%;
-  top: 44%;
-  display: flex;
-  gap: 14px;
-  transform: translate(-50%, -50%) scale(0.8);
-  opacity: 0;
-  transition:
-    opacity 0.25s,
-    transform 0.25s;
-  z-index: 3;
-}
-.tpause.on {
-  opacity: 0.92;
-  transform: translate(-50%, -50%);
-}
-.tpause i {
-  width: 18px;
-  height: 64px;
-  border-radius: 5px;
-  background: #fff;
-}
-.tcheck {
-  width: 560px;
-  margin-left: auto;
-  display: grid;
-  gap: 12px;
-}
-.tcheck p {
-  margin: 0;
-  background: rgba(0, 0, 0, 0.9);
-  border-radius: 16px;
-  padding: 30px 22px 20px;
-  font-size: 21px;
-  line-height: 1.9;
-  font-weight: 500;
-}
-.tcheck .bad {
-  outline: 1.5px dashed rgba(255, 255, 255, 0.55);
-  outline-offset: -1.5px;
-  color: #bdbdbd;
-  animation: tdim 0.4s 2.6s both;
-}
-.tok {
-  position: relative;
-  display: inline-block;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
-  line-height: 1.25;
-}
-.tok::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -17px;
-  width: 9px;
-  height: 5px;
-  border-left: 2.5px solid #fff;
-  border-bottom: 2.5px solid #fff;
-  transform: translateX(-50%) rotate(-45deg) scale(0);
-  animation: ttick 0.3s var(--d) cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
-}
-.tok.wrong {
-  border-bottom-color: #fff;
-  text-decoration: line-through;
-}
-.tok.wrong::before {
-  width: 12px;
-  height: 12px;
-  top: -20px;
-  border: 0;
-  background: linear-gradient(45deg, transparent 43%, #fff 43%, #fff 57%, transparent 57%),
-    linear-gradient(-45deg, transparent 43%, #fff 43%, #fff 57%, transparent 57%);
-  transform: translateX(-50%) scale(0);
-  animation-name: tcross;
-}
-.tok.wrong ~ .tok::before {
-  animation: none;
-}
-@keyframes ttick {
-  to {
-    transform: translateX(-50%) rotate(-45deg) scale(1);
-  }
-}
-@keyframes tcross {
-  to {
-    transform: translateX(-50%) scale(1);
-  }
-}
-@keyframes tdim {
-  to {
-    opacity: 0.6;
-  }
-}
-.treaders {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-.treaders span {
-  background: rgba(0, 0, 0, 0.86);
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 14px;
-}
-.tcheck small {
-  text-align: right;
-  color: #bdbdbd;
-}
-.tcap p {
-  font-size: 22px !important;
-  color: #fff !important;
-  margin-bottom: 16px !important;
-}
-.tchips span {
-  font-size: 15px;
-}
-.tend {
-  grid-template-columns: repeat(3, 240px) !important;
-}
 
-/* the bridge: the same dip between every two features, and a match clock that runs forward to the next moment */
-.tdip {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 2;
-}
 /* the caption changes in place between features */
 .tcap h2,
 .tcap p,
@@ -560,24 +265,6 @@ body.tour:not(.topen) #track {
 .tcap.chg .tno {
   opacity: 0 !important;
   transform: translateY(8px) !important;
-}
-/* as the playhead passes a booking on the way to the next feature, its card on the strip answers */
-#track .book.pop {
-  animation: tbook 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-@keyframes tbook {
-  30% {
-    transform: scale(2.4);
-  }
-}
-/* the proof numbers stand over the dimmed pitch; the full-time cards step aside for them */
-.tveil.deep {
-  background: rgba(0, 0, 0, 0.84);
-  transition: opacity 1s;
-}
-.tproofon #interval {
-  opacity: 0;
-  transition: opacity 0.6s;
 }
 .tcap.on .tchips span {
   animation: tchip 0.5s both cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -826,36 +513,13 @@ body.tour #label {
   color: #bdbdbd;
   font-size: 14px;
 }
-
 body.tour #stage {
   transform-origin: 0 0;
   overflow: hidden;
 }
-body.tour #board,
 body.tour #pins,
 .tscrim {
   transition: opacity 0.5s;
-}
-
-/* full time, and the proof */
-body.tour #interval {
-  justify-content: flex-start;
-  padding: 96px 7% 0;
-}
-body.tour #ih {
-  display: none;
-} /* the film's caption already names it */
-
-/* the film's own furniture, above the picture */
-.tscrim {
-  z-index: 5;
-}
-.tcap,
-.tlogo {
-  z-index: 6;
-}
-.tdip {
-  z-index: 7;
 }
 
 /* the one button the film waits behind when a browser will not start sound by itself */
@@ -885,7 +549,6 @@ body.tour #ih {
   font: 500 14px/1 var(--font);
   letter-spacing: 0;
 }
-/* a first-time viewer reads the measure and the name; the detail stays in the match view */
 
 /* The proof: four cards, one at a time, on black. Sizes follow the picture's width (--u is a hundredth of it) */
 .tcards {
@@ -1001,8 +664,8 @@ body.tour #ih {
 body.tour #interval {
   display: none !important;
 }
-/* Called it. On the pitch: the zone and the shots, drawn in the picture's own space. On the strip: the strip itself comes up
-   to the middle of the screen, and what happened is marked on it above the curve */
+
+/* Called it. The zone, the shots and the runs are drawn over the pitch, in the picture's own space */
 .tover {
   position: absolute;
   inset: 0;
@@ -1116,23 +779,8 @@ body.tour #interval {
   opacity: 1;
   transform: none;
 }
-body.tour #dwin.now:not(.on) {
-  opacity: 0;
-} /* in the film the bracket shows once, when it is said at kick-off */
-#track .goal,
-#track .book {
-  transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.3, 1);
-}
-#track .book.pop {
-  transform: scale(1.9);
-}
+
 /* the scoreboard, when the clock is the picture: larger, then the clock takes the outline and turns solid with the goal */
-body.tour #board {
-  transform-origin: 100% 0;
-  transition:
-    opacity 0.5s,
-    transform 0.55s cubic-bezier(0.3, 0, 0.2, 1);
-}
 body.tbig #board {
   transform: scale(1.55);
 }
@@ -1152,9 +800,6 @@ body.tgoal #board .clock {
   color: #000;
 }
 @media (prefers-reduced-motion: reduce) {
-  #dwin,
-  #track .goal,
-  #track .book,
   #board,
   #board .clock {
     transition: none;

@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- The replay view: the closest earlier attempt, then the goal. ?bare=1 hides the controls and words, for the film. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -7,31 +8,10 @@
 <link rel="icon" href="../brand/tempo-small.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@500&display=swap" rel="stylesheet">
-<style>
-  :root { --font:"Hanken Grotesk", system-ui, sans-serif; --ink:#000; --inkd:#000; --deep:#111; --paper:#fff; --mute:#9A9A9A; --sig:#FFD21F; --card:#FFD21F; --red:#fff; --home:#FF8A3D; --away:#7FD0F5; }
-  * { box-sizing: border-box; }
-  html, body { margin:0; height:100%; background: var(--ink); color: var(--paper); font-family:var(--font); overflow:hidden; }
-  #stage { position:fixed; inset:0; }
-  canvas { display:block; }
-  #top { position:fixed; left:28px; top:22px; right:28px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
-  #score { font-family:var(--font); font-weight:700; font-size:22px; letter-spacing:.01em; background:rgba(0,0,0,.78); padding:8px 14px; border-radius:10px; display:flex; gap:12px; align-items:center; }
-  #score i { width:6px; height:18px; border-radius:2px; display:inline-block; }
-  #clock { color:var(--mute); font-weight:600; font-family:var(--font); font-size:15px; }
-  #label { position:fixed; left:28px; bottom:96px; max-width:min(560px, 80vw); pointer-events:none; transition: opacity .35s; }
-  #label h1 { font-family:var(--font); font-weight:700; font-size:clamp(34px, 5vw, 58px); line-height:.98; margin:0 0 8px; }
-  #label p { margin:0; font-size:17px; line-height:1.4; color:#D9D9D9; max-width:58ch; text-shadow:0 1px 8px rgba(0,0,0,.9); }
-  #label h1 { text-shadow:0 2px 14px rgba(0,0,0,.85); }
-  #gap { position:fixed; pointer-events:none; font-family:var(--font); font-weight:700; font-size:24px; letter-spacing:-.02em; color:#000; background:#fff; padding:2px 10px 3px; border-radius:8px; transform:translate(-50%,-50%); opacity:0; white-space:nowrap; }
-  .tag { position:fixed; pointer-events:none; font-size:13px; font-weight:600; background:rgba(0,0,0,.82); padding:3px 8px; border-radius:6px; transform:translate(-50%,-100%); opacity:0; white-space:nowrap; }
-  #bar { position:fixed; left:28px; right:28px; bottom:26px; display:flex; gap:14px; align-items:center; }
-  button { font:600 15px var(--font); color:var(--ink); background:var(--paper); border:0; border-radius:10px; padding:10px 16px; cursor:pointer; min-width:74px; }
-  button:focus-visible, input:focus-visible { outline:3px solid #fff; outline-offset:2px; }
-  input[type=range] { flex:1; accent-color:#fff; height:28px; }
-  #phase { font-size:14px; color:var(--mute); min-width:190px; text-align:right; }
-  #err { position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:40px; font-size:17px; text-align:center; }
-  #score [hidden] { display:none; }
-  .bare #bar, .bare #top, .bare #label, .bare .tag { display:none; }
-</style>
+<script>
+  // The page's styles carry the time of this page load, like its modules, so a browser never lays out new markup with an old sheet.
+  document.write(`<link rel="stylesheet" href="replay.css?v=${Date.now()}">`);
+</script>
 </head>
 <body>
 <div id="stage"></div>
@@ -43,10 +23,21 @@
 <div id="err"></div>
 <script>
   // Our own modules are mapped with the time of this page load, so a browser never runs an old copy of one file against a new copy of another.
-  { const v = Date.now(), m = document.createElement('script'); m.type = 'importmap';
-    m.textContent = JSON.stringify({ imports: { three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js', 'three/addons/': 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/', '#stage': `../stage.js?v=${v}`, '#intro': `../brand/intro.js?v=${v}`, '#portrait': `../brand/portrait.js?v=${v}`, '#main': `./main.js?v=${v}` } });
-    document.currentScript.after(m); }
+  // Every module is listed here and imported by its #name. A relative import from one module to another would miss the time stamp.
+  // The lists are in loading order: each module comes after the ones it imports, and they are fetched one at a time. Asked for
+  // many files in the same instant, the local server (python3 -m http.server) drops some of the connections, and one module
+  // that fails to arrive stops the whole page.
+  { const v = Date.now(), m = document.createElement('script'), imports = { three: 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js' };
+    const lists = {
+      // the replay view
+      page: [['util', '../shared/util.js'], ['stage', '../shared/stage.js'], ['marker', '../shared/marker.js'], ['shapes', '../shared/shapes.js'], ['replay/start', './start.js'], ['replay/clip', './clip.js'], ['replay/show', './show.js'], ['main', './main.js']],
+    };
+    for (const [name, path] of Object.values(lists).flat()) imports[`#${name}`] = `${path}?v=${v}`;
+    m.type = 'importmap'; m.textContent = JSON.stringify({ imports });
+    document.currentScript.after(m);
+    // fetches one list and gives back its last module, which is the one that starts things
+    window.loadModules = async (list) => { let last; for (const [name] of lists[list]) last = await import(`#${name}`); return last; }; }
 </script>
-<script type="module">import('#main');</script>
+<script type="module">loadModules('page');</script>
 </body>
 </html>

@@ -24,4 +24,4 @@ over a crowd. No recording of a real commentator was used. `spike/voice/expressi
 
 ## Building
 
-`python3 ui/tour/music.py` cuts `with-you.mp3` to the film and writes `ui/tour/tempo-theme.m4a` with a `.json` of timings.
+`python3 tools/film_music.py` cuts `with-you.mp3` to the film and writes `ui/tour/tempo-theme.m4a` with a `.json` of timings.
