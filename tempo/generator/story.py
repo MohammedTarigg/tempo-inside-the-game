@@ -6,6 +6,9 @@ Planted: Skoles (Harbour City 6) is booked at 47 minutes. The same Northgate att
 
 import numpy as np
 
+# The seed the demo match is generated with. The story plants the two attacks and the booking; the rest of the match is
+# whatever this seed gives, and this one was picked from a dozen because the habits the league really has show in it.
+DEMO_SEED = 5
 ROONAY, KESSLER, OKOYE = 7, 6, 8  # Northgate 10, 8, 7 (indices into the 22)
 SKOLES = 11 + 5  # Harbour City 6
 # starting spots for the planted attack, in metres, written for Northgate attacking towards +x
@@ -59,7 +62,11 @@ class Attack:
             "roonay",
         ):  # from the moment the ball is on its way to Roonay, his part is scripted
             return None
-        return "step" if self.variant == "step" else "hold"
+        if (
+            self.variant == "step"
+        ):  # he goes in once Roonay has the ball and has set off, not while it is still on its way
+            return "step" if self.phase == "roonay" else None
+        return "hold"
 
     def carrier_decision(self, sim, p):
         if self.phase == "kessler" and p == KESSLER:
@@ -72,7 +79,7 @@ class Attack:
             sim.dribble_speed = 5.6
             sim.timer = 0.2
             gap = np.linalg.norm(sim.pos[SKOLES] - sim.pos[ROONAY])
-            if self.variant == "step" and gap < 3.4:
+            if self.variant == "step" and gap < 4.6:  # released before he arrives, however quick he is
                 sim.pass_to(ROONAY, OKOYE, forced=True)
                 self.phase = "okoye"
             elif self.variant == "hold" and sim.pos[ROONAY, 0] * self.d > 30:
@@ -111,6 +118,8 @@ class DemoStory:
             return
         kind, t, arg = self.pending[0]
         if kind == "book":
+            if sim.period < 2:  # the booking belongs to the second half; a long first half can run past this minute
+                return
             self.book_armed = True
             sim.force_presser = SKOLES
             self.pending.pop(0)

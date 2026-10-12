@@ -1,5 +1,5 @@
 {
- "ran_at": "2026-10-12 21:37",
+ "ran_at": "2026-10-12 23:25",
  "stake_model_provisional": false,
  "passed": 14,
  "total": 14,
@@ -7,42 +7,42 @@
   {
    "check": "no reading ahead, match cut at 35%",
    "passed": true,
-   "detail": "129 cues with the future removed, 129 in the full run up to minute 32, identical: True"
+   "detail": "7 cues with the future removed, 7 in the full run up to minute 33, identical: True"
   },
   {
    "check": "no reading ahead, match cut at 80%",
    "passed": true,
-   "detail": "369 cues with the future removed, 369 in the full run up to minute 73, identical: True"
+   "detail": "271 cues with the future removed, 271 in the full run up to minute 74, identical: True"
   },
   {
    "check": "recovery after a stop at 30%",
    "passed": true,
-   "detail": "resumed from frame 41,295 of 138,854; 480 cues against 480 uninterrupted; same IDs in the same order: True"
+   "detail": "resumed from frame 42,797 of 142,665; 454 cues against 454 uninterrupted; same IDs in the same order: True"
   },
   {
    "check": "recovery after a stop at 77%",
    "passed": true,
-   "detail": "resumed from frame 106,290 of 138,854; 480 cues against 480 uninterrupted; same IDs in the same order: True"
+   "detail": "resumed from frame 109,662 of 142,665; 454 cues against 454 uninterrupted; same IDs in the same order: True"
   },
   {
    "check": "the planted story is found",
    "passed": true,
-   "detail": "booking at 46.9' (planted 46.9'); closest earlier attempt at 12.8' (planted 12.7'); first relevant difference p_har_6 by 5.5 m"
+   "detail": "booking at 49.5' (planted 49.5'); closest earlier attempt at 12.4' (planted 12.2'); first relevant difference p_har_6 by 7.0 m"
   },
   {
    "check": "no stake card before the booking",
    "passed": true,
-   "detail": "56 card changes for the booked player, the first at 47.8'"
+   "detail": "99 card changes for the booked player, the first at 50.1'"
   },
   {
    "check": "verifier accepts what the pipeline wrote",
    "passed": true,
-   "detail": "14 of 14 sentences pass"
+   "detail": "10 of 10 sentences pass"
   },
   {
    "check": "verifier rejects planted errors",
    "passed": true,
-   "detail": "142 of 142 caught ({'number': 44, 'name': 16, 'overclaim': 58, 'arabic digit': 24})"
+   "detail": "141 of 141 caught ({'number': 44, 'name': 28, 'overclaim': 50, 'arabic digit': 19})"
   },
   {
    "check": "agent tools refuse out-of-scope reads",
@@ -52,7 +52,7 @@
   {
    "check": "a withdrawn booking withdraws its cards",
    "passed": true,
-   "detail": "4 cues resting on the card were withdrawn; cards on him afterwards: 0; the goal's sentence no longer says he had been booked: True (1 sentences checked)"
+   "detail": "5 cues resting on the card were withdrawn; cards on him afterwards: 0; the goal's sentence no longer says he had been booked: True (1 sentences checked)"
   },
   {
    "check": "tracking survives the feed shape",
@@ -62,17 +62,17 @@
   {
    "check": "reflex path under 10 ms a frame",
    "passed": true,
-   "detail": "p50 0.018 ms, p95 0.39 ms, p99 0.514 ms, slowest 41.2 ms, features and network included"
+   "detail": "p50 0.016 ms, p95 0.354 ms, p99 0.422 ms, slowest 28.6 ms, features and network included"
   },
   {
    "check": "writing path well inside the replay window",
    "passed": true,
-   "detail": "7 moments, slowest 0.7 ms with the local backend (a cloud model will be slower; the limit is 10 s)"
+   "detail": "5 moments, slowest 0.6 ms with the local backend (a cloud model will be slower; the limit is 10 s)"
   },
   {
    "check": "full stake cards issued stay within the match cap",
    "passed": true,
-   "detail": "14 full cards issued against a cap of 20. The model wanted 14 across 2 booked players, with 197 card appearances in all, which is above the real rate (see the realism check)"
+   "detail": "20 full cards issued against a cap of 20. The model wanted 32 across 2 booked players, with 179 card appearances in all, which is above the real rate (see the realism check)"
   }
  ],
  "demo_summary": {
@@ -81,50 +81,48 @@
    1,
    0
   ],
-  "frames": 138854,
-  "events_read": 1603,
+  "frames": 142665,
+  "events_read": 1706,
   "cues_by_form": {
    "kickoff_mark": 3,
    "danger_window": 1,
-   "sentence": 21,
-   "label": 7,
-   "stake_card": 419,
-   "duel": 12,
-   "tag": 8,
-   "pressure": 4,
+   "tag": 2,
+   "duel": 13,
    "form_card": 2,
+   "sentence": 15,
+   "label": 5,
+   "stake_card": 408,
    "halftime_card": 1,
+   "pressure": 2,
    "scene": 1,
    "fulltime_card": 1
   },
-  "things_shown": 283,
-  "held_back": 6,
-  "facts": 347,
+  "things_shown": 275,
+  "held_back": 16,
+  "facts": 366,
   "stake_cards": {
-   "appearances": 197,
-   "full": 14,
+   "appearances": 179,
+   "full": 32,
    "players": [
-    "p_har_6",
-    "p_nor_9"
+    "p_har_11",
+    "p_har_6"
    ]
   },
   "verifier_rejections": 0,
   "frame_ms": {
-   "p50": 0.018,
-   "p95": 0.39,
-   "p99": 0.514,
-   "max": 41.2
+   "p50": 0.016,
+   "p95": 0.354,
+   "p99": 0.422,
+   "max": 28.6
   },
   "writer_ms": [
-   0.71,
-   0.32,
-   0.3,
-   0.72,
-   0.29,
-   0.48,
+   0.56,
+   0.27,
+   0.26,
+   0.42,
    0.3
   ],
-  "wall_seconds": 11.7,
+  "wall_seconds": 11.0,
   "writer_backend": "local-templates",
   "stake_model": {
    "provisional": false,

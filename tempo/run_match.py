@@ -13,6 +13,7 @@ import time
 
 import numpy as np
 
+from . import habits as rules
 from . import season as seasonmod
 from . import twin
 from .agents import Writer, verify
@@ -21,7 +22,7 @@ from .contracts import TYPE, fact
 from .cues import CueService
 from .generator.export import match_data
 from .generator.sim import Sim
-from .generator.story import DemoStory
+from .generator.story import DEMO_SEED, DemoStory
 from .ledger import Ledger
 from .listener import Listener
 from .outputs import RunOutputs
@@ -297,15 +298,9 @@ class Pipeline(RunOutputs):
             self.writer.interval_card(t, "fulltime_card", items, calls=self.calls(t))
 
     def calls(self, t):
-        """What became of the things said before kick-off. Each kind of call has one rule, fixed here before any match
-        is seen, and every outcome is written with its numbers and with the points a picture of it needs, so a call that
-        failed is reported as plainly as one that held.
-          shot_channel          held if most of the side's shots came from the channel named (the middle, or wide)
-          late_shots_against    held if the side conceded in the window, or faced at least its season share of shots
-                                there
-          challenges_per_match  ("if he is booked, this space opens") untested if he was not booked. Held if he made
-                                challenges less often after the card than before it. Events of one challenge
-                                (within two seconds of each other) count once"""
+        """What became of the things said before kick-off. Each kind of call has one rule, fixed in habits.py before any
+        match is seen, and every outcome is written with its numbers and with the points a picture of it needs, so a
+        call that failed, or that the match never tested, is reported as plainly as one that held."""
         ids, team, names, mid = self.meta["ids"], self.md["team"], self.meta["names"], self.meta["match_id"]
         clock, period, hd = self.md["clock"], self.md["period"], self.md["home_dir"]
         side = lambda e: int(team[ids.index(e["playerId"])])
@@ -323,12 +318,11 @@ class Pipeline(RunOutputs):
             tix = 0 if subj == self.meta["home"]["id"] else 1
             if kind == "shot_channel":
                 mine = [e for e in shots if side(e) == tix]
-                wide = [abs(e["y"] - 50) > 18 for e in mine]
-                inside = wide if h["zone"] == "wide" else [not w for w in wide]
-                k, n = sum(inside), len(mine)
-                came = bool(n) and k / n > 0.5
+                came, k, n, inside = rules.shot_channel([e["y"] for e in mine], h["zone"])
                 value = [k, n]
                 line, detail = f"{k} of {n} shots", f"Their usual is {h['value']} in 100"
+                if came is None:
+                    detail = "Too few shots to judge"
                 pts = []
                 # every shot, turned to attack the same end, so one picture holds both halves
                 for e, ins in zip(mine, inside):
@@ -344,14 +338,15 @@ class Pipeline(RunOutputs):
                 against = [e for e in shots if side(e) != tix]
                 late = [e for e in against if e["matchTime"] >= w0 * 60]
                 goal = next((e for e in late if e["typeId"] == TYPE["goal"]), None)
-                k, n = len(late), len(against)
-                came = goal is not None or (bool(n) and 100 * k / n >= h["value"])
+                came, k, n, _ = rules.late_shots_against(
+                    [(e["matchTime"], e["typeId"] == TYPE["goal"]) for e in against], h["window"]
+                )
                 value = [k, n]
                 share = f"{k} of {n} shots against came after minute {w0}"
                 line, detail = (
                     (f"Goal, minute {int(goal['matchTime'] // 60) + 1}", share)
                     if goal
-                    else (share, f"The usual is {h['value']} in 100")
+                    else (share, "Too few shots to judge" if came is None else f"The usual is {h['value']} in 100")
                 )
                 extra = dict(
                     window=h["window"],
@@ -375,12 +370,12 @@ class Pipeline(RunOutputs):
                             or (e["typeId"] == TYPE["foul"] and e["outcome"] == 0)
                         )
                     ]
-                    # one challenge is often written as two or three events (the challenge, the tackle, the foul);
-                    # count it once
-                    went = [e for i, e in enumerate(went) if i == 0 or e["matchTime"] - went[i - 1]["matchTime"] > 2.0]
-                    b = sum(e["matchTime"] < tc for e in went)
-                    a = len(went) - b
-                    came = a / max(t - tc, 1.0) < b / max(tc, 1.0)
+                    kept = []  # one challenge is often written as two or three events; count it once
+                    for e in went:
+                        if not kept or e["matchTime"] - kept[-1]["matchTime"] > rules.SAME_CHALLENGE_S:
+                            kept.append(e)
+                    went = kept
+                    came, b, a, _ = rules.booked_challenges([e["matchTime"] for e in went], tc, t)
                     value = [b, a]
                     line, detail = f"{b} challenges before his card, {a} after", f"Booked in minute {int(tc // 60) + 1}"
                     extra = dict(
@@ -421,7 +416,7 @@ class Pipeline(RunOutputs):
 def generate(plain_seed=None):
     if plain_seed is None:
         story = DemoStory()
-        sim = Sim(seed=7, match_id="m_demo", story=story).run()
+        sim = Sim(seed=DEMO_SEED, match_id="m_demo", story=story).run()
         md = match_data(sim)
         md["planted"] = story.planted
     else:

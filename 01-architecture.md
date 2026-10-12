@@ -290,11 +290,11 @@ The distance from the ball to the nearest defender now matches real football, wh
 | Check | Result |
 |---|---|
 | No reading ahead | The match was cut at 35% and at 80% and rerun with the future removed. The cues up to the cut are identical: 129 of 129 and 369 of 369 |
-| Recovery | The process was stopped at 30% and at 77% and resumed from the last checkpoint. 480 cues, same IDs, same order |
-| The planted story is found | Booking at 46.9'. Closest earlier attempt at 12.8' (planted 12.7'). First relevant difference: Skoles, by 5.5 m |
-| No stake card before the booking | First card on Skoles at 47.8' |
-| Verifier accepts what the pipeline wrote | 14 of 14 sentences, English and Arabic |
-| Verifier rejects planted errors | 142 of 142: wrong numbers, wrong names in either script, overclaims, changed Arabic digits |
+| Recovery | The process was stopped at 30% and at 77% and resumed from the last checkpoint. 454 cues, same IDs, same order |
+| The planted story is found | Booking at 49.5'. Closest earlier attempt at 12.4' (planted 12.2'). First relevant difference: Skoles, by 7.0 m |
+| No stake card before the booking | First card on Skoles at 50.1' |
+| Verifier accepts what the pipeline wrote | 10 of 10 sentences, English and Arabic |
+| Verifier rejects planted errors | 141 of 141: wrong numbers, wrong names in either script, overclaims, changed Arabic digits |
 | Agent tools refuse out-of-scope reads | 3 of 3. No fact leaked from after the moment |
 | A withdrawn booking | 4 cues withdrawn, no card on him afterwards, and the later sentence no longer cites a booking, because the reason rule loses its third instrument |
 | Tracking survives the feed shape | 200 frames written in the Second Spectrum shape and read back |
@@ -352,7 +352,7 @@ The services: Container Apps, Event Hubs, Cosmos DB, Blob Storage, AI Search, Fo
 | Push to the screens | Static pages reading a finished run. `server.py` replays cues as a stream | Web PubSub, with each screen releasing a cue by its own picture's match time | Local websockets, or extending `server.py` |
 | Earlier attempts across a season | `twin.py` searches this match in memory | AI Search over the season | A local index over the season |
 | Breaker under a failing model, token and cost caps | The breaker is built and tested around templates. The caps are designed | The workflow's middleware, measured on the Foundry deployment | Simulated model failures or cost sums beyond the check that exists |
-| Latency, recovery and cost figures for the pitch | Local figures exist: 0.38 ms a frame, 480 cues identical after a stop | Measured on Azure. Recovery is filmed by stopping a replica | More local benchmarks. Filming a local recovery |
+| Latency, recovery and cost figures for the pitch | Local figures exist: 0.35 ms a frame, 454 cues identical after a stop | Measured on Azure. Recovery is filmed by stopping a replica | More local benchmarks. Filming a local recovery |
 | Tracing | An audit line in the ledger for everything shown or held back | Application Insights | A local dashboard |
 | Deployment and identity | None | `azd` with Bicep, managed identity | Containers or compose files for local use |
 

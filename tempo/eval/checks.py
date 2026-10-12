@@ -153,7 +153,8 @@ def check_verifier(record, md, full, cues_full, rng):
     )
     caught = total = 0
     kinds = {"number": 0, "name": 0, "overclaim": 0, "arabic digit": 0}
-    for text, fs, lang, want, who in sents * 12:
+    # enough rounds over the match's sentences for well over a hundred planted errors, however few sentences it has
+    for text, fs, lang, want, who in sents * max(12, -(-160 // max(len(sents), 1))):
         fs = [f for f in fs if f]
         nums = re.findall(r"\d+(?:\.\d+)?", text)
         mode = rng.choice(

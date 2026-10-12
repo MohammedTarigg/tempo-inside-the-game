@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 from ..generator.sim import PX, PY, Sim
-from ..generator.story import DemoStory
+from ..generator.story import DEMO_SEED, DemoStory
 from ..paths import ARTIFACTS
 
 
@@ -128,7 +128,7 @@ def scan(s):
 
 if __name__ == "__main__":
     demo = len(sys.argv) > 1 and sys.argv[1] == "demo"
-    s = Sim(seed=7, story=DemoStory() if demo else None).run()
+    s = Sim(seed=DEMO_SEED, story=DemoStory() if demo else None).run()
     r = scan(s)
     for k, v in r.items():
         print(f"  {k}: {v if not isinstance(v, float) else round(v, 2)}")

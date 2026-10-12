@@ -9,6 +9,7 @@ import numpy as np
 
 from ..constants import HZ, PX, PY
 from ..contracts import Q_SECOND_YELLOW, Q_YELLOW, event
+from . import league as league_mod
 
 DT = 1.0 / HZ
 G = 9.81
@@ -63,7 +64,7 @@ BODY = 0.7  # metres between two players' centres when they are in contact
 
 
 class Sim:
-    def __init__(self, seed=7, match_id="m_demo", story=None, minutes=90):
+    def __init__(self, seed=7, match_id="m_demo", story=None, minutes=90, league=True):
         self.rng = np.random.default_rng(seed)
         self.match_id, self.story, self.minutes = match_id, story, minutes
         self.squads = squads()
@@ -72,6 +73,10 @@ class Sim:
         self.vmax = np.clip(self.rng.normal(8.7, 0.5, 22), 7.6, 9.8)
         self.vmax[[0, 11]] = 7.0
         self.aggr = np.clip(self.rng.normal(1.0, 0.25, 22), 0.5, 1.6)
+        self.careful = np.full(22, league_mod.CAREFUL)
+        self.league = league
+        if league:  # the same players every match, with their club's habits (league.py)
+            self.vmax, self.aggr, self.careful = league_mod.players(self.ids)
         self.booked = np.zeros(22, bool)
         self.off = np.zeros(22, bool)  # sent off
         self.score = [0, 0]
@@ -90,6 +95,10 @@ class Sim:
         self.controlled = False  # the man on the ball has it at his feet
         self.ctl = []  # per frame: (state, player on the ball or about to receive it)
         self.force_presser = None  # a defender the storyline sends into the next challenge
+
+    def wary(self, p):
+        """A player who turns careful on a yellow card (league.py): he stands off and stays out of challenges."""
+        return bool(self.league and self.booked[p] and self.careful[p] < 0.5)
 
     # ---------- geometry ----------
     def own_goal(self, t):
@@ -329,7 +338,11 @@ class Sim:
         _, press = self.nearest(self.pos[p], team=1 - t)
         if dist_goal < 30 and abs(self.pos[p, 1]) < 24:
             xg = 0.62 * math.exp(-dist_goal / 8.5)
-            if self.rng.random() < np.clip(3.4 * xg + 0.06, 0, 0.9):
+            room = 1.0
+            if self.league:  # tired legs do not get out to the man on the ball: more attacks end in a shot
+                gone = 1 - float(league_mod.legs(self.team, self.clock)[self.team == 1 - t].mean())
+                room += league_mod.SHOT_ROOM * gone * 10
+            if self.rng.random() < np.clip((3.4 * xg + 0.06) * room, 0, 0.9):
                 return self.shoot(p)
         d = self.dir[t]
         deep = (self.pos[p, 0] - self.own_goal(t)[0]) * d < 38
@@ -353,8 +366,18 @@ class Sim:
                 continue
             _, open_ = self.nearest(self.pos[q], team=1 - t)
             prog = v[0] * d
+            middle = 0.0
+            if (
+                self.league and prog > 0
+            ):  # a side that plays through the middle looks for the man in the central channel
+                middle = league_mod.CLUB[int(t)]["through_middle"] * max(0.0, 1 - abs(self.pos[q, 1]) / 18)
             scores.append(
-                0.045 * prog + 0.16 * min(open_, 8) - 0.02 * L + (0.0 if q % 11 else -1.5) + self.rng.gumbel() * 0.55
+                0.045 * prog
+                + 0.16 * min(open_, 8)
+                - 0.02 * L
+                + (0.0 if q % 11 else -1.5)
+                + middle
+                + self.rng.gumbel() * 0.55
             )
             best.append(q)
         p_pass = 0.86 if press < 3.0 else 0.62
@@ -374,8 +397,9 @@ class Sim:
         closing = float(np.linalg.norm(self.vel[dfn] - self.vel[car]))
         p_foul = 0.12 + (0.05 if closing > 5 else 0)
         r = self.rng.random()
+        won = 0.36 * (league_mod.legs(self.team, self.clock)[dfn] ** 2 if self.league else 1.0)  # tired legs win fewer
         out = forced or (
-            "foul" if r < p_foul else "won" if r < p_foul + 0.36 else "kept" if r < p_foul + 0.68 else "out"
+            "foul" if r < p_foul else "won" if r < p_foul + won else "kept" if r < p_foul + won + 0.32 else "out"
         )
         force_card = {"foul_yellow": Q_YELLOW, "foul_second": Q_SECOND_YELLOW}.get(out)
         if force_card or out == "foul_plain":
@@ -560,12 +584,18 @@ class Sim:
                 tgt[dfn] = self.pos[p] + og * 8.0  # he backs off and keeps his distance
                 urgent[dfn] = True
             else:
-                tgt[dfn] = self.pos[p] + og * 2.1
+                # a player who turns careful on a yellow card jockeys from further off, which is how his space opens
+                tgt[dfn] = self.pos[p] + og * (5.0 if self.wary(dfn) else 2.1)
                 urgent[dfn] = dist > 4
                 if dist < 3.5 and self.stun[dfn] <= 0:
                     zone = 1.25 if abs(self.pos[p, 0] - self.own_goal(1 - t)[0]) < 40 else 0.85
-                    hazard = 0.42 * zone * self.aggr[dfn] * (0.85 if self.booked[dfn] else 1.0)
-                    if rng.random() < hazard * DT:
+                    hazard = 0.42 * zone * self.aggr[dfn] * (self.careful[dfn] if self.booked[dfn] else 1.0)
+                    if self.league:
+                        hazard *= league_mod.legs(self.team, self.clock)[dfn]
+                    # while a planted attack is running, only the defender it is about goes in: the two runs of it
+                    # must differ in him and in nothing else
+                    planted = self.script is not None and getattr(self.script, "phase", "done") != "done"
+                    if rng.random() < hazard * DT and not planted:
                         self.committed = dfn
             if self.committed is not None and np.linalg.norm(self.pos[self.committed] - self.pos[p]) < 1.0:
                 self.duel(self.committed, p)
@@ -604,7 +634,7 @@ class Sim:
                     elif dist < 9:
                         og = self.own_goal(self.team[dfn]) - self.pos[q]
                         og /= np.linalg.norm(og) + 1e-9
-                        tgt[dfn] = self.pos[q] + og * 1.6
+                        tgt[dfn] = self.pos[q] + og * (5.0 if self.wary(dfn) else 1.6)
                         urgent[dfn] = True
                 near, dn = self.nearest(self.ball[:2])
                 if np.linalg.norm(self.ball[:2] - self.pos[q]) < 0.9 and self.ball[2] < 1.4:
@@ -612,7 +642,7 @@ class Sim:
                         self.log("interception", q)
                     else:
                         dfn, dist = self.nearest(self.pos[q], team=1 - self.team[q], exclude=[0, 11])
-                        if dist < 1.3 and rng.random() < 0.45 and not self.script:
+                        if dist < 1.3 and rng.random() < 0.45 and not self.script and not self.wary(dfn):
                             self.give(q, timer=1.0)
                             self.duel(dfn, q)
                             q = None
@@ -635,6 +665,7 @@ class Sim:
                     self.team[a] != self.team[b]
                     and np.linalg.norm(self.pos[b] - self.ball[:2]) < 1.6
                     and rng.random() < 0.6
+                    and not self.wary(b)
                 ):
                     self.give(a, timer=0.8)
                     self.log("ball_recovery", a)
@@ -671,10 +702,11 @@ class Sim:
         d = tgt - self.pos
         dist = np.linalg.norm(d, axis=1) + 1e-9
         far = dist > 9  # out of shape after a turnover: run back into it
+        vmax = self.vmax * league_mod.legs(self.team, self.clock) if self.league else self.vmax
         want = np.where(
             urgent,
-            np.minimum(self.vmax, dist * 2.2),
-            np.where(far, np.minimum(self.vmax * 0.66, dist * 0.45), np.minimum(self.vmax * 0.29, dist * 0.7)),
+            np.minimum(vmax, dist * 2.2),
+            np.where(far, np.minimum(vmax * 0.66, dist * 0.45), np.minimum(vmax * 0.29, dist * 0.7)),
         )
         if self.state == "carried" and self.controlled:
             want[self.carrier] = self.dribble_speed

@@ -22,6 +22,10 @@ class RunOutputs:
         for c in cues:
             if c["form"] != "scene" or c["payload"]["type"] != "closest_attempt":
                 continue
+            if (
+                c["payload"]["earlier_frame"] is None
+            ):  # the closest attempt was in another match: nothing here to lay it over
+                continue
             f = next(
                 x for x in (self.ledger.get_fact(i) for i in c["fact_ids"]) if x and x["kind"] == "closest_attempt"
             )

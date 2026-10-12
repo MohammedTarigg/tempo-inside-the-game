@@ -4,7 +4,8 @@
 
 The demo match is written so that its story plays out, and in it all three kick-off calls hold. That proves the picture, not
 the calls. This runs the same pipeline over plain generated matches that no story steers and that the season baselines never
-saw (the season is seeds 100 to 105; these start at 200), and counts what became of each call by the rule fixed in
+saw (the season is seeds 100 to 139; these start at 400, and seeds 200 to 319 were used while the league's habits and the
+rules were being designed, so they are not used here), and counts what became of each call by the rule fixed in
 Pipeline.calls: held, failed, or never tested (the booked-player call needs him to be booked). The result is written to
 artifacts/calls.json. A call that often fails is reported as plainly as one that holds.
 """
@@ -21,7 +22,7 @@ from ..generator.sim import Sim
 from ..paths import ARTIFACTS
 from ..run_match import Pipeline
 
-FIRST_SEED = 200
+FIRST_SEED = 400
 
 
 def outcomes(seed, season, search):
@@ -38,7 +39,7 @@ def outcomes(seed, season, search):
 
 
 def main(argv):
-    n = int(argv[0]) if argv else 12
+    n = int(argv[0]) if argv else 20
     season, search = seasonmod.load()
     t0, matches, tally = time.time(), [], {}
     for seed in range(FIRST_SEED, FIRST_SEED + n):
@@ -53,7 +54,7 @@ def main(argv):
     out = dict(
         matches=n,
         first_seed=FIRST_SEED,
-        season_seeds="100 to 105",
+        season_seeds="100 to 139",
         held=held,
         tested=tested,
         by_call=tally,
