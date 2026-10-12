@@ -83,6 +83,8 @@ class RunOutputs:
                     team=md["team"].tolist(),
                     home=self.meta["home"]["short"],
                     away=self.meta["away"]["short"],
+                    home_name=self.meta["home"]["name"],
+                    away_name=self.meta["away"]["name"],
                     clips=clips,
                 )
             )

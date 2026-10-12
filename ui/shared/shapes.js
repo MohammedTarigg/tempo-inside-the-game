@@ -4,17 +4,17 @@ import * as THREE from 'three';
 import { scene, INK, PAPER, basic, flat } from '#stage';
 
 // The ball, with a mark on the turf beneath it so its height reads.
-export function makeBall(opacity = 1) {
+export function makeBall() {
   const group = new THREE.Group();
   const ball = new THREE.Mesh(
     new THREE.SphereGeometry(0.2, 20, 14),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity }),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 }),
   );
   const rim = new THREE.Mesh(
     new THREE.SphereGeometry(0.255, 20, 14),
-    new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true, opacity }),
+    new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide, transparent: true, opacity: 1 }),
   );
-  const mark = flat(new THREE.CircleGeometry(0.22, 24), basic({ color: 0x000000, opacity: 0.6 * opacity }), 0.07, 4);
+  const mark = flat(new THREE.CircleGeometry(0.22, 24), basic({ color: 0x000000, opacity: 0.6 }), 0.07, 4);
   ball.renderOrder = 5;
   rim.renderOrder = 5;
   group.add(mark, rim, ball);

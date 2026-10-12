@@ -800,8 +800,8 @@ body.tgoal #board .clock {
   color: #000;
 }
 @media (prefers-reduced-motion: reduce) {
-  #board,
-  #board .clock {
+  body.tour #board,
+  body.tour #board .clock {
     transition: none;
   }
 }

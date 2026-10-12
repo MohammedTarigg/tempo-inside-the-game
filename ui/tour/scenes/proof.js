@@ -12,7 +12,6 @@ export function proof(ctx) {
       api.setPlaying(false);
       cap.classList.remove('on');
       veil.classList.add('on', 'black');
-      document.body.classList.add('tproofon');
       look(null); // full black: with the pitch showing through, the cards had to compete with it
       const caught = check('rejects planted errors'),
         rec = check('recovery after a stop at 30%');

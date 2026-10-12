@@ -68,7 +68,7 @@ export function portrait(id, shirt = '#FF8A3D') {
   const face = beard
     ? `<path d="M${n(cx - rx)},${cy + 6} C${n(cx - rx)},${n(cy + ry * 0.5)} ${n(cx - rx * jaw)},${n(chinY)} ${cx},${n(chinY)} C${n(cx + rx * jaw)},${n(chinY)} ${n(cx + rx)},${n(cy + ry * 0.5)} ${n(cx + rx)},${cy + 6} C${n(cx + rx - 3)},${n(mouthY + 1)} ${n(cx + 11)},${n(mouthY + 6.5)} ${cx},${n(mouthY + 6.5)} C${n(cx - 11)},${n(mouthY + 6.5)} ${n(cx - rx + 3)},${n(mouthY + 1)} ${n(cx - rx)},${cy + 6} Z" fill="${stubble}"/>`
     : '';
-  const ink = beard && hair === '#F5F5F5' ? '#111' : '#111';
+  const ink = '#111';
   return `<svg viewBox="0 0 120 132" role="img" aria-label="Drawn portrait of a fictional player">
   <path d="M4,140 C4,110 24,100 45,95 L75,95 C96,100 116,110 116,140 Z" fill="${shirt}"/>
   <path d="M45,95 C49,106 71,106 75,95 L71,93.500 C67,101 53,101 49,93.500 Z" fill="#111"/>

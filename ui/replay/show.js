@@ -120,8 +120,14 @@ export function makeShow(S) {
       'One thing changed',
       `Two seconds after the attacks part ${nm(who)} is ${S.differing_by_m} m from where he was in minute ${E.minute}`,
     ], // what differs, and the card. Not a verdict on the man: nobody can see what he was told to do
-    finish: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${side === S.home ? 'Northgate' : 'Harbour City'}`],
-    hold: () => [`Minute ${G.minute}`, `${nm(scorer)} scores for ${side === S.home ? 'Northgate' : 'Harbour City'}`],
+    finish: () => [
+      `Minute ${G.minute}`,
+      `${nm(scorer)} scores for ${side === S.home ? S.home_name || S.home : S.away_name || S.away}`,
+    ],
+    hold: () => [
+      `Minute ${G.minute}`,
+      `${nm(scorer)} scores for ${side === S.home ? S.home_name || S.home : S.away_name || S.away}`,
+    ],
   };
   const PHASE = {
     stop: 'The goal, about to start',
