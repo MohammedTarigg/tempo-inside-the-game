@@ -183,6 +183,8 @@ async function main() {
       g.update(dt, 0, 0);
       g.setOpacity(s.ghost * (p ? clamp((Math.hypot(p[0] - q[0], p[1] - q[1]) - 0.5) / 1.0) : 1)); // an outline lying on its own man would only blur him
     }
+    // while the one distance is measured, the runner steps back so the man and his outline can be seen
+    live[scorer].setOpacity(1 - 0.7 * (s.gap || 0));
     const ba = sampleBall(s.a[0], s.a[1]),
       bq = s.b ? sampleBall(s.b[0], s.b[1]) : ba,
       b = ba.map((x, j) => lerp(x, bq[j], s.u));

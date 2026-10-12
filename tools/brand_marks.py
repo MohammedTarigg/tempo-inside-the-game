@@ -23,8 +23,8 @@ def mark(c, Ro=34, w=13, stub=20, rp=11, dx=7, cx=60, cy=60):
     sw = w * 0.78
     return (
         f'<circle cx="{cx}" cy="{cy}" r="{Ro - w / 2}" fill="none" stroke="{c}" stroke-width="{w}"/>'
-        f'<rect x="{cx - sw / 2}" y="{cy - Ro - stub}" width="{sw}" height="{stub + w / 2}" fill="{c}"/>'
-        f'<rect x="{cx - sw / 2}" y="{cy + Ro - w / 2}" width="{sw}" height="{stub + w / 2}" fill="{c}"/>'
+        f'<rect x="{cx - sw / 2}" y="{cy - Ro - stub}" width="{sw}" height="{stub + w / 2}" rx="{sw / 2}" fill="{c}"/>'
+        f'<rect x="{cx - sw / 2}" y="{cy + Ro - w / 2}" width="{sw}" height="{stub + w / 2}" rx="{sw / 2}" fill="{c}"/>'
         f'<circle cx="{cx + dx}" cy="{cy}" r="{rp}" fill="{c}"/>'
     )
 

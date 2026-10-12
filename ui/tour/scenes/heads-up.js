@@ -49,15 +49,8 @@ export function headsUp(ctx) {
       DIR.clock = mine ? this.from * 60 * smooth(seg(v, 0.08, 0.34)) * (1 - seg(v, 0.93, 1)) : null;
       this.goal.setAttribute(
         'points',
-        hull(
-          goalBox(gx, gd)
-            .map(([x, y, h]) => {
-              const q = api.project(x, h, -y);
-              return `${q[0].toFixed(1)},${q[1].toFixed(1)}`;
-            })
-            .map((s) => s.split(',').map(Number)),
-        )
-          .map((q) => q.join(','))
+        hull(goalBox(gx, gd).map(([x, y, h]) => api.project(x, h, -y).slice(0, 2)))
+          .map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`)
           .join(' '),
       );
       this.goal.style.opacity = lit ? on : 0;
