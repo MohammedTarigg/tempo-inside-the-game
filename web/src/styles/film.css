@@ -1193,6 +1193,16 @@ body.theads .pin.name {
   height: 14px;
   background: rgba(255, 255, 255, 0.3);
 }
+.tviewer[lang='ar'] {
+  justify-items: start; /* right to left: its start is the right edge */
+  font-family: var(--font-ar);
+}
+.tviewer[lang='ar'] :is(.tprefs, .tfollow b, .tfollow dt, .tfollow dd) {
+  font-family: var(--font-ar);
+}
+.tviewer[lang='ar'] .tprefs [lang='en'] {
+  font-family: var(--font);
+}
 .tprefs [lang='ar'] {
   font-family: var(--font-ar);
 }
@@ -1206,8 +1216,10 @@ body.theads .pin.name {
   letter-spacing: -0.01em;
   color: #fff;
 }
+.tsaid:empty {
+  display: none;
+}
 .tsaid[dir='rtl'] {
-  justify-self: end;
   font-family: var(--font-ar);
   font-weight: 500;
 }
