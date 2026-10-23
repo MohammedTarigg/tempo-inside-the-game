@@ -1200,7 +1200,7 @@ body.theads .pin.name {
 .tviewer[lang='ar'] :is(.tprefs, .tfollow b, .tfollow dt, .tfollow dd) {
   font-family: var(--font-ar);
 }
-.tviewer[lang='ar'] .tprefs [lang='en'] {
+.tviewer[lang='ar'] [lang='en'] {
   font-family: var(--font);
 }
 .tprefs [lang='ar'] {
