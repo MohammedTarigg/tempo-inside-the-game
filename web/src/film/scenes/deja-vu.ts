@@ -31,7 +31,7 @@ export function dejaVu(ctx: FilmCtx): Scene {
     }
   };
   return {
-    dur: D[4]!,
+    dur: D[5]!,
     enter() {
       // The bridge. The replay opens on the moment the scorer sets off, framed on him. The film goes to that same frame and
       // that same framing in one move, holds, and the replay fades in over a picture that is already identical.
@@ -77,7 +77,7 @@ export function dejaVu(ctx: FilmCtx): Scene {
         );
       } // once it has drawn, and not before the film has arrived
       addEventListener('message', heard);
-      caption('5', 'Déjà vu', 'Same move. One thing changed', [['twin', 'Found in this match']]);
+      caption('6', 'Déjà vu', 'Same move. One thing changed', [['twin', 'Found in this match']]);
     },
     exit() {
       removeEventListener('message', heard);

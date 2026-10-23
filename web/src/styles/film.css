@@ -945,6 +945,26 @@ body.tour #interval {
   fill-opacity: 1;
 } /* an outline while it is only something said, filled once it has happened: Called it sweeps the fill across from the
      side the attack came from (called-it.ts) */
+/* Called it, where they shoot: the channel is its two edges, dashed, and fills once the call holds; each shot a line */
+.tover .zone.lane {
+  stroke: none;
+}
+.tover .laneline {
+  stroke: var(--card);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 7;
+  stroke-linecap: round;
+}
+.tover .shotline {
+  stroke: #8a8a8a;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.tover .shotline.in {
+  stroke: var(--home);
+  stroke-width: 2.5;
+}
 .tover .shot {
   fill: #6e6e6e;
   stroke: #000;
@@ -959,7 +979,7 @@ body.tour #interval {
 .tover .trail {
   fill: none;
   stroke: var(--home);
-  stroke-width: 7;
+  stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0;
@@ -1129,4 +1149,107 @@ body.theads .pin.name {
 }
 .tcard .say {
   clip-path: inset(-20% calc((1 - var(--in2, 1)) * 100%) -20% calc(var(--out, 0) * 100%));
+}
+
+/* Yours: the two viewers' layers, at the right, and the white rule that sweeps from one to the other */
+.trule {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  z-index: 7;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.tviewer {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  width: 400px;
+  z-index: 6;
+  opacity: 0;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.tprefs {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 600 14px var(--font);
+  color: #8a8a8a;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+.tprefs b {
+  color: #fff;
+  font-weight: 600;
+}
+.tprefs i {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.3);
+}
+.tprefs [lang='ar'] {
+  font-family: var(--font-ar);
+}
+.tsaid {
+  margin: 0;
+  max-width: 400px;
+  padding: 12px 16px 13px;
+  border-radius: 14px;
+  background: rgba(10, 10, 10, 0.92);
+  font: 600 18px/1.35 var(--font);
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.tsaid[dir='rtl'] {
+  justify-self: end;
+  font-family: var(--font-ar);
+  font-weight: 500;
+}
+.tfollow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 10px;
+  padding: 12px 16px 14px;
+  border-radius: 14px;
+  background: rgba(10, 10, 10, 0.92);
+  color: #fff;
+}
+.tfollow .disc {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  box-shadow: 0 0 0 1.5px #fff;
+  background: var(--team);
+  color: #000;
+  font: 700 14px var(--font);
+}
+.tfollow b {
+  font: 700 20px var(--font);
+  letter-spacing: -0.02em;
+}
+.tfollow dl {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+.tfollow dt {
+  font-size: 12px;
+  color: #9a9a9a;
+}
+.tfollow dd {
+  margin: 2px 0 0;
+  font: 700 16px var(--font);
+  font-variant-numeric: tabular-nums;
 }

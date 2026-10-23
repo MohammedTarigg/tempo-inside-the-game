@@ -15,7 +15,7 @@ bun run dev
 
 Then open http://localhost:5173. The home page is the logo's halfway line, and scrolling moves the eye along it to four ways in, each opening a window on its page:
 
-- **The film**, 100 seconds on the real match view: the six features in match order, then the evidence.
+- **The film**, 107 seconds on the real match view: the seven features in match order, then the evidence.
 - **The match**, the whole demo match with everything Tempo chose to show, the phone beside it in English or Arabic, and a follow control for one club or one player. At full time the strip rises into the turning points, and each one plays again when tapped.
 - **The producer's desk**, the same match with every item Tempo considered, as it aired or with the short reason it was held.
 - **How we know**, every figure Tempo claims, what it was measured on, and the command that measures it again.

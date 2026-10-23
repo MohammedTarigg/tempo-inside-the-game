@@ -10,7 +10,7 @@ import { el, svgEl, seg, lerp, inOutCubic, outBack } from '../shared/util.ts';
 
 const [home, away] = summary.final_score;
 const STOPS = [
-  { href: '/film/', name: 'Watch the film', line: '100 seconds, six features', loop: '/previews/film.mp4' },
+  { href: '/film/', name: 'Watch the film', line: '107 seconds, seven features', loop: '/previews/film.mp4' },
   {
     href: '/match/?intro=0',
     name: 'Watch the match',

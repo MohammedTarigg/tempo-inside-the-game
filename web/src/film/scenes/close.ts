@@ -13,7 +13,7 @@ export function close(ctx: FilmCtx): Scene {
   const { D, side, veil, logo, look } = ctx;
   let was: number | undefined;
   return {
-    dur: D[7]!,
+    dur: D[8]!,
     enter() {
       side.classList.remove('on');
       veil.classList.add('on', 'black');
@@ -34,7 +34,7 @@ export function close(ctx: FilmCtx): Scene {
       // alone at the end it floats a little, straight up and down. At rest the tails stay upright: they bend only when it moves
       const alone = inOutCubic(seg(t, 4.7, 5.6)),
         y = y0 + alone * 2.2 * Math.sin(t * 2.1),
-        dt = was === undefined ? 0 : ((t - was) * D[7]!) / 7.5;
+        dt = was === undefined ? 0 : ((t - was) * D[8]!) / 7.5;
       was = t;
       const [dTop, dBot] = art.tails.step(x, y, MARK.STUB, dt);
       art.ring.setAttribute('cx', String(x));

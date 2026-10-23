@@ -16,7 +16,7 @@ export function proof(ctx: FilmCtx): Scene {
   let cards: Card[] = [],
     draw: Draw[] = [];
   return {
-    dur: D[6]!,
+    dur: D[7]!,
     enter() {
       api.setPlaying(false);
       cap.classList.remove('on');

@@ -44,7 +44,9 @@ export function calledIt(ctx: FilmCtx): Scene {
   // picture 1: the bands of the zone, their outlines and every shot
   let bands: XY[] = [],
     zones: SVGPolygonElement[] = [],
-    dots: SVGCircleElement[] = [];
+    lanes: SVGLineElement[] = [],
+    dots: SVGCircleElement[] = [],
+    shots: SVGLineElement[] = [];
   // picture 2 and 3: the frames and positions they are built from, and what they draw
   let R: ReturnType<typeof runs> = null,
     els: ReturnType<typeof drawings> | null = null;
@@ -142,7 +144,7 @@ export function calledIt(ctx: FilmCtx): Scene {
     s.b.setAttribute('offset', p.toFixed(3));
   };
   return {
-    dur: D[5]!,
+    dur: D[6]!,
     cutIn: true, // from the replay to the whole pitch at full time: the one real cut in the film
     enter() {
       cut(api.LAST - 3 * FPS, 0.25, (wantPos, wantAim) => {
@@ -159,14 +161,16 @@ export function calledIt(ctx: FilmCtx): Scene {
       shown = -1;
       stage = 0;
       DIR.plain = true; // the pictures are the only marks on the pitch
-      caption('6', 'Called it', callLine(where ? where.said : 'Three calls from kick-off'), [
+      caption('7', 'Called it', callLine(where ? where.said : 'Three calls from kick-off'), [
         ['log', 'From the match record'],
       ]);
       over.replaceChildren();
       sweeps.clear();
       defs = null;
       zones = [];
+      lanes = [];
       dots = [];
+      shots = [];
       if (where) {
         // the zone, as it was drawn at kick-off, and every shot on the spot it was taken from
         bands =
@@ -176,7 +180,12 @@ export function calledIt(ctx: FilmCtx): Scene {
                 [-33, -12.2],
               ]
             : [[-12.2, 12.2]];
-        zones = bands.map(() => svgEl('polygon', { class: 'zone' }, over));
+        zones = bands.map(() => svgEl('polygon', { class: 'zone lane' }, over));
+        lanes = bands.flatMap(() => [
+          svgEl('line', { class: 'laneline' }, over),
+          svgEl('line', { class: 'laneline' }, over),
+        ]);
+        shots = where.points.map((q) => svgEl('line', { class: q.inside ? 'shotline in' : 'shotline' }, over));
         dots = where.points.map((q) => svgEl('circle', { class: q.inside ? 'shot in' : 'shot', r: 0 }, over));
       }
       R = runs();
@@ -241,8 +250,16 @@ export function calledIt(ctx: FilmCtx): Scene {
             a = k === 0 ? outCubic(seg(v, 0.14 + i * 0.03, 0.26 + i * 0.03)) : 1;
           d.setAttribute('cx', x.toFixed(1));
           d.setAttribute('cy', y.toFixed(1));
-          d.setAttribute('r', String((q.inside ? 9 : 6) * a));
+          d.setAttribute('r', String((q.inside ? 5 : 4) * Math.min(1, a * 3)));
           d.style.opacity = String(onPitch);
+          // the shot itself, drawn from where it was struck towards the goal mouth
+          const [gx, gy] = xy(52.5, Math.max(-3, Math.min(3, (q.y ?? 0) * 0.2))),
+            ln = shots[i]!;
+          ln.setAttribute('x1', x.toFixed(1));
+          ln.setAttribute('y1', y.toFixed(1));
+          ln.setAttribute('x2', (x + (gx - x) * a).toFixed(1));
+          ln.setAttribute('y2', (y + (gy - y) * a).toFixed(1));
+          ln.style.opacity = String(onPitch * Math.min(1, a * 4));
           if (a > 0.5) landed++;
         });
         done = k === 0 && landed === W.points.length && W.came_true === true && v < 0.96;
@@ -256,6 +273,18 @@ export function calledIt(ctx: FilmCtx): Scene {
             ];
           z.setAttribute('points', pts(corners.map(([x, y]) => xy(x, y))));
           z.style.opacity = String(onPitch);
+          // the channel's two edges, drawn from halfway towards goal as the picture opens
+          const grow = outCubic(seg(v, 0.02, 0.14));
+          [a, b].forEach((edge, e) => {
+            const ln = lanes[2 * j + e]!,
+              [x1, y1] = xy(24, edge),
+              [x2, y2] = xy(24 + 27 * grow, edge);
+            ln.setAttribute('x1', x1.toFixed(1));
+            ln.setAttribute('y1', y1.toFixed(1));
+            ln.setAttribute('x2', x2.toFixed(1));
+            ln.setAttribute('y2', y2.toFixed(1));
+            ln.style.opacity = String(onPitch);
+          });
           z.classList.toggle('solid', done);
           fillFrom(z, done, true);
         });
@@ -331,12 +360,7 @@ export function calledIt(ctx: FilmCtx): Scene {
           [els.ghostA, ga],
           [els.ghostB, gb],
         ];
-        for (const [ring, q] of rings) {
-          ring.setAttribute('cx', q[0].toFixed(1));
-          ring.setAttribute('cy', q[1].toFixed(1));
-          ring.setAttribute('r', Math.max(8, ppm * 0.95).toFixed(1));
-          ring.style.opacity = String(ghosts * (1 - past));
-        }
+        for (const [ring] of rings) ring.style.opacity = '0'; // the run's line says it: no rings
         const lines: [SVGLineElement, XY, XY][] = [
           [els.ghostPath, g0, ga],
           [els.stop, s0, s1],
@@ -352,21 +376,26 @@ export function calledIt(ctx: FilmCtx): Scene {
         const c = outCubic(seg(v, 0.4, 0.46));
         els.card.setAttribute('x', (hxy[0] + ppm * 0.7).toFixed(1));
         els.card.setAttribute('y', (hxy[1] - ppm * 1.2 - 22 - (1 - c) * 26).toFixed(1));
-        els.card.style.opacity = String(show * seg(v, 0.4, 0.43));
+        els.card.style.opacity = '0';
+        void c;
+        // the run for the goal as he really ran it, frame by frame, up to where he is now and no further
         const runner = stage >= 3 ? R.shot : (api.drawn(R.si) ?? R.from),
-          line2 = [xy(R.from[0], R.from[1]), xy(runner[0], runner[1])];
-        if (on2 && stage >= 3) {
-          const bb = api.ballAt(api.getF());
-          line2.push(xy(bb[0], bb[1], bb[2]));
-          if (Math.abs(bb[0]) >= 52.2) api.setSpeed(0.15);
-        } // once it is in, the picture all but stops, to be looked at
+          upto = stage >= 3 ? R.S : Math.min(R.S, Math.round(api.getF())),
+          line2: XY[] = [];
+        for (let f = Math.max(R.A, upto - 2.5 * FPS); f <= upto; f += 5) {
+          const q = api.pos(f, R.si);
+          if (q) line2.push(xy(q[0], q[1]));
+        } // only the last two and a half seconds behind him: a short tail, not a line across the pitch
+        if (stage < 3 && line2.length) line2.push(xy(runner[0], runner[1]));
+        if (!line2.length) line2.push(xy(R.from[0], R.from[1]));
+        if (on2 && stage >= 3 && Math.abs(api.ballAt(api.getF())[0]) >= 52.2) api.setSpeed(0.15); // once it is in, the picture all but stops
         els.trail.setAttribute('points', pts(line2));
         els.trail.style.opacity = String(on2 && v >= RUN[0] ? show : 0);
         if (on2) {
           done = v >= RUN[0] && v < 0.96 && (runner[0] - (x0 + x1) / 2) * R.dir > 8;
           els.space.classList.toggle('solid', done);
           fillFrom(els.space, done, R.dir > 0);
-          look(line2[1]);
+          look(line2[line2.length - 1]!);
         }
 
         // ---- 3. the clock winds back, runs up, and the goal lands inside the minutes named ----
@@ -406,7 +435,7 @@ export function calledIt(ctx: FilmCtx): Scene {
         els.goal.classList.toggle('solid', hit);
         fillFrom(els.goal, hit, R.dir > 0);
         els.trail3.setAttribute('points', pts([xy(R.shot[0], R.shot[1]), xy(bb[0], bb[1], bb[2])]));
-        els.trail3.style.opacity = String(on3 && stage === 2 ? show3 : 0);
+        els.trail3.style.opacity = '0'; // the goal box filling says it
         if (on3) {
           if (hit) api.setSpeed(0.15);
           done = hit && v < 0.96;

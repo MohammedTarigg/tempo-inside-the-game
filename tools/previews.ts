@@ -26,7 +26,7 @@ type Shot = {
 const SHOTS: Shot[] = [
   {
     name: 'film',
-    path: '/film/?at=69.5&mute=1',
+    path: '/film/?at=76.9&mute=1',
     ready: () => (window.__tour?.TOTAL ?? 0) > 0,
     settle: 500,
     crop: [600, 20, 560],

@@ -1,4 +1,4 @@
-// The Tempo product film: 100 seconds, self-running. It drives the real match view through the real run, one feature at a
+// The Tempo product film: 107 seconds, self-running. It drives the real match view through the real run, one feature at a
 // time, so nothing in it is mocked. Open /film/ to play it. ?at=42 starts at a second, ?hold=1 stops there, ?mute plays
 // it silent.
 //
@@ -23,6 +23,7 @@ import { headsUp } from './scenes/heads-up.ts';
 import { thunderbolt } from './scenes/thunderbolt.ts';
 import { speakOfTheDevil } from './scenes/speak-of-the-devil.ts';
 import { onAYellow } from './scenes/on-a-yellow.ts';
+import { yours } from './scenes/yours.ts';
 import { dejaVu } from './scenes/deja-vu.ts';
 import { calledIt } from './scenes/called-it.ts';
 import { proof } from './scenes/proof.ts';
@@ -135,7 +136,7 @@ export async function runFilm(api: MatchApi, Q = new URLSearchParams(location.se
   const THEME = `/audio/tempo-theme${/^[a-z-]+$/.test(Q.get('music') || '') ? `-${Q.get('music')}` : ''}`;
   const SCORE: Score = (await fetch(`${THEME}.json`, { cache: 'no-cache' })
     .then((r) => (r.ok ? (r.json() as Promise<Score>) : null))
-    .catch(() => null)) ?? { beat: 0.6, open: 16, parts: [16, 12, 16, 24, 28, 24, 18, 12], strike: 4, lit: 16 };
+    .catch(() => null)) ?? { beat: 0.6, open: 16, parts: [16, 12, 16, 24, 12, 28, 24, 18, 12], strike: 4, lit: 16 };
   // The replay's own data: the film has to arrive on the exact frame and framing the replay opens with.
   const REPLAY = await fetch(`/runs/${Q.get('run') || 'm_demo'}/scenes.json`, { cache: 'no-cache' })
     .then((r) => (r.ok ? (r.json() as Promise<ReplayScene[]>) : []))
@@ -146,7 +147,7 @@ export async function runFilm(api: MatchApi, Q = new URLSearchParams(location.se
     { logo, side } = furniture;
   const ctx = context(api, furniture, bridge, findMoments(api, REPLAY), SCORE);
   // Features are in match order. The two that nobody else has get the most time; the rest keep a short, even beat.
-  const SCENES: Scene[] = [headsUp, thunderbolt, speakOfTheDevil, onAYellow, dejaVu, calledIt, proof, close].map(
+  const SCENES: Scene[] = [headsUp, thunderbolt, speakOfTheDevil, onAYellow, yours, dejaVu, calledIt, proof, close].map(
     (make) => make(ctx),
   );
 

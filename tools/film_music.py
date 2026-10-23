@@ -56,6 +56,7 @@ PARTS = [
     ("thunderbolt", 7.2, 0),
     ("speak", 9.6, -5),
     ("yellow", 14.4, -4),
+    ("yours", 7.4, -5),
     ("deja vu", 16.8, -4),
     ("calls", 14.8, -2),
     ("proof", 11.1, -7),
