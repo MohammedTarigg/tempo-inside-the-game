@@ -1,0 +1,120 @@
+/* The front door, one screen: the mark's halfway line down the middle, the eye on it, and the four ways in beside it.
+   Everything that moves is placed by home.ts each frame. */
+@import './theme.css';
+.door {
+  position: relative;
+}
+.word {
+  position: fixed;
+  top: 24px;
+  left: 28px;
+  z-index: 3;
+  font: 600 28px var(--font);
+  letter-spacing: -0.045em;
+}
+.mark {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+/* the spot is drawn at a 300 radius and scaled to size, so the window and the eye are one element */
+.spot {
+  position: fixed;
+  top: -300px;
+  left: -300px;
+  width: 600px;
+  height: 600px;
+  z-index: 2;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+  color: var(--paper);
+  transform-origin: 300px 300px;
+  will-change: transform;
+}
+.spot .white {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--paper);
+}
+.pane {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  visibility: hidden;
+}
+.pane.on {
+  visibility: visible;
+}
+.pane video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.figure {
+  font: 700 118px / 1 var(--font);
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+.names {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 3;
+}
+.names a {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: 0 -50%;
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--mist);
+  text-decoration: none;
+  transition: color 0.25s;
+}
+.names b {
+  font: 600 clamp(19px, 1.8vw, 26px) / 1.1 var(--font);
+  letter-spacing: -0.025em;
+}
+.names span {
+  font-size: 14px;
+}
+.names a.here {
+  color: var(--paper);
+}
+.names a.here span {
+  color: var(--mist);
+}
+.names a:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+.leaving .word {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+@media (max-width: 759px) {
+  .word {
+    top: 18px;
+    left: 18px;
+  }
+  .names b {
+    font-size: 18px;
+  }
+  .names span {
+    display: none;
+    font-size: 13px;
+  }
+  .names a.here span {
+    display: block;
+  }
+}

@@ -1,7 +1,7 @@
 """Train the stake model on the DFL open matches, estimate its quality fairly, and write the artefacts the product
 loads.
 
-Usage: python3 -u -m tempo.stake.train data/dfl-cache
+Usage: tempo train (after tempo data)
 
 Fair estimate (nested): each match is scored by a model trained on the other six, and the two card thresholds used on
 that match are chosen on those six only, from scores they got from models that had not seen them. Input scaling comes
@@ -11,6 +11,7 @@ from training matches only. Threshold rules, fixed in advance:
 The shipped model is then trained on all seven, with thresholds chosen by the same rules from the outer scores."""
 
 import bisect
+import itertools
 import json
 import os
 import sys
@@ -19,7 +20,8 @@ import time
 import numpy as np
 import torch
 
-from ..paths import ARTIFACTS
+from ..jsonio import write_json
+from ..paths import MODELS
 from . import dfl
 from .features import HIST, HZ, STEP, window_features
 from .model import CardState, Net
@@ -41,7 +43,7 @@ def build(matches):
                 if not len(idx):
                     continue
                 t = H["t0"] + f / HZ
-                for k, pi in enumerate(idx):
+                for pi in idx:
                     pid = H["ids"][pi]
                     lab = m["labels"].get(pid, [])
                     j = bisect.bisect_left([a for a, _ in lab], t - 0.05)
@@ -88,10 +90,11 @@ def predict(net, mu, sd, X, idx):
 def cards(S, order, M, PID, T, faint, full):
     """Run the card logic over time-ordered samples. Returns {(match, player): [(start, end, full_start or None)]}."""
     out, cur, state = {}, None, None
-    since = last_t = fs = None  # set on a player's first sample, read on his later ones
+    since = last_t = 0.0  # set on a player's first sample, read on his later ones
+    fs = None
     for a in order:
         k = (M[a], PID[a])
-        if k != cur:
+        if k != cur or state is None:
             if state is not None and state.level:
                 out.setdefault(cur, []).append((state.since, last_t + 0.3, fs))
             cur, state, fs, was = k, CardState(faint, full), None, 0
@@ -129,7 +132,7 @@ def choose_thresholds(S, Y, mask, M, PID, T, matches, match_ids):
             faint = g
     full = 0.5
     for g in np.arange(0.10, 0.45, 0.01):
-        k = mask & (S >= g) & (S < g + 0.04)
+        k = mask & (g <= S) & (g + 0.04 > S)
         if k.sum() > 200 and Y[k].mean() >= 0.20:
             full = float(round(g, 2))
             break
@@ -157,7 +160,7 @@ def main(cache):
     matches = dfl.load(cache)
     NM = len(matches)
     print(f"loaded {NM} matches; building features with the shared path", flush=True)
-    X, Y, M, PID, T, D = build(matches)
+    X, Y, M, PID, T, _ = build(matches)
     print(f"samples {len(X):,}, positives {int(Y.sum()):,} ({Y.mean():.2%}), {time.time() - t_start:.0f} s", flush=True)
     booked = np.array(
         [PID[i] in matches[M[i]]["booked"] and T[i] > matches[M[i]]["booked"][PID[i]] for i in range(len(M))]
@@ -169,13 +172,13 @@ def main(cache):
         S_in = np.zeros(len(X), np.float32)
         for j in train:  # inner loop: fair scores for the six training matches
             tr = np.flatnonzero(np.isin(M, [k for k in train if k != j]))
-            te = np.flatnonzero(M == j)
+            te = np.flatnonzero(j == M)
             net, mu, sd = fit(X, Y, tr, epochs=3)
             S_in[te] = predict(net, mu, sd, X, te)
         tr_mask = np.isin(M, train)
         faint, full = choose_thresholds(S_in, Y, tr_mask, M, PID, T, matches, train)
         tr = np.flatnonzero(tr_mask)
-        te = np.flatnonzero(M == i)
+        te = np.flatnonzero(i == M)
         net, mu, sd = fit(X, Y, tr)
         S_out[te] = predict(net, mu, sd, X, te)
         chosen.append((faint, full))
@@ -208,20 +211,20 @@ def main(cache):
     ece = sum(
         ((S_out >= a) & (S_out < b)).mean()
         * abs(S_out[(S_out >= a) & (S_out < b)].mean() - Y[(S_out >= a) & (S_out < b)].mean())
-        for a, b in zip(edges[:-1], edges[1:])
+        for a, b in itertools.pairwise(edges)
         if ((S_out >= a) & (S_out < b)).any()
     )
     metrics = dict(
         method="nested: thresholds and scaling chosen on training matches only",
         matches=NM,
-        samples=int(len(X)),
+        samples=len(X),
         positives=int(Y.sum()),
         roc_auc=auc(S_out, Y),
         average_precision=avg_precision(S_out, Y),
         base_rate=float(Y.mean()),
         calibration_error=float(ece),
         thresholds_per_outer_match=chosen,
-        challenges_by_booked=int(len(rows)),
+        challenges_by_booked=len(rows),
         faint_on_at_contact=float(np.mean(lf >= 0)),
         faint_ci=ci((lf >= 0).astype(float)),
         faint_half_second_before=float(np.mean(lf >= 0.5)),
@@ -241,9 +244,10 @@ def main(cache):
     # the shipped model: all seven matches, thresholds by the same rules from the outer scores
     faint, full = choose_thresholds(S_out, Y, np.ones(len(X), bool), M, PID, T, matches, list(range(NM)))
     net, mu, sd = fit(X, Y, np.arange(len(X)))
-    os.makedirs(ARTIFACTS, exist_ok=True)
-    torch.save(net.state_dict(), os.path.join(ARTIFACTS, "stake_model.pt"))
-    json.dump(
+    os.makedirs(MODELS, exist_ok=True)
+    torch.save(net.state_dict(), os.path.join(MODELS, "stake_model.pt"))
+    write_json(
+        os.path.join(MODELS, "stake_meta.json"),
         dict(
             mu=mu.ravel().tolist(),
             sd=sd.ravel().tolist(),
@@ -255,42 +259,10 @@ def main(cache):
             "https://doi.org/10.6084/m9.figshare.28196177",
             score_quantiles={str(q): float(np.quantile(S_out, q)) for q in (0.5, 0.9, 0.95, 0.99, 0.999)},
         ),
-        open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
         indent=1,
     )
     print(f"shipped model saved: faint {faint}, full {full}; total {time.time() - t_start:.0f} s", flush=True)
 
 
-def provisional(cache):
-    """A stand-in artefact so the pipeline can be built while the nested run is still going. Same network and data,
-    thresholds from the earlier evaluation, no metrics. The nested run overwrites it."""
-    torch.set_num_threads(4)
-    matches = dfl.load(cache)
-    X, Y, M, PID, T, D = build(matches)
-    net, mu, sd = fit(X, Y, np.arange(len(X)))
-    os.makedirs(ARTIFACTS, exist_ok=True)
-    if os.path.exists(os.path.join(ARTIFACTS, "stake_meta.json")) and not json.load(
-        open(os.path.join(ARTIFACTS, "stake_meta.json"))
-    ).get("provisional"):
-        print("a final artefact already exists; leaving it alone")
-        return
-    torch.save(net.state_dict(), os.path.join(ARTIFACTS, "stake_model.pt"))
-    json.dump(
-        dict(
-            provisional=True,
-            mu=mu.ravel().tolist(),
-            sd=sd.ravel().tolist(),
-            faint_threshold=0.05,
-            full_threshold=0.20,
-            sample_step_frames=STEP,
-            trained_on="DFL open tracking set, Bassek et al. 2025, CC BY 4.0, "
-            "https://doi.org/10.6084/m9.figshare.28196177",
-        ),
-        open(os.path.join(ARTIFACTS, "stake_meta.json"), "w"),
-        indent=1,
-    )
-    print("provisional model saved", flush=True)
-
-
 if __name__ == "__main__":
-    provisional(sys.argv[2]) if sys.argv[1] == "--provisional" else main(sys.argv[1])
+    main(sys.argv[1])

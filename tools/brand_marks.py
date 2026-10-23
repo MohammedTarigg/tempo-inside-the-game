@@ -1,13 +1,13 @@
 """Draws the Tempo mark (black and white) and the two club crests (in club colours) as SVG. Everything is built from
-measured shapes, so a change of proportion is a change of one number. The files are written to ui/brand/.
+measured shapes, so a change of proportion is a change of one number. The files are written to web/public/brand/.
 
-    python3 tools/brand_marks.py"""
+    uv run python tools/brand_marks.py"""
 
 import math
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BRAND = os.path.join(ROOT, "ui", "brand")
+BRAND = os.path.join(ROOT, "web", "public", "brand")
 BLACK, WHITE = "#000", "#fff"
 ORANGE, SKY, NAVY = "#FF8A3D", "#7FD0F5", "#12233A"
 pts = lambda p: " ".join(f"{x:.1f},{y:.1f}" for x, y in p)
@@ -16,10 +16,12 @@ svg = lambda body, title, w=120, h=120: (
 )
 
 
-def mark(c, Ro=34, w=13, stub=20, rp=11, dx=7, cx=60, cy=60):
-    """The Tempo mark: the centre circle and the halfway line, with the centre spot looking to one side.
-    Ro: outer radius of the ring. w: its thickness. stub: how far the line runs beyond the ring. rp: the spot's radius.
-    dx: how far the spot sits off centre. At 0 it is a pitch marking; off centre it is an eye."""
+def mark(
+    c, Ro: float = 34, w: float = 13, stub: float = 20, rp: float = 13.2, dx: float = 0, cx: float = 60, cy: float = 60
+):
+    """The Tempo mark: the centre circle and the halfway line, with round ends, and the centre spot as an eye looking
+    straight out at whoever looks at it, as the film leaves it. Ro: outer radius of the ring. w: its thickness. stub: how far
+    the line runs beyond the ring. rp: the spot's radius, wide open. dx: how far the spot sits off centre, for a glance."""
     sw = w * 0.78
     return (
         f'<circle cx="{cx}" cy="{cy}" r="{Ro - w / 2}" fill="none" stroke="{c}" stroke-width="{w}"/>'
@@ -80,11 +82,11 @@ FILES = {
     "tempo-mark.svg": svg(mark(BLACK), "Tempo"),  # for light backgrounds
     "tempo-mark-white.svg": svg(mark(WHITE), "Tempo"),  # for dark backgrounds
     "tempo.svg": svg(
-        f'<rect width="120" height="120" rx="26" fill="{BLACK}"/>' + mark(WHITE, Ro=30, w=12, stub=14, rp=9.5, dx=6),
+        f'<rect width="120" height="120" rx="26" fill="{BLACK}"/>' + mark(WHITE, Ro=30, w=12, stub=14, rp=11.4),
         "Tempo",
     ),  # app icon
     "tempo-small.svg": svg(
-        f'<rect width="120" height="120" rx="26" fill="{BLACK}"/>' + mark(WHITE, Ro=34, w=16, stub=14, rp=9, dx=5),
+        f'<rect width="120" height="120" rx="26" fill="{BLACK}"/>' + mark(WHITE, Ro=34, w=16, stub=14, rp=10.8),
         "Tempo",
     ),  # 16 to 24 pixels: a heavier ring keeps the eye open
     "northgate.svg": northgate(),
@@ -94,7 +96,8 @@ FILES = {
 
 def main():
     for name, body in FILES.items():
-        open(os.path.join(BRAND, name), "w").write(body)
+        with open(os.path.join(BRAND, name), "w") as f:
+            f.write(body)
     print("wrote", ", ".join(FILES))
 
 

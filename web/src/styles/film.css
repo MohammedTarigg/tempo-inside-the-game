@@ -1,0 +1,1132 @@
+/* The product film's own furniture, laid over the match view. Black, white and grey; yellow only for a card. */
+body.tour {
+  background: #000;
+}
+body.tour #app {
+  grid-template-rows: minmax(0, 1fr);
+  padding: 0;
+  gap: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1280px;
+  height: 720px;
+  transform: translate(-50%, -50%) scale(var(--k, 1));
+}
+body.tour #screen {
+  border-radius: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+body.tour #strip {
+  display: none;
+} /* the film has no strip: nothing in it needs one, and a graph always on screen asks to be read */
+body.tour #phone,
+body.tour #counter,
+body.tour #replaytag,
+body.tour #kmhead {
+  display: none !important;
+}
+body.tour #board {
+  left: auto;
+  right: 26px;
+  top: 22px;
+  transform-origin: 100% 0;
+  transition:
+    opacity 0.5s,
+    transform 0.55s cubic-bezier(0.3, 0, 0.2, 1);
+}
+body.tour #lower {
+  left: auto;
+  right: 26px;
+  bottom: 22px;
+  align-items: flex-end;
+}
+body.topen #board,
+body.topen #lower,
+body.topen #pins {
+  opacity: 0;
+}
+body.topen.tdrawn #board {
+  opacity: 1;
+}
+.tlogo {
+  position: absolute;
+  left: 26px;
+  top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 23px/1 var(--font);
+  letter-spacing: -0.045em;
+  opacity: 0;
+  z-index: 6;
+  transition:
+    left 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    top 0.9s cubic-bezier(0.7, 0, 0.2, 1),
+    transform 0.9s cubic-bezier(0.7, 0, 0.2, 1);
+}
+.tlogo.on {
+  opacity: 1;
+}
+.tlogo svg {
+  display: block;
+  height: 36px;
+  width: auto;
+  overflow: visible;
+}
+.tlogo.centre {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(3.4);
+}
+.tcap {
+  position: absolute;
+  left: 26px;
+  bottom: 24px;
+  display: flex;
+  gap: 22px;
+  align-items: flex-end;
+  max-width: 760px;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+}
+.tcap.on {
+  opacity: 1;
+  transform: none;
+}
+.tno {
+  overflow: hidden;
+  /* room inside the clip for the whole glyph: the tight line height would otherwise cut the foot of the number */
+  padding: 0.08em 0.04em 0.14em;
+  margin: -0.08em -0.04em -0.14em;
+  font: 600 132px/0.78 var(--font);
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.28);
+  font-variant-numeric: tabular-nums;
+}
+.tcap h2 {
+  font: 600 44px/1 var(--font);
+  letter-spacing: -0.035em;
+  margin: 0 0 8px;
+}
+.tcap p {
+  margin: 0 0 16px;
+  font-size: 22px;
+  line-height: 1.38;
+  color: #fff;
+  max-width: 46ch;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.8);
+}
+.tchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tchips span {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px;
+  font-size: 15px;
+}
+/* the pill's ground is its own layer, so it can draw itself on from one end to the other before its words appear */
+.tchips span::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.86);
+}
+.tchips b {
+  font-weight: 500;
+}
+.tchips .planned {
+  color: #bdbdbd;
+}
+.tchips .planned::before {
+  background: transparent;
+  border: 1.5px dashed rgba(255, 255, 255, 0.5);
+}
+.tchips em {
+  font-style: normal;
+  font-size: 12px;
+  color: #9a9a9a;
+}
+.tside {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  margin-top: -30px;
+  width: 400px;
+  z-index: 3;
+  opacity: 0;
+  transform: translate(18px, -50%);
+  transition:
+    opacity 0.45s,
+    transform 0.45s;
+  pointer-events: none;
+}
+.tside.on {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.tside.wide,
+.tside.wide.on {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  width: auto;
+  display: grid;
+  place-items: center;
+  transform: none;
+}
+.tscrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 17%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.5) 22%, rgba(0, 0, 0, 0) 46%);
+}
+.tveil {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  z-index: 2;
+}
+.tveil.on {
+  opacity: 1;
+}
+.tveil.black {
+  background: #000;
+}
+.tframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: 2;
+  /* the replay opens as a circle out of the runner it is about, the eye's window, and closes back into him */
+  clip-path: circle(0 at var(--ox, 50%) var(--oy, 50%));
+  transition: clip-path 0.6s cubic-bezier(0.5, 0, 0.75, 0.2);
+}
+.tframe.on {
+  clip-path: circle(150% at var(--ox, 50%) var(--oy, 50%));
+  transition: clip-path 1.1s cubic-bezier(0.65, 0, 0.2, 1);
+}
+/* the ring at the edge of that circle: the logo's own ring, white, growing out with it and thinning as it goes */
+.tiris {
+  position: absolute;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+.tiris.open {
+  animation: iris-open 1.1s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+.tiris.shut {
+  animation: iris-open 0.6s cubic-bezier(0.5, 0, 0.75, 0.2) reverse both;
+}
+@keyframes iris-open {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    width: 3120px;
+    height: 3120px;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tlogo,
+  .tcap,
+  .tside,
+  .tveil,
+  .tframe {
+    transition: none !important;
+  }
+}
+
+/* pictures the features draw while the match plays */
+.tgauge {
+  width: 9px;
+  height: 68px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.75);
+  outline: 1.5px solid rgba(255, 255, 255, 0.75);
+  overflow: visible;
+  transition: opacity 0.3s;
+  clip-path: inset(
+    calc((1 - var(--rise, 1)) * 100% - 4px) -6px -4px -6px
+  ); /* room above for its outline once it stands */
+  transform-origin: 50% 100%;
+}
+.tgauge i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: var(--card);
+  border-radius: 5px;
+}
+.tgauge u {
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  height: 2px;
+  background: #fff;
+}
+
+.tcap.on .tchips span {
+  --at: 0.9s;
+}
+.tcap.on .tchips span:nth-child(2) {
+  --at: 1.15s;
+}
+.tcap.on .tchips span:nth-child(3) {
+  --at: 1.4s;
+}
+.tcap.on .tchips span::before {
+  animation: tdraw 0.45s var(--at) both cubic-bezier(0.65, 0, 0.2, 1);
+}
+.tcap.on .tchips span > * {
+  animation: tshow 0.3s calc(var(--at) + 0.3s) both;
+}
+@keyframes tdraw {
+  from {
+    clip-path: inset(0 100% 0 0 round 999px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 999px);
+  }
+}
+@keyframes tshow {
+  from {
+    opacity: 0;
+  }
+}
+/* between features the words go first, then the ground undraws towards its far end */
+.tcap.chg .tchips span > * {
+  animation: thide 0.1s both;
+}
+.tcap.chg .tchips span::before {
+  animation: tundraw 0.2s 0.05s both cubic-bezier(0.5, 0, 0.75, 0.2);
+}
+@keyframes thide {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tundraw {
+  from {
+    clip-path: inset(0 0 0 0 round 999px);
+  }
+  to {
+    clip-path: inset(0 0 0 100% round 999px);
+  }
+}
+
+/* ---- the caption, coming on and changing between features ---- */
+/* the number rolls like a scoreboard digit: the old one goes up out of its box as the new one comes up into it */
+.tno span {
+  display: block;
+}
+.tcap.in .tno span {
+  animation: roll-in 0.55s 0.05s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.tcap.chg .tno span {
+  animation: roll-out 0.28s cubic-bezier(0.5, 0, 0.75, 0.2) both;
+}
+@keyframes roll-in {
+  from {
+    translate: 0 100%;
+  }
+}
+@keyframes roll-out {
+  to {
+    translate: 0 -100%;
+  }
+}
+/* the title is wiped off and written on behind a white rule that crosses it */
+.tcap h2 {
+  position: relative;
+  width: fit-content;
+}
+.tcap h2::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #fff;
+  opacity: 0;
+}
+.tcap.in h2 {
+  animation: write-on 0.5s 0.15s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+.tcap.in h2::after {
+  animation: rule 0.5s 0.15s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+.tcap.chg h2 {
+  animation: wipe-off 0.28s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+.tcap.chg h2::after {
+  animation: rule 0.28s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+@keyframes write-on {
+  from {
+    clip-path: inset(-10% 100% -10% 0);
+  }
+  to {
+    clip-path: inset(-10% -4px -10% 0);
+  }
+}
+@keyframes wipe-off {
+  from {
+    clip-path: inset(-10% -4px -10% 0);
+  }
+  to {
+    clip-path: inset(-10% -4px -10% 100%);
+  }
+}
+@keyframes rule {
+  0% {
+    left: 0;
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+/* the line rises out of its own baseline, and sinks back into it */
+.tcap.in p,
+.tcap p.write {
+  animation: from-base 0.5s 0.35s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.tcap p.write {
+  animation-delay: 0s;
+}
+.tcap.chg p,
+.tcap p.out {
+  animation: into-base 0.24s cubic-bezier(0.5, 0, 0.75, 0.2) both;
+}
+@keyframes from-base {
+  from {
+    clip-path: inset(0 0 100% 0);
+    translate: 0 14px;
+  }
+  to {
+    clip-path: inset(-20% -10% -20% -10%);
+  }
+}
+@keyframes into-base {
+  from {
+    clip-path: inset(-20% -10% -20% -10%);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+    translate: 0 14px;
+  }
+}
+
+/* heard, then shown: the commentator's line at the foot of the picture, then the player's card */
+body.tour #form,
+body.tour #label {
+  display: none !important;
+}
+.tspeak {
+  position: absolute;
+  left: 69%;
+  bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* one quiet bar, like a dictation field: near black, fully round, a hairline edge */
+  background: rgba(22, 22, 22, 0.94);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 8px 24px 8px 8px;
+  z-index: 6;
+  white-space: nowrap;
+  transform: translate(-50%, 0);
+  /* it grows sideways out of its waveform ring: shut, only the ring shows */
+  opacity: 0;
+  clip-path: inset(0 calc(100% - 64px) 0 0 round 999px);
+  transition:
+    clip-path 0.35s cubic-bezier(0.5, 0, 0.75, 0.2),
+    opacity 0.15s 0.3s;
+}
+.tspeak.on {
+  opacity: 1;
+  clip-path: inset(0 0 0 0 round 999px);
+  transition:
+    opacity 0.15s,
+    clip-path 0.6s 0.12s cubic-bezier(0.65, 0, 0.2, 1);
+}
+/* the voice: six short round bars in a hairline ring */
+.twave {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 56px;
+  height: 40px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.twave i {
+  width: 3px;
+  height: 3.5px;
+  border-radius: 2px;
+  background: #afafaf;
+}
+.tline {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  min-height: 30px;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: #ededed;
+}
+/* a word arrives faint and grey and settles to white, the way a live transcript does */
+.tline span {
+  opacity: 0;
+}
+.tline span.in {
+  animation: heard 0.5s ease-in-out both;
+}
+@keyframes heard {
+  0% {
+    opacity: 0.2;
+    color: #8c8c8c;
+  }
+  48% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    color: #ededed;
+  }
+}
+/* his name, once it has been heard: a hairline ring draws itself round it from the left */
+.tline span.name {
+  position: relative;
+  padding: 1px 10px 2px;
+  margin: 0 1px;
+  color: #fff;
+}
+.tline span.name::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px #fff;
+  clip-path: inset(0 100% 0 0 round 999px);
+  transition: clip-path 0.45s cubic-bezier(0.65, 0, 0.2, 1);
+}
+.tline span.name.set::before {
+  clip-path: inset(0 0 0 0 round 999px);
+}
+.tplayer {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  width: 330px;
+  transform: translate(0, -56%);
+  isolation: isolate;
+  padding: 20px 22px 20px;
+  z-index: 3;
+  /* the disc arrives first, in the notch, with his number; the card then opens out of it, down and to the left, as if the
+     disc pulled it open. Going, it folds back into the disc and the disc shrinks away */
+  clip-path: circle(0 at calc(100% - 31px) 31px);
+  animation: fold 0.6s cubic-bezier(0.5, 0, 0.75, 0.2) both;
+}
+.tplayer.on {
+  animation: unfold 1s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+@keyframes unfold {
+  0% {
+    clip-path: circle(0 at calc(100% - 31px) 31px);
+  }
+  28%,
+  38% {
+    clip-path: circle(32px at calc(100% - 31px) 31px);
+  }
+  100% {
+    clip-path: circle(160% at calc(100% - 31px) 31px);
+  }
+}
+@keyframes fold {
+  0% {
+    clip-path: circle(160% at calc(100% - 31px) 31px);
+  }
+  62%,
+  72% {
+    clip-path: circle(32px at calc(100% - 31px) 31px);
+  }
+  100% {
+    clip-path: circle(0 at calc(100% - 31px) 31px);
+  }
+}
+/* inside, once it is open: who he is, then each number, its scale drawing from the left and its dot running out */
+.tplayer.on :is(.who, .stat, small) {
+  animation: rise-in 0.45s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.tplayer.on .who {
+  animation-delay: 0.45s;
+}
+.tplayer.on .stat:nth-of-type(2) {
+  animation-delay: 0.58s;
+}
+.tplayer.on .stat:nth-of-type(3) {
+  animation-delay: 0.68s;
+}
+.tplayer.on small {
+  animation-delay: 0.8s;
+}
+.tplayer.on .scale::before {
+  animation: draw-x 0.6s 0.7s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+@keyframes draw-x {
+  from {
+    scale: 0 1;
+  }
+}
+.tplayer .who {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.tplayer .face {
+  position: relative;
+  width: 96px;
+  height: 106px;
+  border-radius: 22px;
+  background: #1a1a1a;
+  overflow: hidden;
+  flex: none;
+}
+.tplayer .face svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tplayer .tnotch {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: visible;
+}
+.tplayer .tnotch path {
+  fill: rgba(0, 0, 0, 0.92);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+/* his number in the notch: a disc in his team's colour, ringed as his marker is on the pitch */
+.tplayer .tdisc {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--team);
+  color: #000;
+  font: 700 24px/1 var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 3px #000;
+}
+.tplayer h3 {
+  margin: 0 0 6px;
+  font: 600 32px/1 var(--font);
+  letter-spacing: -0.035em;
+}
+.tplayer .who p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #bdbdbd;
+  font-size: 15px;
+}
+.tplayer .who img {
+  width: 20px;
+  height: 20px;
+}
+.tplayer .stat {
+  margin-top: 14px;
+}
+.tplayer .stat > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 9px;
+}
+.tplayer .stat span {
+  color: #bdbdbd;
+  font-size: 14px;
+}
+.tplayer .stat b {
+  font: 600 20px/1 var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.tplayer .scale {
+  position: relative;
+  height: 16px;
+}
+.tplayer .scale::before {
+  transform-origin: 0 50%;
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6.5px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+.tplayer .usual {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 3px;
+  height: 16px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #fff;
+}
+.tplayer .dot {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: var(--team);
+  outline: 2px solid #000;
+  transition: left 0.9s 1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.tplayer.on .dot {
+  left: var(--x);
+}
+.tplayer .fill {
+  position: absolute;
+  left: 0;
+  top: 6.5px;
+  height: 3px;
+  width: 0;
+  border-radius: 2px;
+  background: var(--team);
+  transition: width 0.9s 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.tplayer.on .fill {
+  width: var(--x);
+}
+.tplayer small {
+  display: block;
+  margin-top: 16px;
+  color: #bdbdbd;
+  font-size: 14px;
+}
+body.tour #stage {
+  transform-origin: 0 0;
+  overflow: hidden;
+}
+body.tour #pins,
+.tscrim {
+  transition: opacity 0.5s;
+}
+
+/* the one button the film waits behind when a browser will not start sound by itself */
+.tstart {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  background: #000;
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  font: 600 24px/1 var(--font);
+  letter-spacing: -0.02em;
+}
+.tstart span {
+  background: #fff;
+  color: #000;
+  border-radius: 999px;
+  padding: 15px 40px 16px;
+}
+.tstart small {
+  color: #8c8c8c;
+  font: 500 14px/1 var(--font);
+  letter-spacing: 0;
+}
+
+/* The proof: four cards, one at a time, on black. Sizes follow the picture's width (--u is a hundredth of it) */
+.tcards {
+  position: absolute;
+  inset: 0;
+}
+.tcard {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  opacity: 0;
+}
+.tcard h4 {
+  margin: 0 0 calc(var(--u) * 2.2);
+  font: 700 calc(var(--u) * 3.1) / 1.05 var(--font);
+  letter-spacing: -0.03em;
+}
+.tcard .viz {
+  width: calc(var(--u) * 46);
+  height: calc(var(--u) * 9.5);
+  display: grid;
+  place-items: center;
+}
+.tcard .num {
+  display: block;
+  margin-top: calc(var(--u) * 1.2);
+  font: 700 calc(var(--u) * 10.5) / 1 var(--font);
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.tcard .say {
+  display: block;
+  margin-top: calc(var(--u) * 1.1);
+  font: 500 calc(var(--u) * 2) / 1.2 var(--font);
+  letter-spacing: -0.02em;
+  color: #bdbdbd;
+}
+.tcard .line {
+  margin: 0;
+  font: 600 calc(var(--u) * 2.9) / 1.2 var(--font);
+  letter-spacing: -0.02em;
+  color: #d9d9d9;
+}
+.tcard .line i {
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+}
+.tcard .line s {
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(#ff5a4d, #ff5a4d) left 58% / calc(var(--k, 0) * 100%) 0.12em no-repeat;
+  transition: opacity 0.25s;
+}
+.tcard .line u {
+  position: absolute;
+  left: 0;
+  top: 0;
+  text-decoration: none;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tcard .line i.fixed s {
+  opacity: 0;
+}
+.tcard .line i.fixed u {
+  opacity: 1;
+}
+.tside .tcard .viz > canvas {
+  width: calc(var(--u) * 46);
+  height: calc(var(--u) * 9.5);
+  display: block;
+} /* sizes are given outright: a percentage height did not hold inside the grid, and the dots ran under the number */
+.tcard .bars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55em 0.5em;
+  justify-content: center;
+  width: calc(var(--u) * 34);
+  font-size: calc(var(--u) * 1.5);
+}
+.tcard .bars i {
+  display: block;
+  height: 0.85em;
+  border-radius: 0.43em;
+  background: #fff;
+}
+.tcard .bars.back i {
+  animation: tbarback 0.35s ease-out both;
+}
+.tside .tcard .viz > svg {
+  width: calc(var(--u) * 16.6);
+  height: calc(var(--u) * 9.5);
+  overflow: visible;
+}
+.tcard svg g {
+  transition: none;
+}
+@keyframes tbarback {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The match view's own full-time cards are not used in the film */
+body.tour #interval {
+  display: none !important;
+}
+
+/* Called it. The zone, the shots and the runs are drawn over the pitch, in the picture's own space */
+.tover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 5;
+  pointer-events: none;
+}
+.tover .zone {
+  fill: var(--card);
+  fill-opacity: 0;
+  stroke: var(--card);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: fill-opacity 0.35s;
+}
+.tover .zone.solid {
+  fill-opacity: 1;
+} /* an outline while it is only something said, filled once it has happened: Called it sweeps the fill across from the
+     side the attack came from (called-it.ts) */
+.tover .shot {
+  fill: #6e6e6e;
+  stroke: #000;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+.tover .shot.in {
+  fill: var(--home);
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+.tover .trail {
+  fill: none;
+  stroke: var(--home);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.tover .ghost {
+  stroke: var(--home);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 11;
+  opacity: 0;
+}
+.tover .gring {
+  fill: none;
+  stroke-width: 3;
+  stroke-dasharray: 5 4;
+  opacity: 0;
+}
+.tover .gring.home {
+  stroke: var(--home);
+}
+.tover .gring.away {
+  stroke: var(--away);
+}
+.tover .stop {
+  stroke: var(--away);
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.tover .tbook {
+  fill: var(--card);
+  stroke: #000;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+.tcap p.tcall {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  max-width: none;
+}
+.tsw {
+  display: inline-block; /* sized whatever the line around it is doing, so it never stretches the caption */
+  vertical-align: middle;
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  border: 3.5px solid var(--card);
+  box-sizing: border-box;
+  flex: none;
+  transition: background-color 0.3s;
+}
+.tcall.done .tsw {
+  background: var(--card);
+}
+.ttk {
+  display: inline-block;
+  vertical-align: middle;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: var(--card);
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.ttk svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tcall.done .ttk {
+  opacity: 1;
+  transform: none;
+}
+/* the tick is drawn as a stroke, from its short arm to the end of its long one; the square fills from its centre */
+.ttk path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+.tcall.done .ttk path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.45s 0.08s cubic-bezier(0.65, 0, 0.2, 1);
+}
+.tsw {
+  transition: box-shadow 0.35s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+.tcall.done .tsw {
+  background: transparent;
+  box-shadow: inset 0 0 0 10px var(--card);
+}
+
+/* the scoreboard, when the clock is the picture: larger, then the clock takes the outline and turns solid with the goal */
+body.tbig #board {
+  transform: scale(1.55);
+}
+#board .clock {
+  transition:
+    background-color 0.3s,
+    color 0.3s,
+    box-shadow 0.3s;
+}
+body.tlate #board .clock {
+  background: #000;
+  color: var(--card);
+  box-shadow: inset 0 0 0 3px var(--card);
+}
+body.tgoal #board .clock {
+  background: var(--card);
+  color: #000;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.tour #board,
+  body.tour #board .clock {
+    transition: none;
+  }
+}
+body.treplay #board {
+  z-index: 6;
+} /* over the replay, whose own scoreboard is not shown: the clock says which minute is on screen */
+body.tour #kmtext,
+body.theads .pin.name {
+  display: none !important;
+} /* before kick-off the film puts no words on the pitch: the call is the caption's line */
+
+/* the eyelids: each covers well over half the frame, its edge curved like a lid, so when both are shut they overlap even
+   at the far ends of the curve */
+.tlid {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  height: 82%;
+  z-index: 7;
+  background: #000;
+  scale: 1 0;
+  transition: scale 0.32s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+.tlid.top {
+  top: 0;
+  transform-origin: 50% 0;
+  border-radius: 0 0 50% 50% / 0 0 26% 26%;
+}
+.tlid.bottom {
+  bottom: 0;
+  transform-origin: 50% 100%;
+  border-radius: 50% 50% 0 0 / 26% 26% 0 0;
+}
+.tlid.shut {
+  scale: 1 1;
+  transition: scale 0.22s cubic-bezier(0.5, 0, 0.75, 0.2);
+}
+
+/* the number cards at the end, part by part, from --in, --in2 and --out (proof.ts) */
+.tcard h4 {
+  clip-path: inset(-12% calc((1 - var(--in, 1)) * 100%) -12% calc(var(--out, 0) * 100%));
+}
+.tcard .viz {
+  opacity: calc(var(--in, 1) * (1 - var(--out, 0)));
+  translate: 0 calc((1 - var(--in, 1)) * 18px + var(--out, 0) * 14px);
+}
+.tcard .num {
+  overflow: hidden;
+  padding-bottom: 0.06em;
+}
+.tcard .num span {
+  display: block;
+  translate: 0 calc((1 - var(--nin, 1)) * 105% - var(--nout, 0) * 105%);
+}
+.tcard .say {
+  clip-path: inset(-20% calc((1 - var(--in2, 1)) * 100%) -20% calc(var(--out, 0) * 100%));
+}

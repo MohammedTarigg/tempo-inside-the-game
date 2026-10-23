@@ -2,8 +2,23 @@
 name = "tempo"
 version = "0.1.0"
 description = "Tempo: before the moment, the stake; after it, the reason. A football broadcast layer built on synthetic match data."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = ["numpy>=2.0", "torch>=2.2"]
+
+[dependency-groups]
+dev = ["ruff>=0.6", "pyright>=1.1.380", "pytest>=8"]
+
+# On Linux (CI, containers) torch comes from PyTorch's CPU-only index: the PyPI build carries CUDA libraries Tempo never uses
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[project.scripts]
+tempo = "tempo.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -12,11 +27,25 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["tempo*"]
 
+[tool.setuptools.package-data]
+tempo = ["stake/dfl_sources.tsv"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py311"
-extend-exclude = ["data", "private", "spike", "runs", "artifacts"]
+target-version = "py312"
+extend-exclude = ["data", "private", "web", "node_modules"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
-ignore = ["E501", "E741", "E731"]
+select = ["E", "F", "I", "B", "UP", "SIM", "C4", "PIE", "RUF"]
+ignore = ["E501", "E741", "E731", "RUF001", "RUF003", "C408"]  # dict(...) is the house style for records
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: runs whole matches through the pipeline"]
+
+[tool.pyright]
+include = ["tempo", "tests", "experiments", "tools"]
+# needs mlx-audio, which runs only on Apple Silicon and is not a project dependency
+exclude = ["tools/commentator_voice.py"]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"

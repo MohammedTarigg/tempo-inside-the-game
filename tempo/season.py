@@ -10,17 +10,19 @@ call that passes is not said at all. Each habit carries how often it held."""
 
 import json
 import os
+from typing import Any
 
 import numpy as np
 
-from . import habits as rules
-from . import twin
 from .contracts import Q_YELLOW, TYPE
 from .generator.export import match_data
 from .generator.sim import AWAY, HOME, HZ, Sim, squads
-from .paths import ARTIFACTS
+from .instruments import habits as rules
+from .instruments import twin
+from .jsonio import read_json
+from .paths import MODELS
 
-PATH = os.path.join(ARTIFACTS, "season.json")
+PATH = os.path.join(MODELS, "season.json")
 
 
 HOLD_RATE, MIN_TESTED, MIN_TESTED_BOOKED = 0.7, 8, 4
@@ -29,6 +31,7 @@ WINDOW = [70, 90]
 
 def build(n=40, seed0=100, verbose=True):
     shot_speed, pass_dist, per_min, archive = [], [], [], []
+    by_player = {}  # each player's shot speeds across the season, for a claim about his own best
     wide = {0: [0, 0], 1: [0, 0]}
     late_against = {0: [0, 0], 1: [0, 0]}
     challenges = {}
@@ -36,15 +39,16 @@ def build(n=40, seed0=100, verbose=True):
     for k in range(n):
         md = match_data(Sim(seed=seed0 + k, match_id=f"s_{k}").run())
         ids, team = md["meta"]["ids"], md["team"]
-        view = dict(pos=md["pos"], ball=md["ball"], live=md["live"], poss=md["poss"], team=team)
+        view: dict[str, Any] = dict(pos=md["pos"], ball=md["ball"], live=md["live"], poss=md["poss"], team=team)
         clock, period = md["clock"], md["period"]
-        rec = dict(shots={0: [], 1: []}, went={}, card={}, end=float(clock[-1]))
+        rec: dict[str, Any] = dict(shots={0: [], 1: []}, went={}, card={}, end=float(clock[-1]))
         season.append(rec)
         for e in md["events"]:
             q = {x["qualifierId"]: x["value"] for x in e["qualifier"]}
             p = ids.index(e["playerId"])
             if e["typeId"] in (TYPE["goal"], TYPE["attempt_saved"], TYPE["miss"]):
                 shot_speed.append(q[322])
+                by_player.setdefault(e["playerId"], []).append(q[322])
                 t = int(team[p])
                 rec["shots"][t].append((e["y"], e["matchTime"], e["typeId"] == TYPE["goal"]))
                 wide[t][0] += abs(e["y"] - 50) > 18
@@ -92,11 +96,12 @@ def build(n=40, seed0=100, verbose=True):
         shot_speed=shot_speed,
         pass_distance=pass_dist,
         distance_per_minute=per_min,
+        best_shot={pid: dict(kmh=max(v), shots=len(v)) for pid, v in sorted(by_player.items())},
         habits=habits,
         considered=considered,
         archive=archive,
     )
-    os.makedirs(ARTIFACTS, exist_ok=True)
+    os.makedirs(MODELS, exist_ok=True)
     tmp = PATH + ".tmp"
     with open(tmp, "w") as f:
         json.dump(out, f, default=float)
@@ -184,7 +189,7 @@ def mine(season, wide, late_against, challenges, n):
 def load(n=40):
     if not os.path.exists(PATH):
         build(n)
-    s = json.load(open(PATH))
+    s = read_json(PATH)
     search = twin.TwinSearch()
     for a in s["archive"]:
         vec = {k: (np.array(v) if k in ("ball", "A", "D") else v) for k, v in a["vec"].items()}

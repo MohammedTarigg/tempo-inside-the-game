@@ -1,0 +1,612 @@
+{
+ "rows": [
+  {
+   "case": "case01",
+   "kind": "raw",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 11,
+   "seconds": 73,
+   "usd": 0.39,
+   "sentence": "Harbour keeper Quist's ~25 m pass was intercepted by Marek near the box and he scored almost at once, but no defender or the team shape did anything c"
+  },
+  {
+   "case": "case01",
+   "kind": "raw",
+   "run": 2,
+   "error": "[Errno 2] No such file or directory: '/private/tmp/claude-50"
+  },
+  {
+   "case": "case01",
+   "kind": "inst",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 9,
+   "seconds": 50,
+   "usd": 0.31,
+   "sentence": "Harbour City's keeper pass was intercepted on the edge of his own box and Marek scored from close range, with no defender standing off or doing anythi"
+  },
+  {
+   "case": "case01",
+   "kind": "inst",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 10,
+   "seconds": 56,
+   "usd": 0.34,
+   "sentence": "Northgate won the ball from a long Harbour City keeper clearance near the box and scored two seconds later, with no defender doing anything unusual."
+  },
+  {
+   "case": "case02",
+   "kind": "raw",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": false,
+   "turns": 16,
+   "seconds": 101,
+   "usd": 0.47,
+   "sentence": "Northgate won the ball in midfield and ran it centrally about 30 metres in roughly 7 seconds, and the Harbour City defence, which was positioned norma"
+  },
+  {
+   "case": "case02",
+   "kind": "raw",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 17,
+   "seconds": 111,
+   "usd": 0.58,
+   "sentence": "Northgate's Draper carried the ball about 40 metres and shot from 20 metres, and Harbour City's defence kept a normal, symmetric shape, so nothing in "
+  },
+  {
+   "case": "case02",
+   "kind": "inst",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 12,
+   "seconds": 55,
+   "usd": 0.34,
+   "sentence": "Draper carried the ball forward from midfield and finished from a long run while Harbour City's defenders retreated in the normal way, with nothing on"
+  },
+  {
+   "case": "case02",
+   "kind": "inst",
+   "run": 2,
+   "error": "[Errno 2] No such file or directory: '/private/tmp/claude-50"
+  },
+  {
+   "case": "case03",
+   "kind": "raw",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 18,
+   "seconds": 99,
+   "usd": 0.5,
+   "sentence": "Draper carried the ball about 31 metres through the middle and shot from range; Harbour City's shape and individual defenders looked normal, so nothin"
+  },
+  {
+   "case": "case03",
+   "kind": "raw",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 11,
+   "seconds": 67,
+   "usd": 0.43,
+   "sentence": "Northgate won the ball in midfield and Draper drove straight through the middle to shoot; nothing in the data shows a Harbour City defender or the tea"
+  },
+  {
+   "case": "case03",
+   "kind": "inst",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": false,
+   "turns": 11,
+   "seconds": 49,
+   "usd": 0.33,
+   "sentence": "Northgate won the ball in midfield and ran straight through the middle at a retreating Harbour City back line, and nothing in the data shows one defen"
+  },
+  {
+   "case": "case03",
+   "kind": "inst",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 11,
+   "seconds": 44,
+   "usd": 0.33,
+   "sentence": "Harbour City's defence backed off a little more than usual before the shot, but nothing one player or the team did stands out strongly enough to call "
+  },
+  {
+   "case": "case04",
+   "kind": "raw",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 19,
+   "seconds": 86,
+   "usd": 0.5,
+   "sentence": "Northgate worked the ball down the right to Okoye and Marek finished from close range while Harbour's Stahl was tight on him, an ordinary goal with no"
+  },
+  {
+   "case": "case04",
+   "kind": "raw",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 9,
+   "seconds": 62,
+   "usd": 0.36,
+   "sentence": "Northgate kept the ball moving across the wings for about 30 seconds against a deep, compact Harbour City and Marek finished from close range; nothing"
+  },
+  {
+   "case": "case04",
+   "kind": "inst",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 13,
+   "seconds": 52,
+   "usd": 0.34,
+   "sentence": "Northgate built a patient attack down both wings and finished it; nothing in Harbour City's defending stood out as unusual."
+  },
+  {
+   "case": "case04",
+   "kind": "inst",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 20,
+   "seconds": 72,
+   "usd": 0.45,
+   "sentence": "Northgate worked the ball across the box with quick passes and Marek finished from close range while a marker was on him; nothing Harbour City did sta"
+  },
+  {
+   "case": "case05",
+   "kind": "raw",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.65,
+   "named": null,
+   "right": false,
+   "turns": 11,
+   "seconds": 77,
+   "usd": 0.41,
+   "sentence": "Northgate's Draper carried the ball about 30 metres up the middle and shot from roughly 21 metres, and nothing in Harbour City's play stood out as unu"
+  },
+  {
+   "case": "case05",
+   "kind": "raw",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 15,
+   "seconds": 175,
+   "usd": 0.45,
+   "sentence": "Northgate's Draper ran onto a ball played in behind from midfield and finished while Harbour City were backing off in a normal shape, and nothing in t"
+  },
+  {
+   "case": "case05",
+   "kind": "inst",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": false,
+   "turns": 21,
+   "seconds": 185,
+   "usd": 0.5,
+   "sentence": "Northgate won the ball back and Draper finished after a run through the middle; Harbour City's nearest defender kept about 5 m off him, which is typic"
+  },
+  {
+   "case": "case05",
+   "kind": "inst",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 15,
+   "seconds": 152,
+   "usd": 0.38,
+   "sentence": "Northgate won the ball in midfield and drove at a settled Harbour City back line, and nothing the defenders did stands out as different from normal, s"
+  },
+  {
+   "case": "case06",
+   "kind": "raw",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": false,
+   "turns": 13,
+   "seconds": 175,
+   "usd": 0.46,
+   "sentence": "Draper carried the ball about 30 metres through the middle and shot from range; no single Harbour City defender or team habit stands out as the reason"
+  },
+  {
+   "case": "case06",
+   "kind": "raw",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.3,
+   "named": null,
+   "right": false,
+   "turns": 14,
+   "seconds": 71,
+   "usd": 0.35,
+   "sentence": "Draper carried the ball through the middle and finished from about 18m; no Harbour City defender did anything unusual, so this looks like an ordinary "
+  },
+  {
+   "case": "case06",
+   "kind": "inst",
+   "run": 1,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": false,
+   "turns": 12,
+   "seconds": 87,
+   "usd": 0.38,
+   "sentence": "Northgate's Draper carried the ball 25 metres through the middle with Harbour City's Stahl backing off in front of him and no team-mate stepping in, b"
+  },
+  {
+   "case": "case06",
+   "kind": "inst",
+   "run": 2,
+   "planted": true,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.5,
+   "named": null,
+   "right": false,
+   "turns": 17,
+   "seconds": 113,
+   "usd": 0.47,
+   "sentence": "Northgate's Draper carried the ball about 30 m through the middle and shot from range, with Harbour City's Stahl backing off in front of him, but noth"
+  },
+  {
+   "case": "case07",
+   "kind": "raw",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.4,
+   "named": null,
+   "right": true,
+   "turns": 16,
+   "seconds": 113,
+   "usd": 0.47,
+   "sentence": "Northgate's defenders were all sitting deep when a loose ball fell to Harbour's Tully at the edge of the box and he shot home; no single defender did "
+  },
+  {
+   "case": "case07",
+   "kind": "raw",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 10,
+   "seconds": 70,
+   "usd": 0.32,
+   "sentence": "Harbour City won the ball inside the box after a Northgate tackle went out, and Tully hit a quick 103 km/h shot from about 8 metres while Northgate's "
+  },
+  {
+   "case": "case07",
+   "kind": "inst",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 15,
+   "seconds": 82,
+   "usd": 0.4,
+   "sentence": "Harbour City won the ball on the left flank and worked it across for an ordinary close-range finish, with no Northgate defender standing off or out of"
+  },
+  {
+   "case": "case07",
+   "kind": "inst",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 10,
+   "seconds": 77,
+   "usd": 0.34,
+   "sentence": "Harbour City won the ball inside Northgate's box and Tully scored from close range; nothing in the data shows a defender or the defending team doing a"
+  },
+  {
+   "case": "case08",
+   "kind": "raw",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 15,
+   "seconds": 109,
+   "usd": 0.51,
+   "sentence": "Harbour City scored from a free kick that Northgate defended in a normal set-piece shape, with no defender doing anything unusual."
+  },
+  {
+   "case": "case08",
+   "kind": "raw",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.6,
+   "named": null,
+   "right": true,
+   "turns": 17,
+   "seconds": 93,
+   "usd": 0.42,
+   "sentence": "Harbour City took a free kick, played a quick pass and Tully hit a 102 km/h shot from about 17 m, and no Northgate defender did anything clearly out o"
+  },
+  {
+   "case": "case08",
+   "kind": "inst",
+   "run": 1,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 19,
+   "seconds": 95,
+   "usd": 0.48,
+   "sentence": "Harbour City took a quick free kick from deep and Tully finished from range; Northgate defended it much as they defend every similar free kick, so not"
+  },
+  {
+   "case": "case08",
+   "kind": "inst",
+   "run": 2,
+   "planted": false,
+   "cause": "no_clear_cause",
+   "player": null,
+   "conf": 0.7,
+   "named": null,
+   "right": true,
+   "turns": 16,
+   "seconds": 96,
+   "usd": 0.48,
+   "sentence": "Harbour City took a quick free kick, switched it across the pitch and Tully hit a hard 35-metre shot (101.6 km/h) that went in; Northgate were set up "
+  }
+ ],
+ "pairs": {
+  "case01:raw": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    "ERROR"
+   ],
+   "gate": null
+  },
+  "case01:inst": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case02:raw": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case02:inst": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    "ERROR"
+   ],
+   "gate": null
+  },
+  "case03:raw": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case03:inst": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case04:raw": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case04:inst": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case05:raw": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case05:inst": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case06:raw": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case06:inst": {
+   "planted": true,
+   "want": "p_har_6",
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case07:raw": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case07:inst": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case08:raw": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  },
+  "case08:inst": {
+   "planted": false,
+   "want": null,
+   "runs": [
+    null,
+    null
+   ],
+   "gate": null
+  }
+ }
+}

@@ -1,13 +1,13 @@
 """The stake network and the two-level card logic. One implementation, used in training, evaluation and the live
 service."""
 
-import json
 import os
 
 import numpy as np
 import torch
 
-from ..paths import ARTIFACTS
+from ..jsonio import read_json
+from ..paths import MODELS
 from .features import LAGS, N_FEAT
 
 
@@ -30,8 +30,8 @@ class StakeModel:
     """Loads the trained network with its input scaling and thresholds."""
 
     def __init__(self, path=None):
-        path = path or ARTIFACTS
-        self.meta = json.load(open(os.path.join(path, "stake_meta.json")))
+        path = path or MODELS
+        self.meta = read_json(os.path.join(path, "stake_meta.json"))
         self.mu = np.array(self.meta["mu"], np.float32).reshape(1, N_FEAT, 1)
         self.sd = np.array(self.meta["sd"], np.float32).reshape(1, N_FEAT, 1)
         self.net = Net()

@@ -1,0 +1,155 @@
+{
+ "ran_at": "2026-10-23 16:51",
+ "passed": 14,
+ "total": 14,
+ "results": [
+  {
+   "check": "no reading ahead, match cut at 35%",
+   "passed": true,
+   "detail": "49 cues with the future removed, 49 in the full run up to minute 33, identical: True",
+   "counts": {}
+  },
+  {
+   "check": "no reading ahead, match cut at 80%",
+   "passed": true,
+   "detail": "325 cues with the future removed, 325 in the full run up to minute 73, identical: True",
+   "counts": {}
+  },
+  {
+   "check": "recovery after a stop at 30%",
+   "passed": true,
+   "detail": "resumed from frame 42,046 of 141,319; 502 cues against 502 uninterrupted; same IDs in the same order: True",
+   "counts": {
+    "identical": 502,
+    "cues": 502
+   }
+  },
+  {
+   "check": "recovery after a stop at 77%",
+   "passed": true,
+   "detail": "resumed from frame 108,160 of 141,319; 502 cues against 502 uninterrupted; same IDs in the same order: True",
+   "counts": {
+    "identical": 502,
+    "cues": 502
+   }
+  },
+  {
+   "check": "the planted story is found",
+   "passed": true,
+   "detail": "booking at 47.8' (planted 47.8'); closest earlier attempt at 12.4' (planted 12.2'); first relevant difference p_har_6 by 6.4 m",
+   "counts": {}
+  },
+  {
+   "check": "no stake card before the booking",
+   "passed": true,
+   "detail": "121 card changes for the booked player, the first at 48.5'",
+   "counts": {}
+  },
+  {
+   "check": "verifier accepts what the pipeline wrote",
+   "passed": true,
+   "detail": "12 of 12 sentences pass",
+   "counts": {}
+  },
+  {
+   "check": "verifier rejects planted errors",
+   "passed": true,
+   "detail": "155 of 155 caught ({'number': 49, 'name': 33, 'overclaim': 52, 'arabic digit': 21})",
+   "counts": {
+    "caught": 155,
+    "planted": 155
+   }
+  },
+  {
+   "check": "agent tools refuse out-of-scope reads",
+   "passed": true,
+   "detail": "3 of 3 refused (other team's player, one second after the moment, the Director's tool); facts leaked from after the moment: 0",
+   "counts": {}
+  },
+  {
+   "check": "a withdrawn booking withdraws its cards",
+   "passed": true,
+   "detail": "4 cues resting on the card were withdrawn; cards on him afterwards: 0; the goal's sentence no longer says he had been booked: True (1 sentences checked)",
+   "counts": {}
+  },
+  {
+   "check": "tracking survives the feed shape",
+   "passed": true,
+   "detail": "200 random frames written in the Second Spectrum shape and read back",
+   "counts": {}
+  },
+  {
+   "check": "reflex path under 10 ms a frame",
+   "passed": true,
+   "detail": "p50 0.042 ms, p95 1.367 ms, p99 2.389 ms, slowest 243.5 ms, features and network included",
+   "counts": {}
+  },
+  {
+   "check": "writing path well inside the replay window",
+   "passed": true,
+   "detail": "6 moments, slowest 1.7 ms with the local backend (a cloud model will be slower; the limit is 10 s)",
+   "counts": {}
+  },
+  {
+   "check": "full stake cards issued stay within the match cap",
+   "passed": true,
+   "detail": "20 full cards issued against a cap of 20. The model wanted 43 across 2 booked players, with 199 card appearances in all, which is above the real rate (see the realism check)",
+   "counts": {}
+  }
+ ],
+ "demo_summary": {
+  "match_id": "m_demo",
+  "final_score": [
+   1,
+   0
+  ],
+  "frames": 141319,
+  "events_read": 1650,
+  "cues_by_form": {
+   "kickoff_mark": 3,
+   "danger_window": 1,
+   "sentence": 18,
+   "label": 6,
+   "tag": 3,
+   "duel": 9,
+   "stake_card": 455,
+   "form_card": 2,
+   "halftime_card": 1,
+   "pressure": 2,
+   "scene": 1,
+   "fulltime_card": 1
+  },
+  "things_shown": 304,
+  "held_back": 31,
+  "facts": 402,
+  "stake_cards": {
+   "appearances": 199,
+   "full": 43,
+   "players": [
+    "p_har_11",
+    "p_har_6"
+   ]
+  },
+  "verifier_rejections": 0,
+  "frame_ms": {
+   "p50": 0.042,
+   "p95": 1.367,
+   "p99": 2.389,
+   "max": 243.5
+  },
+  "writer_ms": [
+   1.68,
+   0.69,
+   1.17,
+   1.04,
+   1.55,
+   1.33
+  ],
+  "wall_seconds": 52.6,
+  "writer_backend": "local-templates",
+  "stake_model": {
+   "faint": 0.02,
+   "full": 0.19
+  }
+ }
+}

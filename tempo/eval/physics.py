@@ -1,7 +1,6 @@
 """Does the generated match move like a real one? Scans the ball and the players frame by frame for motion that cannot
 happen."""
 
-import json
 import os
 import sys
 
@@ -9,7 +8,8 @@ import numpy as np
 
 from ..generator.sim import PX, PY, Sim
 from ..generator.story import DEMO_SEED, DemoStory
-from ..paths import ARTIFACTS
+from ..jsonio import write_json
+from ..paths import RESULTS
 
 
 def scan(s):
@@ -26,7 +26,7 @@ def scan(s):
     out = {}
     out["ball jumps over 2 m in one frame"] = int(((step > 2.0) & same).sum())
     stop = np.where(live[:-1] & ~live[1:])[0]
-    out["stoppages"] = int(len(stop))
+    out["stoppages"] = len(stop)
     out["median ball jump in the first second of a stoppage (m)"] = (
         float(np.median([step[i : i + 25].max() for i in stop])) if len(stop) else 0.0
     )
@@ -84,7 +84,7 @@ def scan(s):
     out["ball changes pace by over 3 m/s on the turf with nobody within 1.5 m"] = int(
         ((jump > 3) & (near > 1.5) & flat & onpitch & same[1:] & same[:-1]).sum()
     )
-    out["passes"] = int(len(kick))
+    out["passes"] = len(kick)
     out["passes that reach a team-mate's feet"] = float(len(rec) / max(len(kick), 1))
     out["restarts that had to be forced"] = int(getattr(s, "timeouts", 0))
     # bodies: nobody stands inside anybody, and a challenge does something to the man who loses it
@@ -126,10 +126,13 @@ def scan(s):
     return out
 
 
-if __name__ == "__main__":
-    demo = len(sys.argv) > 1 and sys.argv[1] == "demo"
+def main(demo=False):
     s = Sim(seed=DEMO_SEED, story=DemoStory() if demo else None).run()
     r = scan(s)
     for k, v in r.items():
         print(f"  {k}: {v if not isinstance(v, float) else round(v, 2)}")
-    json.dump(r, open(os.path.join(ARTIFACTS, "physics.json"), "w"), indent=1)
+    write_json(os.path.join(RESULTS, "physics.json"), r, indent=1)
+
+
+if __name__ == "__main__":
+    main(len(sys.argv) > 1 and sys.argv[1] == "demo")

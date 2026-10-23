@@ -1,0 +1,185 @@
+{
+ "plain": {
+  "n": 76,
+  "median": 3.0,
+  "p90": 5.0,
+  "p95": 5.35,
+  "max": 6.5
+ },
+ "demo": [
+  {
+   "seed": 7,
+   "planted": [
+    {
+     "kind": "attack",
+     "variant": "hold",
+     "restart": 4282.1
+    }
+   ],
+   "at_planted": [
+    {
+     "minute": 71.5,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.5,
+     "s_before": 2.2,
+     "beyond_plain_pct": 83
+    }
+   ],
+   "goals": [
+    {
+     "minute": 53.9,
+     "goal": true,
+     "top": "p_har_5",
+     "off": -0.5,
+     "s_before": 0.4,
+     "beyond_plain_pct": 1
+    },
+    {
+     "minute": 71.5,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.5,
+     "s_before": 2.2,
+     "beyond_plain_pct": 83
+    }
+   ]
+  },
+  {
+   "seed": 8,
+   "planted": [
+    {
+     "kind": "attack",
+     "variant": "hold",
+     "restart": 4275.5
+    }
+   ],
+   "at_planted": [
+    {
+     "minute": 71.4,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.7,
+     "s_before": 4.6,
+     "beyond_plain_pct": 86
+    }
+   ],
+   "goals": [
+    {
+     "minute": 71.4,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.7,
+     "s_before": 4.6,
+     "beyond_plain_pct": 86
+    },
+    {
+     "minute": 83.5,
+     "goal": true,
+     "top": "p_har_3",
+     "off": 4.5,
+     "s_before": 0.2,
+     "beyond_plain_pct": 83
+    }
+   ]
+  },
+  {
+   "seed": 9,
+   "planted": [
+    {
+     "kind": "attack",
+     "variant": "hold",
+     "restart": 4291.9
+    }
+   ],
+   "at_planted": [
+    {
+     "minute": 71.7,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.5,
+     "s_before": 3.2,
+     "beyond_plain_pct": 83
+    }
+   ],
+   "goals": [
+    {
+     "minute": 71.7,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.5,
+     "s_before": 3.2,
+     "beyond_plain_pct": 83
+    }
+   ]
+  },
+  {
+   "seed": 10,
+   "planted": [
+    {
+     "kind": "attack",
+     "variant": "hold",
+     "restart": 4274.0
+    }
+   ],
+   "at_planted": [
+    {
+     "minute": 71.4,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.6,
+     "s_before": 4.4,
+     "beyond_plain_pct": 83
+    }
+   ],
+   "goals": [
+    {
+     "minute": 54.5,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 2.7,
+     "s_before": 3.8,
+     "beyond_plain_pct": 41
+    },
+    {
+     "minute": 71.4,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.6,
+     "s_before": 4.4,
+     "beyond_plain_pct": 83
+    }
+   ]
+  },
+  {
+   "seed": 11,
+   "planted": [
+    {
+     "kind": "attack",
+     "variant": "hold",
+     "restart": 4286.6
+    }
+   ],
+   "at_planted": [
+    {
+     "minute": 71.6,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.4,
+     "s_before": 3.0,
+     "beyond_plain_pct": 80
+    }
+   ],
+   "goals": [
+    {
+     "minute": 71.6,
+     "goal": true,
+     "top": "p_har_6",
+     "off": 4.4,
+     "s_before": 3.0,
+     "beyond_plain_pct": 80
+    }
+   ]
+  }
+ ]
+}

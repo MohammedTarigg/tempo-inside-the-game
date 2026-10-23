@@ -1,25 +1,26 @@
 """Realism check for the generator. The same measurements on the seven real matches and on generated ones, side by side,
 ending with the stake model (trained on real tracking only) scored on generated matches.
 
-Usage: python3 -m tempo.eval.realism data/dfl-cache [seeds...]"""
+Usage: uv run tempo realism (after uv run tempo data)"""
 
 import bisect
-import json
 import os
 import sys
+from typing import Any
 
 import numpy as np
 
 from ..contracts import DEFENDING_CHALLENGE
 from ..generator.export import match_data
 from ..generator.sim import Sim
-from ..paths import ARTIFACTS
+from ..jsonio import read_json, write_json
+from ..paths import RESULTS
 from ..stake import dfl
 from ..stake.features import HIST, HZ, STEP, window_features
 from ..stake.model import CardState, StakeModel
 
 
-def halves_of_generated(md):
+def halves_of_generated(md) -> dict[str, Any]:
     """A generated match in the same per-half structure the real reader produces."""
     out = {}
     ids = md["meta"]["ids"]
@@ -48,7 +49,7 @@ def halves_of_generated(md):
 
 
 def measure(match, model, keepers_by_pos=None):
-    r = dict(
+    r: dict[str, Any] = dict(
         per_min=[],
         fast=[],
         sprint=[],
@@ -91,7 +92,7 @@ def measure(match, model, keepers_by_pos=None):
             if not live[f]:
                 continue
             sl = slice(f - HIST + 1, f + 1)
-            idx, feats, dist = window_features(xy[:, sl], ball[sl], H["team"], H["own"], H["poss"][sl], live[sl])
+            idx, feats, _ = window_features(xy[:, sl], ball[sl], H["team"], H["own"], H["poss"][sl], live[sl])
             if not len(idx):
                 continue
             s = model.score(feats)
@@ -152,16 +153,16 @@ def summarise(rows, n_matches, n_chal):
 
 
 def real_reference(cache, model):
-    path = os.path.join(ARTIFACTS, "real_reference.json")
+    path = os.path.join(RESULTS, "real_reference.json")
     if os.path.exists(path):
-        return json.load(open(path))
+        return read_json(path)
     matches = dfl.load(cache)
     rows = []
     for m in matches:
         kp = lambda H, m=m: [i for i, p in enumerate(H["ids"]) if m["players"][p]["pos"] == "TW"]
         rows.append(measure(dict(halves=m["halves"], labels=m["labels"]), model, keepers_by_pos=kp))
     ref = summarise(rows, len(matches), sum(len(v) for m in matches for v in m["labels"].values()))
-    json.dump(ref, open(path, "w"), indent=1)
+    write_json(path, ref, indent=1)
     return ref
 
 
@@ -183,19 +184,18 @@ def main(argv):
     for k in ref:
         a, b = ref[k], gen[k]
         if isinstance(a, list):
-            ok = all(abs(y - x) <= 0.25 * abs(x) for x, y in zip(a, b))
+            ok = all(abs(y - x) <= 0.25 * abs(x) for x, y in zip(a, b, strict=True))
         else:
             ok = abs(b - a) <= 0.25 * abs(a)
         rows.append(dict(measure=k, real=a, generated=b, within_25_percent=bool(ok)))
-        print(f"{k:72s} {str(a):>22s} {str(b):>22s} {'yes' if ok else 'NO':>11s}")
+        print(f"{k:72s} {a!s:>22s} {b!s:>22s} {'yes' if ok else 'NO':>11s}")
     out = dict(
         seeds=[int(x) for x in argv[1:]] or [31, 32],
-        provisional_model=bool(model.meta.get("provisional")),
         rows=rows,
         within=sum(r["within_25_percent"] for r in rows),
         total=len(rows),
     )
-    json.dump(out, open(os.path.join(ARTIFACTS, "realism.json"), "w"), indent=1)
+    write_json(os.path.join(RESULTS, "realism.json"), out, indent=1)
     print(f"\n{out['within']} of {out['total']} measures within 25% of real football")
     return ref, gen
 

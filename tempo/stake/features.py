@@ -32,7 +32,7 @@ def window_features(xy, ball, team, own_goal_x, poss, live):
     live        (T,) ball in play
     Returns (player indices, features (k, N_FEAT, len(LAGS)), distance to the ball (k,)).
     """
-    n, T, _ = xy.shape
+    _, T, _ = xy.shape
     assert T >= HIST, "window too short"
     now = T - 1
     if not live[now]:

@@ -2,20 +2,58 @@
 and an event stream in the Opta shape, joined on player IDs, plus match metadata. Also the reverse adapter the pipeline
 uses to read tracking."""
 
+from typing import Any, TypedDict
+
 import numpy as np
 
 from ..contracts import tracking_frame
 from .sim import AWAY, HOME, HZ
 
 
-def match_data(sim):
+class Meta(TypedDict):
+    """Who is playing: the match, the pitch, both squads and how to name each player."""
+
+    match_id: str
+    fps: int
+    pitchLength: float
+    pitchWidth: float
+    home: dict[str, Any]
+    away: dict[str, Any]
+    ids: list[str]
+    numbers: list[int]
+    names: dict[str, str]
+    names_ar: dict[str, str]
+    team_of: dict[str, str]
+    keepers: list[int]
+    final_score: list[int]
+
+
+class MatchData(TypedDict):
+    """One match as the feeds deliver it, frame by frame (25 a second) and event by event. pos is frames by players by
+    x and y in metres (NaN while a player is off), ball is frames by x, y and height."""
+
+    meta: Meta
+    pos: np.ndarray
+    ball: np.ndarray
+    live: np.ndarray
+    poss: np.ndarray
+    period: np.ndarray
+    clock: np.ndarray
+    home_dir: np.ndarray
+    team: np.ndarray
+    events: list[dict[str, Any]]
+    commentary: list[dict[str, Any]]
+    planted: list[dict[str, Any]]
+
+
+def match_data(sim) -> MatchData:
     F = sim.frames
     pos = np.stack([f[7] for f in F])
     ball = np.array([[f[4], f[5], f[6]] for f in F])
     period = np.array([f[0] for f in F])
     clock = np.array([f[1] for f in F])
     dirs = np.where(period == 1, 1.0, -1.0)  # the home team's attacking direction
-    meta = dict(
+    meta = Meta(
         match_id=sim.match_id,
         fps=HZ,
         pitchLength=105.0,
@@ -30,7 +68,7 @@ def match_data(sim):
         keepers=[0, 11],
         final_score=list(sim.score),
     )
-    return dict(
+    return MatchData(
         meta=meta,
         pos=pos,
         ball=ball,
@@ -42,10 +80,11 @@ def match_data(sim):
         team=sim.team.copy(),
         events=sim.events,
         commentary=sorted(sim.commentary, key=lambda c: c["matchTime"]),
+        planted=[],  # what a storyline planted, filled in by whoever ran it
     )
 
 
-def to_feed_frame(md, i):
+def to_feed_frame(md: MatchData, i):
     """Frame i as the tracking feed would send it."""
     sp = np.zeros(22) if i == 0 else np.linalg.norm(md["pos"][i] - md["pos"][i - 1], axis=1) * HZ
     bs = 0.0 if i == 0 else float(np.linalg.norm(md["ball"][i, :2] - md["ball"][i - 1, :2]) * HZ)

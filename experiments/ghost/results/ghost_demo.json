@@ -1,0 +1,498 @@
+[
+ {
+  "trained_on": "generated",
+  "samples": 386106,
+  "plain_shots": 49,
+  "plain_top_gap": {
+   "median": 5.4,
+   "p90": 7.3,
+   "p95": 7.7,
+   "max": 8.5
+  },
+  "demo": [
+   {
+    "minute": 6.2,
+    "goal": false,
+    "shooter": "p_har_7",
+    "top": "p_nor_11",
+    "gap": 5.6,
+    "further_from_ball": -5.5,
+    "s_before": 2.0,
+    "beyond_plain_pct": 55
+   },
+   {
+    "minute": 12.4,
+    "goal": false,
+    "shooter": "p_nor_7",
+    "top": "p_har_6",
+    "gap": 10.2,
+    "further_from_ball": -10.0,
+    "s_before": 2.8,
+    "beyond_plain_pct": 100
+   },
+   {
+    "minute": 24.7,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_11",
+    "gap": 3.9,
+    "further_from_ball": 3.9,
+    "s_before": 4.8,
+    "beyond_plain_pct": 10
+   },
+   {
+    "minute": 25.2,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_7",
+    "gap": 4.8,
+    "further_from_ball": 4.1,
+    "s_before": 1.2,
+    "beyond_plain_pct": 27
+   },
+   {
+    "minute": 30.9,
+    "goal": false,
+    "shooter": "p_nor_11",
+    "top": "p_har_11",
+    "gap": 4.6,
+    "further_from_ball": -3.8,
+    "s_before": 4.2,
+    "beyond_plain_pct": 22
+   },
+   {
+    "minute": 33.0,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_6",
+    "gap": 3.1,
+    "further_from_ball": 0.0,
+    "s_before": 1.2,
+    "beyond_plain_pct": 0
+   },
+   {
+    "minute": 34.2,
+    "goal": false,
+    "shooter": "p_nor_11",
+    "top": "p_har_7",
+    "gap": 6.3,
+    "further_from_ball": -5.9,
+    "s_before": 1.0,
+    "beyond_plain_pct": 76
+   },
+   {
+    "minute": 36.5,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_10",
+    "gap": 4.4,
+    "further_from_ball": 3.7,
+    "s_before": 2.2,
+    "beyond_plain_pct": 16
+   },
+   {
+    "minute": 43.1,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_10",
+    "gap": 7.4,
+    "further_from_ball": 7.4,
+    "s_before": 5.4,
+    "beyond_plain_pct": 90
+   },
+   {
+    "minute": 49.1,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_8",
+    "gap": 7.7,
+    "further_from_ball": -3.3,
+    "s_before": 2.0,
+    "beyond_plain_pct": 94
+   },
+   {
+    "minute": 53.9,
+    "goal": true,
+    "shooter": "p_nor_9",
+    "top": "p_har_4",
+    "gap": 4.6,
+    "further_from_ball": -4.2,
+    "s_before": 0.2,
+    "beyond_plain_pct": 22
+   },
+   {
+    "minute": 55.6,
+    "goal": false,
+    "shooter": "p_har_7",
+    "top": "p_nor_8",
+    "gap": 7.5,
+    "further_from_ball": 7.5,
+    "s_before": 3.0,
+    "beyond_plain_pct": 92
+   },
+   {
+    "minute": 57.2,
+    "goal": false,
+    "shooter": "p_nor_7",
+    "top": "p_har_7",
+    "gap": 6.2,
+    "further_from_ball": -4.4,
+    "s_before": 3.8,
+    "beyond_plain_pct": 73
+   },
+   {
+    "minute": 58.0,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_5",
+    "gap": 4.9,
+    "further_from_ball": -4.7,
+    "s_before": 0.2,
+    "beyond_plain_pct": 31
+   },
+   {
+    "minute": 69.2,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_6",
+    "gap": 2.5,
+    "further_from_ball": -2.5,
+    "s_before": 0.4,
+    "beyond_plain_pct": 0
+   },
+   {
+    "minute": 71.5,
+    "goal": true,
+    "shooter": "p_nor_10",
+    "top": "p_har_6",
+    "gap": 6.8,
+    "further_from_ball": 3.1,
+    "s_before": 4.0,
+    "beyond_plain_pct": 84
+   },
+   {
+    "minute": 79.7,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_8",
+    "gap": 4.0,
+    "further_from_ball": -1.0,
+    "s_before": 0.6,
+    "beyond_plain_pct": 10
+   }
+  ],
+  "stahl": [
+   {
+    "minute": 12.4,
+    "goal": false,
+    "stahl_gap": 10.2,
+    "top": "p_har_6",
+    "top_gap": 10.2
+   },
+   {
+    "minute": 25.2,
+    "goal": false,
+    "stahl_gap": 2.2,
+    "top": "p_har_7",
+    "top_gap": 4.8
+   },
+   {
+    "minute": 30.9,
+    "goal": false,
+    "stahl_gap": 1.9,
+    "top": "p_har_11",
+    "top_gap": 4.6
+   },
+   {
+    "minute": 34.2,
+    "goal": false,
+    "stahl_gap": 2.3,
+    "top": "p_har_7",
+    "top_gap": 6.3
+   },
+   {
+    "minute": 53.9,
+    "goal": true,
+    "stahl_gap": 3.4,
+    "top": "p_har_4",
+    "top_gap": 4.6
+   },
+   {
+    "minute": 57.2,
+    "goal": false,
+    "stahl_gap": 4.2,
+    "top": "p_har_7",
+    "top_gap": 6.2
+   },
+   {
+    "minute": 58.0,
+    "goal": false,
+    "stahl_gap": 3.3,
+    "top": "p_har_5",
+    "top_gap": 4.9
+   },
+   {
+    "minute": 69.2,
+    "goal": false,
+    "stahl_gap": 2.5,
+    "top": "p_har_6",
+    "top_gap": 2.5
+   },
+   {
+    "minute": 71.5,
+    "goal": true,
+    "stahl_gap": 6.8,
+    "top": "p_har_6",
+    "top_gap": 6.8
+   }
+  ]
+ },
+ {
+  "trained_on": "real",
+  "samples": 425523,
+  "plain_shots": 49,
+  "plain_top_gap": {
+   "median": 6.7,
+   "p90": 8.6,
+   "p95": 8.9,
+   "max": 9.9
+  },
+  "demo": [
+   {
+    "minute": 6.2,
+    "goal": false,
+    "shooter": "p_har_7",
+    "top": "p_nor_11",
+    "gap": 6.5,
+    "further_from_ball": -6.3,
+    "s_before": 2.2,
+    "beyond_plain_pct": 31
+   },
+   {
+    "minute": 12.4,
+    "goal": false,
+    "shooter": "p_nor_7",
+    "top": "p_har_6",
+    "gap": 9.2,
+    "further_from_ball": 3.2,
+    "s_before": 6.0,
+    "beyond_plain_pct": 96
+   },
+   {
+    "minute": 24.7,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_11",
+    "gap": 6.8,
+    "further_from_ball": 6.1,
+    "s_before": 5.2,
+    "beyond_plain_pct": 55
+   },
+   {
+    "minute": 25.2,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_7",
+    "gap": 8.0,
+    "further_from_ball": 5.5,
+    "s_before": 1.0,
+    "beyond_plain_pct": 84
+   },
+   {
+    "minute": 30.9,
+    "goal": false,
+    "shooter": "p_nor_11",
+    "top": "p_har_11",
+    "gap": 6.2,
+    "further_from_ball": -5.5,
+    "s_before": 4.2,
+    "beyond_plain_pct": 14
+   },
+   {
+    "minute": 33.0,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_10",
+    "gap": 6.1,
+    "further_from_ball": -6.1,
+    "s_before": 3.2,
+    "beyond_plain_pct": 14
+   },
+   {
+    "minute": 34.2,
+    "goal": false,
+    "shooter": "p_nor_11",
+    "top": "p_har_7",
+    "gap": 6.3,
+    "further_from_ball": -3.8,
+    "s_before": 3.4,
+    "beyond_plain_pct": 20
+   },
+   {
+    "minute": 36.5,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_7",
+    "gap": 6.5,
+    "further_from_ball": -6.3,
+    "s_before": 3.0,
+    "beyond_plain_pct": 31
+   },
+   {
+    "minute": 43.1,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_10",
+    "gap": 8.2,
+    "further_from_ball": -8.1,
+    "s_before": 3.0,
+    "beyond_plain_pct": 86
+   },
+   {
+    "minute": 49.1,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_7",
+    "gap": 7.4,
+    "further_from_ball": 6.3,
+    "s_before": 3.6,
+    "beyond_plain_pct": 71
+   },
+   {
+    "minute": 53.9,
+    "goal": true,
+    "shooter": "p_nor_9",
+    "top": "p_har_6",
+    "gap": 2.6,
+    "further_from_ball": -2.5,
+    "s_before": 0.2,
+    "beyond_plain_pct": 0
+   },
+   {
+    "minute": 55.6,
+    "goal": false,
+    "shooter": "p_har_7",
+    "top": "p_nor_8",
+    "gap": 8.6,
+    "further_from_ball": 8.5,
+    "s_before": 2.8,
+    "beyond_plain_pct": 88
+   },
+   {
+    "minute": 57.2,
+    "goal": false,
+    "shooter": "p_nor_7",
+    "top": "p_har_7",
+    "gap": 6.8,
+    "further_from_ball": -5.2,
+    "s_before": 0.6,
+    "beyond_plain_pct": 55
+   },
+   {
+    "minute": 58.0,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_5",
+    "gap": 3.1,
+    "further_from_ball": -2.8,
+    "s_before": 0.2,
+    "beyond_plain_pct": 0
+   },
+   {
+    "minute": 69.2,
+    "goal": false,
+    "shooter": "p_nor_9",
+    "top": "p_har_4",
+    "gap": 3.7,
+    "further_from_ball": 3.7,
+    "s_before": 0.2,
+    "beyond_plain_pct": 0
+   },
+   {
+    "minute": 71.5,
+    "goal": true,
+    "shooter": "p_nor_10",
+    "top": "p_har_9",
+    "gap": 5.2,
+    "further_from_ball": -5.2,
+    "s_before": 5.0,
+    "beyond_plain_pct": 8
+   },
+   {
+    "minute": 79.7,
+    "goal": false,
+    "shooter": "p_har_9",
+    "top": "p_nor_9",
+    "gap": 5.6,
+    "further_from_ball": 5.1,
+    "s_before": 5.0,
+    "beyond_plain_pct": 10
+   }
+  ],
+  "stahl": [
+   {
+    "minute": 12.4,
+    "goal": false,
+    "stahl_gap": 9.2,
+    "top": "p_har_6",
+    "top_gap": 9.2
+   },
+   {
+    "minute": 25.2,
+    "goal": false,
+    "stahl_gap": 5.0,
+    "top": "p_har_7",
+    "top_gap": 8.0
+   },
+   {
+    "minute": 30.9,
+    "goal": false,
+    "stahl_gap": 5.1,
+    "top": "p_har_11",
+    "top_gap": 6.2
+   },
+   {
+    "minute": 34.2,
+    "goal": false,
+    "stahl_gap": 4.3,
+    "top": "p_har_7",
+    "top_gap": 6.3
+   },
+   {
+    "minute": 53.9,
+    "goal": true,
+    "stahl_gap": 2.6,
+    "top": "p_har_6",
+    "top_gap": 2.6
+   },
+   {
+    "minute": 57.2,
+    "goal": false,
+    "stahl_gap": 4.3,
+    "top": "p_har_7",
+    "top_gap": 6.8
+   },
+   {
+    "minute": 58.0,
+    "goal": false,
+    "stahl_gap": 3.0,
+    "top": "p_har_5",
+    "top_gap": 3.1
+   },
+   {
+    "minute": 69.2,
+    "goal": false,
+    "stahl_gap": 2.5,
+    "top": "p_har_4",
+    "top_gap": 3.7
+   },
+   {
+    "minute": 71.5,
+    "goal": true,
+    "stahl_gap": 4.1,
+    "top": "p_har_9",
+    "top_gap": 5.2
+   }
+  ]
+ }
+]

@@ -11,14 +11,15 @@ private/
 __pycache__/
 *.pyc
 .venv/
-venv/
 *.egg-info/
 .pytest_cache/
-.mypy_cache/
 .ruff_cache/
 
-# node, used only for the formatter
+# web
 node_modules/
+dist/
+web/e2e/report/
+web/e2e/results/
 
 # os and editors
 .DS_Store
@@ -26,23 +27,21 @@ node_modules/
 .vscode/
 *.swp
 
+# runs: only the demo match, and of it only what the site reads and what checks it
+web/public/runs/*
+!web/public/runs/m_demo/
+web/public/runs/m_demo/*
+!web/public/runs/m_demo/match.bin
+!web/public/runs/m_demo/match.json
+!web/public/runs/m_demo/scenes.json
+!web/public/runs/m_demo/summary.json
+!web/public/runs/m_demo/cues.jsonl
+!web/public/runs/m_demo/facts.jsonl
+
 # databases and logs
 *.sqlite
 *.sqlite-*
 *.log
-
-# runs: only the demo match, and of it only what the pages and the local server read
-runs/*
-!runs/m_demo/
-runs/m_demo/*
-!runs/m_demo/match.bin
-!runs/m_demo/match.json
-!runs/m_demo/scenes.json
-!runs/m_demo/summary.json
-!runs/m_demo/meta.json
-!runs/m_demo/replay.npz
-!runs/m_demo/cues.jsonl
-!runs/m_demo/facts.jsonl
 
 # weights and arrays: ignored unless listed
 *.pt
@@ -50,30 +49,26 @@ runs/m_demo/*
 *.npz
 *.onnx
 *.pkl
-!artifacts/stake_model.pt
-!artifacts/ghost_model.pt
-!runs/m_demo/replay.npz
+!models/stake_model.pt
+!models/ghost_model.pt
 
-# scratch output from experiments
-spike/**/out/
-spike/**/out[0-9]*/
-artifacts/agents_*.json
-artifacts/ghost_demo.json
-artifacts/ghost_standoff.json
-
-# audio: ignored unless listed. The film's sound and the three sources it is cut from are kept
+# audio: the recordings the film's sound is cut from, and the cut itself
 *.mp3
 *.wav
 *.m4a
-!ui/tour/tempo-theme.m4a
-!ui/tour/music/with-you.mp3
-!ui/tour/music/crowd.mp3
-!ui/tour/music/commentator.wav
+!assets/audio/with-you.mp3
+!assets/audio/crowd.mp3
+!assets/audio/commentator.wav
+!web/public/audio/tempo-theme.m4a
+web/public/audio/tempo-theme-*
 
-# third-party assets that must never be committed
+# third-party 3D assets
 *.fbx
 *.glb
 *.gltf
 
-# per-track copies of the film sound, written by the music script beside the default
-ui/tour/tempo-theme-*
+# rendered videos and scratch: only the home page's loops are kept
+exports/
+*.mp4
+!web/public/previews/*.mp4
+.work/

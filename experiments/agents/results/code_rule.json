@@ -1,0 +1,42 @@
+{
+ "case01": {
+  "planted": false,
+  "named": null,
+  "right": true
+ },
+ "case02": {
+  "planted": true,
+  "named": "p_har_6",
+  "right": true
+ },
+ "case03": {
+  "planted": true,
+  "named": "p_har_6",
+  "right": true
+ },
+ "case04": {
+  "planted": false,
+  "named": null,
+  "right": true
+ },
+ "case05": {
+  "planted": true,
+  "named": "p_har_6",
+  "right": true
+ },
+ "case06": {
+  "planted": true,
+  "named": "p_har_6",
+  "right": true
+ },
+ "case07": {
+  "planted": false,
+  "named": null,
+  "right": true
+ },
+ "case08": {
+  "planted": false,
+  "named": null,
+  "right": true
+ }
+}

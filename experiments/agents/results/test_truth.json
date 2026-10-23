@@ -1,0 +1,64 @@
+{
+ "case01": {
+  "seed": 7,
+  "story": true,
+  "goal_t": 3235.12,
+  "planted": false,
+  "player": null,
+  "booked_at": 2977.9
+ },
+ "case02": {
+  "seed": 7,
+  "story": true,
+  "goal_t": 4290.88,
+  "planted": true,
+  "player": "p_har_6",
+  "booked_at": 2977.9
+ },
+ "case03": {
+  "seed": 8,
+  "story": true,
+  "goal_t": 4283.04,
+  "planted": true,
+  "player": "p_har_6",
+  "booked_at": 2707.1
+ },
+ "case04": {
+  "seed": 8,
+  "story": true,
+  "goal_t": 5012.48,
+  "planted": false,
+  "player": null,
+  "booked_at": 2707.1
+ },
+ "case05": {
+  "seed": 9,
+  "story": true,
+  "goal_t": 4302.2,
+  "planted": true,
+  "player": "p_har_6",
+  "booked_at": 2732.0
+ },
+ "case06": {
+  "seed": 10,
+  "story": true,
+  "goal_t": 4281.36,
+  "planted": true,
+  "player": "p_har_6",
+  "booked_at": 2779.8
+ },
+ "case07": {
+  "seed": 32,
+  "story": false,
+  "goal_t": 1375.16,
+  "planted": false,
+  "player": null
+ },
+ "case08": {
+  "seed": 33,
+  "story": false,
+  "goal_t": 1906.72,
+  "planted": false,
+  "player": null
+ }
+}

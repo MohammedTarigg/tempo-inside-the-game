@@ -1,8 +1,0 @@
-<!doctype html><meta charset="utf-8"><title>Tempo portraits</title>
-<!-- Every player's drawn portrait, to check them side by side. -->
-<style>body{background:#000;color:#fff;font:14px system-ui;margin:24px;display:grid;grid-template-columns:repeat(11,1fr);gap:12px}figure{margin:0;text-align:center}figure div{background:#1A1A1A;border-radius:18px;overflow:hidden}svg{display:block;width:100%;height:auto}</style>
-<script type="module">
-const { portrait } = await import(`./portrait.js?v=${Date.now()}`);
-const nums = [1, 2, 5, 4, 3, 6, 8, 10, 7, 9, 11];
-for (const [t, col] of [['nor', '#FF8A3D'], ['har', '#7FD0F5']]) for (const n of nums) { const f = document.createElement('figure'), d = document.createElement('div'); d.innerHTML = portrait(`p_${t}_${n}`, col); f.append(d, `${t.toUpperCase()} ${n}`); document.body.append(f); }
-</script>

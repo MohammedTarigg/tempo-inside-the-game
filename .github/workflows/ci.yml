@@ -1,0 +1,54 @@
+# Every push: the Python checks, the pipeline's own checks on the demo match, and the site built and opened in a browser.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Types
+        run: uv run pyright
+      - name: The site's types match the pipeline's schema
+        run: uv run tempo types --check
+      - name: Unit tests
+        run: uv run pytest -m "not slow"
+
+  pipeline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: The demo match is reproduced byte for byte
+        run: uv run pytest -m slow
+      - name: The pipeline's checks
+        run: uv run tempo check
+
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Format
+        run: bun run lint
+      - name: Types
+        run: bun run typecheck
+      - name: Unit tests
+        run: bun test web/src
+      - run: bunx playwright install --with-deps chromium
+      - name: Every page, built and opened
+        run: bun run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pages
+          path: web/e2e/results

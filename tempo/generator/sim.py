@@ -4,12 +4,16 @@ It is a behaviour model, written to be checked against real football: tempo/eval
 trained on real tracking, over its output. Everything it emits is synthetic. Clubs and players are fictional."""
 
 import math
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from ..constants import HZ, PX, PY
 from ..contracts import Q_SECOND_YELLOW, Q_YELLOW, event
 from . import league as league_mod
+
+if TYPE_CHECKING:
+    from .story import Attack
 
 DT = 1.0 / HZ
 G = 9.81
@@ -30,7 +34,7 @@ ANCHOR = np.array(
     ]
 )
 NUMBERS = [1, 2, 5, 4, 3, 6, 8, 10, 7, 9, 11]
-HOME = dict(
+HOME: dict[str, Any] = dict(
     id="t_nor",
     name="Northgate",
     short="NOR",
@@ -38,7 +42,7 @@ HOME = dict(
     name_ar="نورثغيت",
     names_ar=["بيل", "أديمي", "برانت", "سوتو", "فيران", "هيل", "كيسلر", "روناي", "أوكويي", "ماريك", "إلفيس"],
 )
-AWAY = dict(
+AWAY: dict[str, Any] = dict(
     id="t_har",
     name="Harbour City",
     short="HAR",
@@ -54,7 +58,7 @@ def squads():
         out.append(
             [
                 dict(playerId=f"p_{team['short'].lower()}_{n}", number=n, name=nm, name_ar=ar, team=team["id"])
-                for n, nm, ar in zip(NUMBERS, team["names"], team["names_ar"])
+                for n, nm, ar in zip(NUMBERS, team["names"], team["names_ar"], strict=True)
             ]
         )
     return out
@@ -90,7 +94,7 @@ class Sim:
         self.fx = np.random.default_rng(
             seed + 7919
         )  # its own stream, so what a body does after contact never shifts the match's decisions
-        self.script = None
+        self.script: Attack | None = None  # the attack a storyline is staging, while it runs
         self.bvz = 0.0  # the ball's vertical speed
         self.controlled = False  # the man on the ball has it at his feet
         self.ctl = []  # per frame: (state, player on the ball or about to receive it)
@@ -132,7 +136,7 @@ class Sim:
 
     # ---------- logging ----------
     def log(self, kind, player, outcome=1, qualifiers=None, **extra):
-        t = self.team[player]
+        t = int(self.team[player])
         d = self.dir[t]
         x = (self.pos[player, 0] * d + PX) / 105 * 100
         y = (self.pos[player, 1] * d + PY) / 68 * 100
@@ -288,7 +292,7 @@ class Sim:
             if r < xg + (1 - xg) * 0.8
             else "blocked"
         )
-        t = self.team[p]
+        t = int(self.team[p])
         gk = 11 * (1 - t)
         if outcome == "goal":  # inside the posts, away from the keeper
             side = -np.sign(self.pos[gk, 1]) or self.rng.choice([-1, 1])
@@ -330,7 +334,7 @@ class Sim:
     # ---------- decisions ----------
     def decide(self):
         p = self.carrier
-        t = self.team[p]
+        t = int(self.team[p])
         if self.script and self.script.carrier_decision(self, p):
             return
         goal = self.opp_goal(t)
@@ -542,7 +546,7 @@ class Sim:
                     self.script.on_restart(self, taker)
         elif self.state == "carried":
             p = self.carrier
-            t = self.team[p]
+            t = int(self.team[p])
             # The ball only changes pace when it is at someone's feet. Within a metre he has it under control and keeps
             # it just ahead of him, the way a dribbler does with small touches. Further away he has to run to it first.
             reach = float(np.linalg.norm(self.ball[:2] - self.pos[p]))
@@ -620,13 +624,14 @@ class Sim:
                 urgent[q] = True
                 if self.interceptor is None:  # the nearest defender closes on the receiver
                     dfn, dist = self.nearest(self.pos[q], team=1 - self.team[q], exclude=[0, 11])
-                    holding = (
-                        self.script is not None
-                        and self.script.presser is not None
-                        and self.script.press_mode(self, self.script.presser, receiving=True) == "hold"
-                    )
-                    if holding:  # the storyline's defender backs off instead of closing
-                        dfn = self.script.presser
+                    script = self.script
+                    presser = script.presser if script is not None else None
+                    if (
+                        script is not None
+                        and presser is not None
+                        and script.press_mode(self, presser, receiving=True) == "hold"
+                    ):  # the storyline's defender backs off instead of closing
+                        dfn = presser
                         og = self.own_goal(self.team[dfn]) - self.pos[q]
                         og /= np.linalg.norm(og) + 1e-9
                         tgt[dfn] = self.pos[q] + og * 8.0
@@ -636,7 +641,6 @@ class Sim:
                         og /= np.linalg.norm(og) + 1e-9
                         tgt[dfn] = self.pos[q] + og * (5.0 if self.wary(dfn) else 1.6)
                         urgent[dfn] = True
-                near, dn = self.nearest(self.ball[:2])
                 if np.linalg.norm(self.ball[:2] - self.pos[q]) < 0.9 and self.ball[2] < 1.4:
                     if self.interceptor is not None:
                         self.log("interception", q)
@@ -739,7 +743,7 @@ class Sim:
         D = P[:, None, :] - P[None, :, :]
         dist = np.linalg.norm(D, axis=2)
         ii, jj = np.nonzero(np.triu(dist < BODY, 1))
-        for a, b in zip(ii, jj):
+        for a, b in zip(ii, jj, strict=True):
             i, j = on[a], on[b]
             d = self.pos[i] - self.pos[j]
             L = float(np.linalg.norm(d))
@@ -756,7 +760,7 @@ class Sim:
         """The shot has reached the goal, the keeper or a defender. Nothing is moved by hand: the ball keeps its own
         motion."""
         p, out = self.shooter, self.shot_outcome
-        t = self.team[p]
+        t = int(self.team[p])
         gk = 11 * (1 - t)
         if out == "goal":
             self.score[t] += 1

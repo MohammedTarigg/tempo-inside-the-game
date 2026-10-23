@@ -1,0 +1,6 @@
+# The public repository is cut from this one with `git archive`, which leaves these out: the working notes stay private.
+CLAUDE.md export-ignore
+00-strategy.md export-ignore
+reports export-ignore
+research export-ignore
+.gitattributes export-ignore

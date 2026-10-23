@@ -90,8 +90,8 @@ class Attack:
             sim.heading = np.array([self.d, 0.25 * self.d])
             sim.dribble_speed = 5.0
             if sim.pos[OKOYE, 0] * self.d > 34:
-                sim.shoot(OKOYE, forced="saved", power=28.9)
-                self.phase = "done"  # struck hard, 104 km/h: the rare number the match view shows
+                sim.shoot(OKOYE, forced="saved", power=30.0)
+                self.phase = "done"  # struck hard, 108 km/h: rare, and the fastest he has hit all season (104.3)
             else:
                 sim.timer = 0.2
             return True

@@ -1,0 +1,102 @@
+{
+ "seeds": [
+  31,
+  32
+ ],
+ "rows": [
+  {
+   "measure": "in-play metres a minute, outfield",
+   "real": 151.1,
+   "generated": 165.1,
+   "within_25_percent": true
+  },
+  {
+   "measure": "share of in-play time above 5.5 m/s",
+   "real": 0.0436,
+   "generated": 0.0517,
+   "within_25_percent": true
+  },
+  {
+   "measure": "share of in-play time above 7 m/s",
+   "real": 0.0084,
+   "generated": 0.0046,
+   "within_25_percent": false
+  },
+  {
+   "measure": "ball to nearest defender, metres: p25, median, p75",
+   "real": [
+    2.8,
+    5.1,
+    8.7
+   ],
+   "generated": [
+    2.7,
+    4.9,
+    7.5
+   ],
+   "within_25_percent": true
+  },
+  {
+   "measure": "ball in play, minutes a match",
+   "real": 52.7,
+   "generated": 55.9,
+   "within_25_percent": true
+  },
+  {
+   "measure": "defender-moments near a live ball, a match",
+   "real": 120337,
+   "generated": 105437,
+   "within_25_percent": true
+  },
+  {
+   "measure": "logged defending challenges a match",
+   "real": 157.0,
+   "generated": 179.5,
+   "within_25_percent": true
+  },
+  {
+   "measure": "share of those moments followed by a challenge",
+   "real": 0.0145,
+   "generated": 0.0204,
+   "within_25_percent": false
+  },
+  {
+   "measure": "stake score: mean",
+   "real": 0.0153,
+   "generated": 0.0171,
+   "within_25_percent": true
+  },
+  {
+   "measure": "stake score: share above the faint threshold",
+   "real": 0.0814,
+   "generated": 0.0864,
+   "within_25_percent": true
+  },
+  {
+   "measure": "stake score: share above the full threshold",
+   "real": 0.01,
+   "generated": 0.0166,
+   "within_25_percent": false
+  },
+  {
+   "measure": "stake model ROC AUC on these matches",
+   "real": 0.913,
+   "generated": 0.805,
+   "within_25_percent": true
+  },
+  {
+   "measure": "faint cards per 100 player-minutes in play, if everyone carried a card",
+   "real": 108.3,
+   "generated": 153.0,
+   "within_25_percent": false
+  },
+  {
+   "measure": "full cards per 100 player-minutes in play, if everyone carried a card",
+   "real": 22.3,
+   "generated": 34.0,
+   "within_25_percent": false
+  }
+ ],
+ "within": 9,
+ "total": 14
+}

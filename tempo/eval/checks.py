@@ -1,10 +1,9 @@
 """The checks behind the claims. Each one tests a property the design promises, on the demo match, and the result is
-written to artifacts/checks.json.
+written to results/checks.json.
 
-Usage: python3 -m tempo.eval.checks"""
+Usage: uv run tempo check"""
 
 import copy
-import json
 import os
 import re
 import shutil
@@ -17,8 +16,9 @@ from .. import season as seasonmod
 from ..agents import FactTools, ScopeError, verify
 from ..contracts import TYPE, event, stable_id
 from ..generator.export import from_feed_frame, to_feed_frame
-from ..paths import ARTIFACTS
-from ..run_match import Pipeline, generate
+from ..jsonio import write_json
+from ..paths import RESULTS
+from ..pipeline.run import Pipeline, generate
 from ..stake.model import StakeModel
 
 INTERVAL = ("halftime_card", "fulltime_card")
@@ -26,7 +26,7 @@ INTERVAL = ("halftime_card", "fulltime_card")
 
 def fresh(md, season, model, tag):
     d = tempfile.mkdtemp(prefix=f"tempo_{tag}_")
-    s2, search = seasonmod.load()
+    _, search = seasonmod.load()
     return Pipeline(md, d, model=model, season=season, search=search), d
 
 
@@ -78,7 +78,7 @@ def check_recovery(record, md, season, model, ids_full):
         first, d = fresh(md, season, model, "crash")
         first.run(stop_at=stop)
         first.ledger.db.close()
-        s2, search = seasonmod.load()
+        _, search = seasonmod.load()
         second = Pipeline(md, d, model=model, season=season, search=search)
         start = second.resume()
         second.run(start=start)
@@ -89,6 +89,8 @@ def check_recovery(record, md, season, model, ids_full):
             f"resumed from frame {start:,} of {len(md['clock']):,};"
             f" {len(ids)} cues against {len(ids_full)} uninterrupted;"
             f" same IDs in the same order: {ids == ids_full}",
+            identical=sum(x == y for x, y in zip(ids, ids_full, strict=False)) if len(ids) == len(ids_full) else 0,
+            cues=len(ids_full),
         )
         shutil.rmtree(d, ignore_errors=True)
 
@@ -184,7 +186,13 @@ def check_verifier(record, md, full, cues_full, rng):
     record(
         "verifier accepts what the pipeline wrote", clean_ok == len(sents), f"{clean_ok} of {len(sents)} sentences pass"
     )
-    record("verifier rejects planted errors", caught == total and total >= 100, f"{caught} of {total} caught ({kinds})")
+    record(
+        "verifier rejects planted errors",
+        caught == total and total >= 100,
+        f"{caught} of {total} caught ({kinds})",
+        caught=caught,
+        planted=total,
+    )
 
 
 def check_agent_scoping(record, md, L):
@@ -317,8 +325,9 @@ def check_load_and_counts(record, full, cues_full, summary):
 def main():
     results = []
 
-    def record(name, ok, detail):
-        results.append(dict(check=name, passed=bool(ok), detail=detail))
+    def record(name, ok, detail, **counts):
+        # counts: the figures a reader of results/checks.json would otherwise have to parse out of the sentence
+        results.append(dict(check=name, passed=bool(ok), detail=detail, counts=counts))
         print(f"{'PASS' if ok else 'FAIL'}  {name}: {detail}", flush=True)
 
     model = StakeModel()
@@ -345,13 +354,12 @@ def main():
     shutil.rmtree(d_full, ignore_errors=True)
     out = dict(
         ran_at=time.strftime("%Y-%m-%d %H:%M"),
-        stake_model_provisional=bool(model.meta.get("provisional")),
         passed=sum(r["passed"] for r in results),
         total=len(results),
         results=results,
         demo_summary=summary,
     )
-    json.dump(out, open(os.path.join(ARTIFACTS, "checks.json"), "w"), indent=1, default=float)
+    write_json(os.path.join(RESULTS, "checks.json"), out, indent=1, default=float)
     print(f"\n{out['passed']} of {out['total']} checks passed")
     return out
 

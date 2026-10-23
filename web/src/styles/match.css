@@ -1,0 +1,1612 @@
+/* The match view: the picture edge to edge with its scoreboard and pinned graphics, the match's strip under it across the
+   whole width, and one row under that for the mark, the controls, the phone's words and the viewer's choices. No boxes:
+   the picture, the strip and the row are told apart by what is in them. */
+@import './theme.css';
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+#app {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) var(--row);
+  height: 100%;
+  --row: 132px;
+  --side: 28px;
+}
+#screen {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 112px;
+  min-height: 0;
+  transition: grid-template-rows 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+#screen.ft {
+  grid-template-rows: minmax(0, 1fr) 236px;
+}
+#stagewrap {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+#stage {
+  position: absolute;
+  inset: 0;
+}
+canvas {
+  display: block;
+}
+.plate {
+  background: rgba(0, 0, 0, 0.88);
+  border-radius: 8px;
+}
+
+/* the scorebug: a black bar with Tempo's eye between the two scores, and the minute as its white end. The eye looks
+   straight out; when the match has something to say it turns to the side it is about, and the words are written on under
+   that half (view.ts). A goal: the eye blinks and the new score shows in the scorer's colour for a moment */
+#board {
+  position: absolute;
+  left: var(--side);
+  top: 18px;
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  font: 700 22px var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+#board .front {
+  position: relative;
+  display: flex;
+}
+/* the black pill, over the white one and over the tray */
+#board .pill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: #000;
+}
+#board .side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#board .beye {
+  width: 40px;
+  height: 40px;
+  margin: 0 16px;
+}
+#bspot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.45s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+#board img {
+  display: block;
+}
+#board [hidden] {
+  display: none;
+}
+#board .code {
+  font-size: 15px;
+  color: #cfcfcf;
+}
+#board .goals {
+  margin: 0 4px;
+}
+#board .goals {
+  min-width: 13px;
+  text-align: center;
+  transition: color 0.6s;
+}
+#board.scored[data-side='0'] #hg,
+#board.scored[data-side='1'] #ag {
+  color: var(--home);
+}
+#board.scored[data-side='1'] #ag {
+  color: var(--away);
+}
+#board .clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 0 18px;
+  margin-left: -44px; /* the white pill runs on under the black one, its left end hidden: only its right end shows */
+  padding: 0 16px 0 56px;
+  border-radius: 22px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 18px;
+}
+/* what happens, as a tray that slides out from under the bar: a little narrower, a shade lighter, a hairline edge, its
+   top hidden behind the bar. The words sit under the half they are about */
+#bsay {
+  position: absolute;
+  z-index: -1;
+  top: calc(100% - 20px);
+  left: 12px;
+  right: 12px;
+  margin: 0;
+  box-sizing: border-box;
+  height: 56px;
+  padding: 20px 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font: 600 14px var(--font);
+  letter-spacing: -0.01em;
+  color: #e6e6e6;
+  background: #0b0b0b;
+  border-radius: 0 0 18px 18px;
+  /* tucked up behind the bar, only the part below the bar ever showing */
+  transform: translateY(-36px);
+  clip-path: inset(36px 0 0 0);
+  transition:
+    transform 0.3s cubic-bezier(0.5, 0, 0.75, 0.2),
+    clip-path 0.3s cubic-bezier(0.5, 0, 0.75, 0.2);
+}
+#bsay.on {
+  transform: none;
+  clip-path: inset(0 0 0 0);
+  transition:
+    transform 0.45s cubic-bezier(0.2, 0.75, 0.2, 1),
+    clip-path 0.45s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+#bsay span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis; /* the tray is the pill's width whatever is said in it: a long name ends in an ellipsis */
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+#bsay.on span {
+  opacity: 1;
+  transition: opacity 0.3s 0.25s;
+}
+#board[data-side='1'] #bsay {
+  justify-content: flex-end;
+}
+#bsay i {
+  flex: none;
+  display: none;
+  width: 10px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--card);
+}
+#bsay.card i {
+  display: block;
+}
+#replaytag {
+  position: absolute;
+  left: 20px;
+  top: 70px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+}
+#replaytag b {
+  background: #fff;
+  color: #000;
+  font: 600 18px var(--font);
+  letter-spacing: -0.02em;
+  padding: 6px 14px;
+  border-radius: 8px;
+}
+#replaytag a {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.88);
+  outline: 1.5px solid #fff;
+  outline-offset: -1.5px;
+  font: 600 16px var(--font);
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+/* the producer's funnel, on the desk only (a viewer has no use for it): the two counts over one line, where the whole line
+   is every event the feed sent and the white sliver is what reached the screen */
+#counter {
+  display: none;
+}
+body.desk #counter {
+  position: absolute;
+  right: var(--side);
+  top: 18px;
+  display: block;
+  width: 230px;
+  padding: 9px 13px 11px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.9);
+  font: 500 13px var(--font);
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+}
+#counter p {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+#counter b {
+  margin-right: 5px;
+  font: 700 16px var(--font);
+  color: var(--paper);
+}
+#counter i {
+  display: block;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: #333;
+  overflow: hidden;
+}
+#counter i b {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  margin: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  transition: width 0.4s;
+}
+
+/* things pinned to the pitch */
+.pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  will-change: transform;
+}
+.name {
+  font: 600 15px var(--font);
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(6, 26, 20, 0.9);
+}
+.chip {
+  font: 600 15px var(--font);
+  letter-spacing: -0.02em;
+  padding: 5px 12px 6px;
+}
+#duel small {
+  display: block;
+  font: 500 14px var(--font);
+  letter-spacing: -0.02em;
+  color: var(--mist);
+  margin-top: 3px;
+}
+#duel {
+  padding: 8px 16px 9px;
+  text-align: center;
+}
+#duel b {
+  font: 700 24px/1 var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* How rare was that: a short line under the player. Two marks on it, the season's usual and where rare begins, and a dot
+   in his team's colour that runs out to what he just did. It lies flat; the stake's bar stands up and is yellow. */
+#tag {
+  width: 132px;
+  height: 40px;
+}
+#tag .line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.8);
+  outline: 1.5px solid rgba(255, 255, 255, 0.8);
+}
+#tag u {
+  position: absolute;
+  top: 2px;
+  width: 2.5px;
+  height: 16px;
+  margin-left: -1.25px;
+  border-radius: 1.5px;
+  background: #fff;
+}
+#tag .usual {
+  left: var(--usual);
+  opacity: 0.75;
+}
+#tag .rare {
+  left: var(--rare);
+}
+#tag .dot {
+  position: absolute;
+  top: 3px;
+  left: var(--at);
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: var(--team);
+  outline: 2px solid #000;
+  transition: transform 0.25s;
+}
+#tag.past .dot {
+  transform: scale(1.25);
+}
+#tag b {
+  position: absolute;
+  left: var(--at);
+  top: 22px;
+  transform: translateX(-50%);
+  font: 600 14px var(--font);
+  white-space: nowrap;
+  text-shadow: 0 1px 6px #000;
+  opacity: var(--on, 1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* lower left: the label, the form card, the kick-off heading */
+#lower {
+  position: absolute;
+  left: var(--side);
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+  pointer-events: none;
+}
+#lower > div {
+  display: none;
+}
+#label {
+  font: 600 clamp(21px, 2.6vw, 32px) / 1.05 var(--font);
+  letter-spacing: -0.03em;
+  padding: 12px 22px 13px 24px;
+}
+#kmhead {
+  font: 600 18px var(--font);
+  letter-spacing: -0.02em;
+  padding: 7px 14px 8px;
+}
+#form {
+  padding: 14px 22px 14px 24px;
+  min-width: 340px;
+}
+#form h3 {
+  font: 700 27px/1 var(--font);
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+#form p {
+  color: var(--paper);
+  margin: 0;
+  font: 500 17px var(--font);
+  letter-spacing: -0.02em;
+}
+#form .scale {
+  position: relative;
+  height: 22px;
+  margin: 14px 0 6px;
+}
+#form .scale::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+#form .mid {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 3px;
+  height: 17px;
+  background: var(--paper);
+  border-radius: 2px;
+}
+#form .dot {
+  position: absolute;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: var(--paper);
+  transition: left 0.8s;
+}
+#form small {
+  display: block;
+  font-size: 14px;
+  color: var(--mist);
+}
+#form q {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--mist);
+  quotes: none;
+}
+
+/* The cards that sit on the picture share one shape: soft, with one sharp corner pointing at what the card is about, and
+   a small dot at the start, which takes a colour only when the card belongs to a team or a booking. No logo on them. */
+#label,
+#form {
+  --spot: #fff;
+  border-radius: 22px 22px 22px 5px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 13px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.9);
+}
+#label::before,
+#form::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--spot);
+  opacity: 0.75;
+}
+#label.booking::before {
+  width: 9px;
+  height: 13px;
+  border-radius: 2px;
+  opacity: 1;
+}
+
+#form::before {
+  align-self: start;
+  margin-top: 6px;
+}
+#form > * {
+  grid-column: 2;
+}
+#form::before {
+  grid-row: 1;
+}
+#form h3 {
+  grid-row: 1;
+}
+#label.booking {
+  --spot: var(--card);
+}
+
+/* half time and full time */
+#interval {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.93);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 7%;
+}
+#interval h2 {
+  font: 700 clamp(32px, 4vw, 54px) / 1 var(--font);
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+#interval > p {
+  margin: 0 0 26px;
+  font: 500 19px var(--font);
+  letter-spacing: -0.02em;
+  color: var(--mist);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#cards {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+#cards article {
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 22px 24px 24px;
+  width: min(340px, 100%);
+}
+#cards svg {
+  display: block;
+  margin-bottom: 16px;
+}
+#cards h3 {
+  font: 700 26px/1 var(--font);
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+#cards p {
+  margin: 0;
+  font: 500 17px/1.25 var(--font);
+  letter-spacing: -0.02em;
+  color: var(--mist);
+}
+
+/* the strip under the picture, edge to edge: momentum, bookings, goals, the danger window, and where we are */
+#strip {
+  position: relative;
+  padding: 8px var(--side) 0;
+  display: grid;
+  grid-template-rows: 18px minmax(0, 1fr);
+  border-top: 1px solid #1c1c1c;
+}
+button {
+  font: 600 15px var(--font);
+  color: var(--mist);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+button:hover,
+button[aria-pressed='true'] {
+  color: var(--paper);
+}
+button:focus-visible,
+#track:focus-visible,
+#brand:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+#moment {
+  font: 500 13px var(--font);
+  letter-spacing: -0.02em;
+  color: var(--mist);
+  height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#track {
+  position: relative;
+  height: 86px;
+  cursor: pointer;
+  touch-action: none;
+}
+#track canvas {
+  position: absolute;
+  left: 0;
+  top: 25px;
+  width: 100%;
+  height: 46px;
+}
+#track .min {
+  position: absolute;
+  bottom: -2px;
+  transform: translateX(-50%);
+  font: 500 11px var(--font);
+  letter-spacing: -0.02em;
+  color: var(--mist);
+}
+#track .book {
+  position: absolute;
+  top: 6px;
+  width: 9px;
+  height: 13px;
+  margin-left: -4px;
+  border-radius: 2px;
+  background: var(--card);
+}
+#track .goal {
+  position: absolute;
+  top: 2.5px;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  line-height: 0;
+}
+/* full time: the strip stands up as the turning points chart, with the same curve, bookings and goals */
+#track,
+#track canvas,
+#track .book,
+#track .goal {
+  transition: all 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+#screen.ft #track {
+  height: 202px;
+}
+#screen.ft #track canvas {
+  top: 58px;
+  height: 84px;
+}
+#screen.ft #track .book {
+  top: 34px;
+}
+#screen.ft #track .goal {
+  top: 30.5px;
+}
+#screen.ft #track .pinned {
+  opacity: 0;
+}
+#track .tp {
+  position: absolute;
+  height: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transform: translateX(-12px);
+  color: var(--paper);
+  font: 500 15px var(--font);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#screen.ft #track .tp {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0.35s;
+}
+/* the player's disc, as his marker is on the pitch */
+#track .tp .disc {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #000;
+  box-shadow: 0 0 0 1.5px var(--paper);
+  color: var(--ink);
+  font: 600 12px var(--font);
+  font-variant-numeric: tabular-nums;
+}
+#track .tp .disc.home {
+  background: var(--home);
+}
+#track .tp .disc.away {
+  background: var(--away);
+}
+#track .tp .crest {
+  flex: none;
+  margin: 0 1px;
+}
+#track .tp .card {
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--card);
+}
+#track .tp .ball {
+  line-height: 0;
+}
+#track .tp .ball svg {
+  width: 18px;
+  height: 18px;
+}
+#track .home .ring {
+  stroke: var(--home);
+}
+#track .away .ring {
+  stroke: var(--away);
+}
+#track .tp .mn {
+  color: var(--mist);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+#track .tp.flip {
+  flex-direction: row-reverse;
+  transform: translateX(calc(-100% + 12px));
+}
+/* the stalk from the disc to the bars' middle line, and the dot on it */
+#track .tp::before,
+#track .tp::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+}
+#track .tp.flip::before,
+#track .tp.flip::after {
+  left: auto;
+  right: 12px;
+}
+#track .tp::before {
+  width: 2px;
+  margin-left: -1px;
+  background: var(--paper);
+}
+#track .tp.flip::before {
+  margin: 0 -1px 0 0;
+}
+#track .tp::after {
+  width: 8px;
+  height: 8px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid #0a0a0a;
+  transition: transform 0.25s;
+}
+#track .tp.flip::after {
+  margin: 0 -6px 0 0;
+}
+#track .tp.up {
+  top: 2px;
+}
+#track .tp.up::before {
+  top: 100%;
+  height: 70px;
+}
+#track .tp.up::after {
+  top: 90px;
+}
+#track .tp.down {
+  top: 150px;
+}
+#track .tp.down::before {
+  bottom: 100%;
+  height: 50px;
+}
+#track .tp.down::after {
+  top: -58px;
+}
+#track .tp:focus-visible {
+  outline: 2px solid var(--paper);
+}
+#screen.ft #track.replaying .tp:not(.on) {
+  opacity: 0.35;
+}
+#screen.ft #dwin {
+  display: none;
+}
+#track .tp.on::after {
+  transform: scale(1.5);
+}
+#dwin {
+  position: absolute;
+  top: 0;
+  height: 9px;
+  border: 2px dashed var(--mist);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  opacity: 0;
+  transition:
+    opacity 0.4s,
+    border-color 0.3s;
+} /* hidden unless it is being explained or the match is inside it */
+#dwin.on,
+#dwin.now {
+  opacity: 1;
+}
+#dwin.on {
+  border-color: var(--paper);
+}
+#head {
+  position: absolute;
+  top: 4px;
+  bottom: 14px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--paper);
+}
+
+/* the row under the strip: the mark, the controls, the phone's words for this moment, and the viewer's choices */
+#phone {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+  padding: 0 var(--side);
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid #1c1c1c;
+}
+#brand {
+  display: block;
+  line-height: 0;
+}
+#eye {
+  transition: cx 0.35s;
+}
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+#controls button {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 40px;
+}
+#play {
+  color: var(--paper);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+}
+#speed {
+  font-variant-numeric: tabular-nums;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* the phone's words: whichever of these the moment has, side by side */
+#story {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+#story > * {
+  flex: none;
+}
+#pstake,
+#pfollow,
+#pline {
+  display: none;
+}
+#pstake {
+  width: 300px;
+}
+#pstake h3,
+#pfollow h3 {
+  font: 700 21px/1 var(--font);
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+#pstake h3 i {
+  width: 12px;
+  height: 17px;
+  border-radius: 2.5px;
+  border: 2.5px solid var(--card);
+}
+#pstake h3 i.full {
+  background: var(--card);
+}
+#pstake p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #cfcfcf;
+}
+#meter {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  margin-top: 10px;
+  overflow: hidden;
+}
+#meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--card);
+  transition: width 0.25s;
+}
+#pline {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#pbig {
+  margin: 0;
+  font: 600 19px/1.3 var(--font);
+  letter-spacing: -0.015em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#pbig[dir='rtl'] {
+  font-family: var(--font-ar);
+  font-weight: 500;
+}
+#proof {
+  display: flex;
+  gap: 28px;
+  margin-top: 10px;
+}
+#proof:empty {
+  display: none;
+}
+#proof div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+#proof[dir='rtl'] div {
+  font-family: var(--font-ar);
+}
+#proof svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--mist);
+}
+#proof b {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mist);
+}
+#proof small {
+  display: none;
+}
+#proof em {
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+#pfollow h3 b {
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+}
+#wbook {
+  display: none;
+  width: 11px;
+  height: 16px;
+  border-radius: 2.5px;
+  background: var(--card);
+}
+#wclub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mist);
+}
+#pfollow dl {
+  display: flex;
+  gap: 22px;
+  margin: 10px 0 0;
+}
+#pfollow dt {
+  font-size: 12px;
+  color: var(--mist);
+}
+#pfollow dd {
+  margin: 2px 0 0;
+  white-space: nowrap;
+  font: 700 16px/1 var(--font);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the viewer's choices, as words: the chosen one in white */
+#prefs {
+  display: grid;
+  grid-template-rows: auto auto 0fr;
+  justify-items: end;
+  transition: grid-template-rows 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* choosing a club opens the row of its shirt numbers under the clubs, easing the rows above up to make room */
+#prefs.open {
+  grid-template-rows: auto auto 1fr;
+}
+#modes,
+#follow,
+#squad {
+  display: flex;
+  gap: 16px;
+}
+#follow {
+  margin-top: 8px;
+}
+#squad {
+  gap: 11px;
+  min-height: 0;
+  overflow: hidden;
+}
+#squad button {
+  margin-top: 8px;
+  animation: rise 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--k) * 22ms + 80ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+#prefs button {
+  font: 600 14px var(--font);
+  letter-spacing: -0.01em;
+}
+#squad button {
+  font-size: 13px;
+  min-width: 14px;
+  font-variant-numeric: tabular-nums;
+}
+#modes button[data-m='ar'] {
+  font-family: var(--font-ar);
+  font-weight: 500;
+}
+
+/* the producer's desk, at /desk/: a line that starts at now, right beside the play button, and runs back through the
+   match. Each item considered is a stop on it: its minute, a pill for its kind and one for what became of it (solid when it
+   aired, an outline when it was held), and the reason under them. Older stops fade as they run off to the right. */
+#desk {
+  display: none;
+}
+body.desk #prefs,
+body.desk #story > :not(#desk) {
+  display: none !important;
+}
+body.desk #phone {
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 32px;
+}
+body.desk #desk {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 100%;
+}
+#dline {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent);
+  mask-image: linear-gradient(90deg, #000 70%, transparent);
+}
+/* the line itself, through every stop, on the same middle as the play button: it starts where the controls end */
+#dline {
+  --now: 58px; /* the now mark's width; its dot's middle is at 19px */
+  --gap: 26px; /* between stops */
+}
+#dline::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--now) + 6px); /* from the first stop on; now to the first stop is that stop's own segment */
+  right: 0;
+  top: calc(50% - 1px);
+  height: 2px;
+  background: linear-gradient(90deg, #fff, #fff 60px, #3a3a3a 55%, #222);
+}
+/* now: a live dot at the start of the line, the match minute over it */
+#dnow {
+  position: relative;
+  flex: none;
+  width: 58px;
+  height: 100%;
+  font: 600 13px/1 var(--font);
+  font-style: normal;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+#dnow::after {
+  content: attr(data-m);
+  position: absolute;
+  left: 12px;
+  bottom: calc(50% + 18px); /* level with the minutes over the other stops */
+}
+#dnow::before {
+  content: '';
+  position: absolute;
+  left: 12px; /* in from the edge, so its pulse is not cut off */
+  top: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--paper);
+  animation: live 1.8s ease-out infinite;
+}
+@keyframes live {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+}
+#drows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--gap);
+  min-width: 0;
+}
+/* the newest stop's own segment, from the now dot to it */
+#drows li:first-child::before {
+  content: '';
+  position: absolute;
+  top: calc(50% - 1px);
+  right: calc(100% - 6px);
+  width: calc(var(--now) - 19px + 6px);
+  height: 2px;
+  background: var(--paper);
+  transform-origin: 0 50%;
+}
+#drows li {
+  position: relative;
+  flex: none;
+  width: 196px;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 22px minmax(0, 1fr);
+  opacity: max(0.16, calc(1 - var(--age, 0) * 0.14));
+}
+#drows .top {
+  align-self: end;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#drows .mn {
+  font-size: 12px;
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+  margin-right: 2px;
+}
+#drows .pill {
+  position: relative;
+  isolation: isolate;
+  font: 600 11px/1 var(--font);
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+#drows .pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+}
+#drows .kind {
+  color: #cfcfcf;
+}
+#drows .kind::before {
+  background: #1f1f1f;
+}
+#drows .st {
+  color: var(--ink);
+}
+#drows .st::before {
+  background: var(--paper);
+}
+#drows li:is(.held, .rejected, .withdrawn) .st {
+  color: var(--paper);
+}
+#drows li:is(.held, .rejected, .withdrawn) .st::before {
+  background: none;
+  box-shadow: inset 0 0 0 1.3px var(--paper);
+}
+/* the stop on the line: filled when it aired, hollow when it was held */
+#drows .node {
+  grid-row: 2;
+  align-self: center;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 3px #000;
+}
+#drows li:is(.held, .rejected, .withdrawn) .node {
+  background: #000;
+  box-shadow:
+    inset 0 0 0 2px var(--paper),
+    0 0 0 3px #000;
+}
+#drows small {
+  align-self: start;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: #bdbdbd;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#drows li:is(.held, .rejected, .withdrawn) small {
+  color: var(--paper);
+}
+/* the counts are the funnel's, over the picture */
+#desk > p {
+  display: none !important;
+  margin: 0;
+  flex: none;
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#desk > p b {
+  color: var(--paper);
+  font: 700 20px var(--font);
+  margin-right: 4px;
+}
+/* an item that has just been considered: its stop appears at the now end, each pill draws itself on from its left, then
+   its words appear */
+/* the stops already there slide right (desk.ts), the line grows out from now to make the new stop, its node pops in at
+   the tip, then its pills draw themselves on and its words appear */
+#drows li.new::before {
+  animation: grow 0.38s 0.18s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+#drows li.new .node {
+  animation: pop 0.35s 0.5s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+}
+#drows li.new .pill::before {
+  animation: pill-draw 0.4s 0.62s cubic-bezier(0.65, 0, 0.2, 1) both;
+}
+#drows li.new .pill:last-child::before {
+  animation-delay: 0.74s;
+}
+#drows li.new :is(.mn, .pill, small) {
+  animation: show 0.3s 0.85s both;
+}
+#drows li.new .pill:last-child {
+  animation-delay: 0.97s;
+}
+@keyframes grow {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes pop {
+  from {
+    scale: 0;
+  }
+}
+@keyframes pill-draw {
+  from {
+    clip-path: inset(0 100% 0 0 round 999px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 999px);
+  }
+}
+@keyframes show {
+  from {
+    color: transparent;
+  }
+}
+body.tour #follow,
+body.tour #squad {
+  display: none;
+}
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: #000;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.55s;
+}
+/* a narrow screen: the picture at its own shape, and the row folds under it; the page scrolls */
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow: auto;
+    height: auto;
+  }
+  #app {
+    height: auto;
+    grid-template-rows: auto auto;
+    --side: 16px;
+  }
+  #screen {
+    grid-template-rows: auto 112px;
+  }
+  #stagewrap {
+    aspect-ratio: 16 / 11;
+  }
+  #counter {
+    display: none;
+  }
+  #phone {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px 24px;
+    padding: 16px var(--side) 28px;
+  }
+  #story {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+  #prefs {
+    grid-column: 1 / -1;
+    justify-items: start;
+    order: 3;
+  }
+  #pstake {
+    width: auto;
+  }
+  #pbig {
+    -webkit-line-clamp: unset;
+  }
+  #proof {
+    flex-wrap: wrap;
+    gap: 10px 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* ---- how each overlay comes and goes, by its shape ----
+   Pinned graphics move with --on (0 to 1, set from the match clock each frame, so scrubbing plays them too). The rest
+   play an entrance when they come on (data-state="in") and an exit before they go ("out"); --out tells presence.ts that
+   an element has one. Everything eases out on the way in and in on the way out. */
+:root {
+  --ease-in: cubic-bezier(0.2, 0.75, 0.2, 1);
+  --ease-out: cubic-bezier(0.5, 0, 0.75, 0.2);
+}
+
+/* the duel score rises out of the point between the two players, as if lifted from it */
+#duel {
+  transform-origin: 50% 100%;
+  clip-path: inset(calc((1 - var(--on, 1)) * 100%) 0 0 0 round 8px);
+  scale: calc(0.9 + 0.1 * var(--on, 1));
+}
+/* how rare: the line draws out from its left end, then the dot runs along it */
+#tag .line {
+  transform-origin: 0 50%;
+  scale: var(--on, 1) 1;
+}
+#tag u {
+  scale: 1 var(--on, 1);
+}
+/* the words for a kick-off call wipe on from the left, as text is written */
+#kmtext {
+  clip-path: inset(0 calc((1 - var(--on, 1)) * 100%) 0 0 round 6px);
+}
+/* a name slides out from the player it belongs to */
+.name {
+  clip-path: inset(0 calc((1 - var(--on, 1)) * 100%) 0 0);
+  translate: calc((1 - var(--on, 1)) * -8px) 0;
+}
+
+/* the label and the form card grow out of their sharp corner, the one pointing at the play, and fold back into it */
+#label,
+#form {
+  --out: 1;
+  transform-origin: 0 100%;
+}
+#label[data-state='in'],
+#form[data-state='in'] {
+  animation: from-corner 0.45s var(--ease-in) both;
+}
+#label[data-state='out'],
+#form[data-state='out'] {
+  animation: from-corner 0.3s var(--ease-out) reverse both;
+}
+@keyframes from-corner {
+  from {
+    clip-path: inset(100% 100% 0 0 round 22px 22px 22px 5px);
+    scale: 0.92;
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 22px 22px 22px 5px);
+    scale: 1;
+  }
+}
+#form[data-state='in'] .dot {
+  animation: to-value 0.8s 0.25s var(--ease-in) both;
+}
+@keyframes to-value {
+  from {
+    left: 50%;
+  }
+}
+/* the heading over the kick-off calls is written on from the left and wiped off the same way */
+#kmhead {
+  --out: 1;
+}
+#kmhead[data-state='in'] {
+  animation: wipe 0.4s var(--ease-in) both;
+}
+#kmhead[data-state='out'] {
+  animation: wipe 0.25s var(--ease-out) reverse both;
+}
+@keyframes wipe {
+  from {
+    clip-path: inset(0 100% 0 0 round 8px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 8px);
+  }
+}
+/* the replay tag: the white block snaps in like the scoreboard's clock, then the link slides out from behind it */
+#replaytag {
+  --out: 1;
+}
+#replaytag[data-state='in'] b {
+  animation: wipe 0.3s var(--ease-in) both;
+}
+#replaytag[data-state='in'] a {
+  animation: from-behind 0.4s 0.15s var(--ease-in) both;
+}
+#replaytag[data-state='out'] {
+  animation: fade-out 0.25s var(--ease-out) both;
+}
+@keyframes from-behind {
+  from {
+    opacity: 0;
+    translate: -24px 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* half time: the dark comes over the picture, the heading rises, and the panels follow one after another */
+#interval {
+  --out: 1;
+}
+#interval[data-state='in'] {
+  animation: fade-in 0.4s var(--ease-in) both;
+}
+#interval[data-state='in'] h2,
+#interval[data-state='in'] > p {
+  animation: rise-in 0.5s 0.1s var(--ease-in) both;
+}
+#interval[data-state='in'] #cards article {
+  animation: rise-in 0.5s var(--ease-in) both;
+}
+#interval[data-state='in'] #cards article:nth-child(2) {
+  animation-delay: 0.25s;
+}
+#interval[data-state='in'] #cards article:nth-child(1) {
+  animation-delay: 0.18s;
+}
+#interval[data-state='in'] #cards article:nth-child(3) {
+  animation-delay: 0.32s;
+}
+#interval[data-state='out'] {
+  animation: fade-out 0.35s var(--ease-out) both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* the row under the strip. The stake: the card turns face on, the words come up under it, and the bar fills */
+#pstake,
+#pfollow,
+#pline {
+  --out: 1;
+}
+#pstake[data-state='in'] h3 i {
+  animation: turn-on 0.45s var(--ease-in) both;
+}
+#pstake[data-state='in'] :is(h3 span, p) {
+  animation: rise-in 0.4s 0.08s var(--ease-in) both;
+}
+#pstake[data-state='in'] #meter i {
+  animation: fill 0.7s 0.2s var(--ease-in) both;
+}
+@keyframes turn-on {
+  from {
+    rotate: y 90deg;
+  }
+}
+@keyframes fill {
+  from {
+    width: 0;
+  }
+}
+/* the followed player: his number comes in first, then his name, then his three numbers one after another */
+#pfollow[data-state='in'] h3 {
+  animation: rise-in 0.4s var(--ease-in) both;
+}
+#pfollow[data-state='in'] #wclub {
+  animation: rise-in 0.4s 0.06s var(--ease-in) both;
+}
+#pfollow[data-state='in'] dl > div {
+  animation: rise-in 0.4s var(--ease-in) both;
+}
+#pfollow[data-state='in'] dl > div:nth-child(1) {
+  animation-delay: 0.12s;
+}
+#pfollow[data-state='in'] dl > div:nth-child(2) {
+  animation-delay: 0.18s;
+}
+#pfollow[data-state='in'] dl > div:nth-child(3) {
+  animation-delay: 0.24s;
+}
+/* the line comes up from under its own baseline, and the facts behind it follow from the left, one after another */
+#pline[data-state='in'] #pbig {
+  animation: from-below 0.5s var(--ease-in) both;
+}
+#pline[data-state='in'] #proof div {
+  animation: from-left 0.4s var(--ease-in) both;
+  animation-delay: calc(0.25s + var(--k, 0) * 0.08s);
+}
+@keyframes from-below {
+  from {
+    clip-path: inset(0 0 100% 0);
+    translate: 0 12px;
+  }
+  to {
+    clip-path: inset(0 0 -10% 0);
+  }
+}
+@keyframes from-left {
+  from {
+    opacity: 0;
+    translate: -10px 0;
+  }
+}
+/* every part of the row leaves by sinking back under the row's own line */
+:is(#pstake, #pfollow, #pline)[data-state='out'] {
+  animation: sink 0.28s var(--ease-out) both;
+}
+@keyframes sink {
+  to {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+/* the strip: a new moment's words rise in; the late minutes' bracket draws out from its middle to both ends */
+#moment.in {
+  animation: rise-in 0.35s var(--ease-in) both;
+}
+#dwin {
+  transform-origin: 50% 0;
+  scale: 0 1;
+  transition:
+    opacity 0.4s,
+    scale 0.55s var(--ease-in),
+    border-color 0.3s;
+}
+#dwin:is(.on, .now) {
+  scale: 1 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  #duel,
+  #kmtext,
+  .name {
+    clip-path: none;
+    scale: none;
+    translate: none;
+  }
+  #tag :is(.line, u) {
+    scale: none;
+  }
+  * {
+    animation: none !important;
+  }
+}
