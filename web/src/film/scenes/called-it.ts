@@ -390,7 +390,7 @@ export function calledIt(ctx: FilmCtx): Scene {
         if (!line2.length) line2.push(xy(R.from[0], R.from[1]));
         if (on2 && stage >= 3 && Math.abs(api.ballAt(api.getF())[0]) >= 52.2) api.setSpeed(0.15); // once it is in, the picture all but stops
         els.trail.setAttribute('points', pts(line2));
-        els.trail.style.opacity = String(on2 && v >= RUN[0] ? show : 0);
+        els.trail.style.opacity = '0'; // no line behind the runner: the space filling as he goes through says it
         if (on2) {
           done = v >= RUN[0] && v < 0.96 && (runner[0] - (x0 + x1) / 2) * R.dir > 8;
           els.space.classList.toggle('solid', done);

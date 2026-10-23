@@ -155,14 +155,15 @@ export function proof(ctx: FilmCtx): Scene {
         const w = u * n - i,
           first = i === 0,
           last = i === n - 1,
-          on = w > (first ? 0 : -0.06) && w < (last ? 0.96 : 1.06);
+          on = w >= 0 && w < (last ? 0.96 : 1);
         c.el.style.opacity = on ? '1' : '0';
         if (!on) return;
-        c.el.style.setProperty('--in', outCubic(seg(w, 0.02, 0.13)).toFixed(3));
-        c.el.style.setProperty('--in2', outCubic(seg(w, 0.08, 0.22)).toFixed(3));
-        c.el.style.setProperty('--out', (seg(w, last ? 0.82 : 0.9, last ? 0.95 : 0.99) ** 2).toFixed(3));
-        c.el.style.setProperty('--nin', outCubic(seg(w, first ? 0 : -0.06, 0.06)).toFixed(3));
-        c.el.style.setProperty('--nout', (last ? seg(w, 0.82, 0.95) : seg(w, 0.94, 1.06)).toFixed(3));
+        // one card at a time: each part leaves before the next card's arrive, the number last out and first in
+        c.el.style.setProperty('--in', outCubic(seg(w, 0.04, 0.14)).toFixed(3));
+        c.el.style.setProperty('--in2', outCubic(seg(w, 0.1, 0.24)).toFixed(3));
+        c.el.style.setProperty('--out', (seg(w, last ? 0.82 : 0.9, last ? 0.92 : 0.97) ** 2).toFixed(3));
+        c.el.style.setProperty('--nin', outCubic(seg(w, first ? 0 : 0.0, 0.07)).toFixed(3));
+        c.el.style.setProperty('--nout', (last ? seg(w, 0.86, 0.95) : seg(w, 0.93, 1)).toFixed(3));
         draw[i]?.(c, Math.min(1, Math.max(0, w)));
       });
       // as the last card leaves, the logo is already on its way from the corner to the middle for the close

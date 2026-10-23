@@ -16,7 +16,14 @@ const dir = mkdtempSync(join(tmpdir(), 'tempo-film-'));
 const browser = await chromium.launch({
   channel: process.env.CI ? undefined : 'chrome',
   headless: false,
-  args: ['--mute-audio', '--window-size=1300,820'],
+  args: [
+    '--mute-audio',
+    '--window-size=1300,820',
+    // keep painting at full rate even when the window is behind others
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+  ],
 });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const cdp = await page.context().newCDPSession(page);
