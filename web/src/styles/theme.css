@@ -14,8 +14,11 @@
   --paper: #fff;
   --mist: #9a9a9a;
   --card: #ffd21f;
+  /* each club's two colours: the first is its players' colour on the pitch, the second its trim */
   --home: #ff8a3d;
+  --home-2: #ffffff;
   --away: #7fd0f5;
+  --away-2: #1b2a6b;
   /* a club may play in black or in white, so every team colour comes with two partners. Its edge: the same colour, lifted
      only when it is too dark to see on black (a bright colour's edge is itself, a black kit's a grey). Its ink: black or
      white, whichever reads on it */
