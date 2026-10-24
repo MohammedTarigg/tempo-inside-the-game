@@ -20,10 +20,12 @@
   --away: #7fd0f5;
   --away-2: #1b2a6b;
   /* a club may play in black or in white, so every team colour comes with two partners. Its edge: the same colour, lifted
-     only when it is too dark to see on black (a bright colour's edge is itself, a black kit's a grey). Its ink: black or
+     only when it is too dark to see on black (a bright colour's edge is itself, a black kit's a grey: only a near-black colour is lifted). Its ink: black or
      white, whichever reads on it */
-  --home-edge: oklch(from var(--home) max(l, 0.62) c h);
-  --away-edge: oklch(from var(--away) max(l, 0.62) c h);
+  --home-edge: oklch(from var(--home) calc(l + (0.62 - l) * clamp(0, (0.25 - l) * 100, 1)) c h);
+  --away-edge: oklch(from var(--away) calc(l + (0.62 - l) * clamp(0, (0.25 - l) * 100, 1)) c h);
+  --home-2-edge: oklch(from var(--home-2) calc(l + (0.62 - l) * clamp(0, (0.25 - l) * 100, 1)) c h);
+  --away-2-edge: oklch(from var(--away-2) calc(l + (0.62 - l) * clamp(0, (0.25 - l) * 100, 1)) c h);
   --home-on: oklch(from var(--home) round(1.2 - l) 0 0);
   --away-on: oklch(from var(--away) round(1.2 - l) 0 0);
 }
@@ -31,7 +33,7 @@
 #tag,
 .tplayer,
 .tfollow {
-  --team-edge: oklch(from var(--team) max(l, 0.62) c h);
+  --team-edge: oklch(from var(--team) calc(l + (0.62 - l) * clamp(0, (0.25 - l) * 100, 1)) c h);
   --team-on: oklch(from var(--team) round(1.2 - l) 0 0);
 }
 * {

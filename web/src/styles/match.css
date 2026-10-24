@@ -71,40 +71,55 @@ canvas {
   border-radius: 22px;
   background: #000;
 }
-/* each end of the bar in its club's two colours: the first fills the end, the second is a band inside it. The end is set
-   in from the bar's edge so black always rings it (a white kit never runs into the white clock, a black one shows by its
-   edge), and the band sits inside the first colour, so it never touches the black either */
+/* each end of the bar in its club's two colours, half and half: the first colour on the outside, the second on the inside.
+   The end is set in from the bar's edge so black always rings it, and each half carries its own edge, so a white half never
+   runs into the white clock and a black half still shows against the bar */
 #board .cap {
   --c1: var(--home);
   --c2: var(--home-2);
-  --edge: var(--home-edge);
-  position: relative;
+  --e1: var(--home-edge);
+  --e2: var(--home-2-edge);
+  display: flex;
   flex: none;
   width: 24px;
   height: 34px;
-  border-radius: 17px 4px 4px 17px;
-  background: var(--c1);
-  box-shadow: inset 0 0 0 1.5px var(--edge);
 }
+#board .cap::before,
 #board .cap::after {
   content: '';
-  position: absolute;
-  top: 5px;
-  bottom: 5px;
-  right: 4px;
-  width: 6px;
-  border-radius: 2px;
+  flex: 1;
+}
+#board .cap::before {
+  border-radius: 17px 0 0 17px;
+  background: var(--c1);
+  box-shadow:
+    inset 1.5px 0 0 0 var(--e1),
+    inset 0 1.5px 0 0 var(--e1),
+    inset 0 -1.5px 0 0 var(--e1);
+}
+#board .cap::after {
+  border-radius: 0 4px 4px 0;
   background: var(--c2);
+  box-shadow:
+    inset -1.5px 0 0 0 var(--e2),
+    inset 0 1.5px 0 0 var(--e2),
+    inset 0 -1.5px 0 0 var(--e2);
 }
 #board .side + .beye + .side .cap {
-  --c1: var(--away);
-  --c2: var(--away-2);
-  --edge: var(--away-edge);
-  border-radius: 4px 17px 17px 4px;
+  --c1: var(--away-2);
+  --c2: var(--away);
+  --e1: var(--away-2-edge);
+  --e2: var(--away-edge);
+}
+#board .side + .beye + .side .cap::before {
+  border-radius: 4px 0 0 4px;
+  box-shadow:
+    inset 1.5px 0 0 0 var(--e1),
+    inset 0 1.5px 0 0 var(--e1),
+    inset 0 -1.5px 0 0 var(--e1);
 }
 #board .side + .beye + .side .cap::after {
-  right: auto;
-  left: 4px;
+  border-radius: 0 17px 17px 0;
 }
 #board .side {
   display: flex;
