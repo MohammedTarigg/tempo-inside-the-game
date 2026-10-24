@@ -17,7 +17,6 @@ import {
   watchSize,
   spread,
   facing,
-  crestUrl,
   FONT,
   drawPitch,
   mountStage,
@@ -103,19 +102,13 @@ export async function startMatch(mode: Mode, Q = new URLSearchParams(location.se
     downFrames,
     moments,
   } = match;
-  $('hs').textContent = M.home.short;
-  $('as').textContent = M.away.short;
+  // the scorebug names each club by its code, with the club's colour as that end of the bar
   for (const [id, club] of [
-    ['hc', M.home],
-    ['ac', M.away],
+    ['hs', M.home],
+    ['as', M.away],
   ] as const) {
-    const url = crestUrl(club.short),
-      img = $<HTMLImageElement>(id);
-    if (url) {
-      img.src = url;
-      img.alt = `${club.name} crest`;
-      img.hidden = false;
-    }
+    $(id).textContent = club.short;
+    $(id).title = club.name;
   }
   // ---- the players, the ball, and the shapes drawn on the pitch ----
   const figs = M.ids.map((_, i) => {

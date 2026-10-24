@@ -635,7 +635,7 @@ body.tour #label {
   place-items: center;
   border-radius: 50%;
   background: var(--team);
-  color: #000;
+  color: var(--team-on);
   font: 700 24px/1 var(--font);
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -711,6 +711,7 @@ body.tour #label {
   border-radius: 50%;
   background: var(--team);
   outline: 2px solid #000;
+  box-shadow: inset 0 0 0 1.5px var(--team-edge);
   transition: left 0.9s 1s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .tplayer.on .dot {
@@ -723,7 +724,7 @@ body.tour #label {
   height: 3px;
   width: 0;
   border-radius: 2px;
-  background: var(--team);
+  background: var(--team-edge);
   transition: width 0.9s 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .tplayer.on .fill {
@@ -1208,7 +1209,7 @@ body.theads .pin.name {
   border: 2px solid #000;
   box-shadow: 0 0 0 1.5px #fff;
   background: var(--team);
-  color: #000;
+  color: var(--team-on);
   font: 700 14px var(--font);
 }
 .tfollow b {

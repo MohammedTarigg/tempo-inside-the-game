@@ -16,6 +16,20 @@
   --card: #ffd21f;
   --home: #ff8a3d;
   --away: #7fd0f5;
+  /* a club may play in black or in white, so every team colour comes with two partners. Its edge: the same colour, lifted
+     only when it is too dark to see on black (a bright colour's edge is itself, a black kit's a grey). Its ink: black or
+     white, whichever reads on it */
+  --home-edge: oklch(from var(--home) max(l, 0.62) c h);
+  --away-edge: oklch(from var(--away) max(l, 0.62) c h);
+  --home-on: oklch(from var(--home) round(1.2 - l) 0 0);
+  --away-on: oklch(from var(--away) round(1.2 - l) 0 0);
+}
+/* the same pair for a mark that carries one player's team as --team */
+#tag,
+.tplayer,
+.tfollow {
+  --team-edge: oklch(from var(--team) max(l, 0.62) c h);
+  --team-on: oklch(from var(--team) round(1.2 - l) 0 0);
 }
 * {
   box-sizing: border-box;

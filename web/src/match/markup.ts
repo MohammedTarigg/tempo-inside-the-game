@@ -11,9 +11,9 @@ const PICTURE = `
     <div id="board">
       <span class="front">
         <span class="pill">
-          <span class="side"><img id="hc" hidden width="28" height="28" alt=""><b class="code" id="hs"></b><b class="goals" id="hg">0</b></span>
+          <span class="side"><i class="cap"></i><b class="code" id="hs"></b><b class="goals" id="hg">0</b></span>
           <svg class="beye" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" fill="#000" stroke="#fff" stroke-width="5"/><ellipse id="bspot" cx="20" cy="20" rx="6.8" ry="6.8" fill="#fff"/></svg>
-          <span class="side"><b class="goals" id="ag">0</b><b class="code" id="as"></b><img id="ac" hidden width="28" height="28" alt=""></span>
+          <span class="side"><b class="goals" id="ag">0</b><b class="code" id="as"></b><i class="cap"></i></span>
         </span>
         <p id="bsay"><i></i><span></span></p>
       </span>

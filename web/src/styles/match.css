@@ -67,9 +67,24 @@ canvas {
   display: flex;
   align-items: center;
   height: 44px;
-  padding: 0 16px;
+  padding: 0 5px;
   border-radius: 22px;
   background: #000;
+}
+/* each end of the bar in its club's colour, set in from the edge so black always rings it: a white kit never runs into
+   the white clock, and a black one shows by its edge */
+#board .cap {
+  flex: none;
+  width: 22px;
+  height: 34px;
+  border-radius: 17px 4px 4px 17px;
+  background: var(--home);
+  box-shadow: inset 0 0 0 1.5px var(--home-edge);
+}
+#board .side + .beye + .side .cap {
+  border-radius: 4px 17px 17px 4px;
+  background: var(--away);
+  box-shadow: inset 0 0 0 1.5px var(--away-edge);
 }
 #board .side {
   display: flex;
@@ -86,9 +101,6 @@ canvas {
   transform-origin: center;
   transition: transform 0.45s cubic-bezier(0.2, 0.75, 0.2, 1);
 }
-#board img {
-  display: block;
-}
 #board [hidden] {
   display: none;
 }
@@ -104,12 +116,11 @@ canvas {
   text-align: center;
   transition: color 0.6s;
 }
-#board.scored[data-side='0'] #hg,
-#board.scored[data-side='1'] #ag {
-  color: var(--home);
+#board.scored[data-side='0'] #hg {
+  color: var(--home-edge);
 }
 #board.scored[data-side='1'] #ag {
-  color: var(--away);
+  color: var(--away-edge);
 }
 #board .clock {
   display: flex;
@@ -336,6 +347,7 @@ body.desk #counter {
   border-radius: 50%;
   background: var(--team);
   outline: 2px solid #000;
+  box-shadow: inset 0 0 0 1.5px var(--team-edge);
   transition: transform 0.25s;
 }
 #tag.past .dot {
@@ -670,9 +682,11 @@ button:focus-visible,
 }
 #track .tp .disc.home {
   background: var(--home);
+  color: var(--home-on);
 }
 #track .tp .disc.away {
   background: var(--away);
+  color: var(--away-on);
 }
 #track .tp .crest {
   flex: none;
@@ -692,10 +706,10 @@ button:focus-visible,
   height: 18px;
 }
 #track .home .ring {
-  stroke: var(--home);
+  stroke: var(--home-edge);
 }
 #track .away .ring {
-  stroke: var(--away);
+  stroke: var(--away-edge);
 }
 #track .tp .mn {
   color: var(--mist);

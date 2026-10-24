@@ -132,6 +132,14 @@ export function makeStrip(
     peak = Math.max(0.03, ...bars.map(Math.abs));
   let played = -1; // the bar the playhead is in: those after it are faint
 
+  // a colour token as the browser resolves it, for the canvas, which cannot read the token itself
+  const resolve = (token: string) => {
+    const probe = el('i', '', document.body);
+    probe.style.color = `var(${token})`;
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  };
   function drawMomentum() {
     const c = $<HTMLCanvasElement>('mom'),
       w = c.clientWidth,
@@ -143,9 +151,8 @@ export function makeStrip(
     g.scale(r, r);
     g.clearRect(0, 0, w, h);
     const mid = h / 2,
-      css = getComputedStyle(document.documentElement),
-      home = css.getPropertyValue('--home').trim(),
-      away = css.getPropertyValue('--away').trim(),
+      home = resolve('--home-edge'), // the bars stand on black: a black kit's bars are drawn in its grey edge
+      away = resolve('--away-edge'),
       step = (MIN / LAST) * w,
       gap = Math.min(1.4, step * 0.25);
     bars.forEach((v, k) => {
