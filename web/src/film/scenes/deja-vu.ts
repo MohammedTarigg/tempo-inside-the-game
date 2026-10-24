@@ -1,4 +1,4 @@
-// The film's fifth feature, Déjà vu: the replay view itself, in a frame, faded in over a picture that already matches it.
+// The film's sixth feature, Déjà vu: the replay view itself, in a frame, put in behind a blink of the eye.
 import { el } from '../../shared/util.ts';
 import { startLead, runnerCamera } from '../../replay/start.ts';
 import type { FilmCtx, Scene } from '../film.ts';
@@ -7,20 +7,9 @@ import type { FilmCtx, Scene } from '../film.ts';
 // attempt plays alone, then it rewinds and the goal plays alone, past two outlined markers left where the earlier one
 // ended. Both at once was too much to follow. The film's own scoreboard shows which minute is on screen.
 export function dejaVu(ctx: FilmCtx): Scene {
-  const { api, M, DIR, D, REPLAY, scene, index, wrap, glide, onBall, caption, look, shut } = ctx;
-  // the replay's frame, while it is on screen, and the point on the picture it opens out of and closes back into
-  let frame: HTMLIFrameElement | null = null,
-    from: () => readonly [number, number] = () => [wrap.clientWidth / 2, wrap.clientHeight / 2];
-  // the ring of the opening, the eye's own ring, which grows out of that point with the replay inside it
-  const iris = (on: boolean) => {
-    const [x, y] = from(),
-      ring = el('i', `tiris ${on ? 'open' : 'shut'}`, wrap);
-    ring.style.left = `${x}px`;
-    ring.style.top = `${y}px`;
-    setTimeout(() => ring.remove(), 1200);
-    frame?.style.setProperty('--ox', `${x}px`);
-    frame?.style.setProperty('--oy', `${y}px`);
-  };
+  const { api, M, DIR, D, REPLAY, scene, index, wrap, glide, onBall, caption, look, shut, lids } = ctx;
+  // the replay's frame, while it is on screen
+  let frame: HTMLIFrameElement | null = null;
   // what the replay says about itself while it plays: the clock it is showing, and whether the goal has gone in
   const heard = (e: MessageEvent<{ tempoReplay?: { clock: number; scored: boolean } }>) => {
     const said = e.data?.tempoReplay;
@@ -34,7 +23,7 @@ export function dejaVu(ctx: FilmCtx): Scene {
     dur: D[5]!,
     enter() {
       // The bridge. The replay opens on the moment the scorer sets off, framed on him. The film goes to that same frame and
-      // that same framing in one move, holds, and the replay fades in over a picture that is already identical.
+      // close framing in one move, holds, and the replay is put in behind a blink.
       const G = REPLAY?.clips.goal,
         E = REPLAY?.clips.earlier;
       let turn = 1;
@@ -49,11 +38,7 @@ export function dejaVu(ctx: FilmCtx): Scene {
           dir = Math.sign(shot[0] - q[0]) || 1;
         const stored = (G.pos[G.shot_offset]?.[sc]?.[0] ?? 0) - (G.pos[G.start_offset]?.[sc]?.[0] ?? 0);
         turn = Math.sign((shot[0] - q[0]) * stored) || 1; // the clips are stored turned one way; the film shows the pitch as it was played
-        from = () => {
-          const p = api.pos(api.getF(), si) ?? q,
-            xy = api.project(p[0], 0, -p[1]);
-          return [xy[0], xy[1]];
-        }; // the runner the replay is about
+
         glide(f, 0, (wantPos, wantAim) => runnerCamera(wantPos, wantAim, q, dir), null, 0);
       } else if (scene) glide(scene.frame, 0, onBall(46, 44), null, 0);
       look([wrap.clientWidth / 2, wrap.clientHeight / 2]);
@@ -67,8 +52,14 @@ export function dejaVu(ctx: FilmCtx): Scene {
           setTimeout(
             () => {
               if (frame === f) {
-                iris(true);
-                f.classList.add('on');
+                // the replay's camera is not quite the film's, so it is not dissolved over it: the eye blinks, the
+                // replay is put in while it is shut, and it opens on the replay
+                lids(true);
+                setTimeout(() => {
+                  if (frame !== f) return;
+                  f.classList.add('on');
+                  setTimeout(() => lids(false), 60);
+                }, 240);
                 document.body.classList.add('treplay');
               }
             },
@@ -89,7 +80,6 @@ export function dejaVu(ctx: FilmCtx): Scene {
         frame = null;
       } else if (frame) {
         const f = frame;
-        iris(false);
         f.classList.remove('on');
         setTimeout(() => f.remove(), 700);
         frame = null;

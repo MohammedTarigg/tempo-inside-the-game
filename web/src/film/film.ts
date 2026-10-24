@@ -83,6 +83,7 @@ function context(
     cut: bridge.cut,
     glide: bridge.glide,
     shut: furniture.shut,
+    lids: furniture.lids,
     onPlayer: bridge.onPlayer,
     onBall: bridge.onBall,
     // The logo's parts do not exist until the opening has played, which is after the scenes are built. A scene reads them
