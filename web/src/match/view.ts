@@ -434,6 +434,7 @@ export async function startMatch(mode: Mode, Q = new URLSearchParams(location.se
   watchSize(strip.drawMomentum);
   window.__tempo = { frames: M.frames, moments, seek };
   const api = {
+    match,
     M,
     FPS,
     LAST,

@@ -19,6 +19,7 @@ import type { Cue, ReplayScene } from '../types/run.ts';
 import type { CueOf, Timed } from '../match/data.ts';
 import { makeFurniture, type Furniture } from './furniture.ts';
 import { makeBridge, type Bridge } from './bridge.ts';
+import { makeMap, type PitchMap } from './map.ts';
 import { headsUp } from './scenes/heads-up.ts';
 import { thunderbolt } from './scenes/thunderbolt.ts';
 import { speakOfTheDevil } from './scenes/speak-of-the-devil.ts';
@@ -55,6 +56,7 @@ function context(
   api: MatchApi,
   furniture: Furniture,
   bridge: Bridge,
+  map: PitchMap,
   found: ReturnType<typeof findMoments>,
   score: Score,
 ) {
@@ -75,6 +77,7 @@ function context(
     side: furniture.side,
     veil: furniture.veil,
     over: furniture.over,
+    map,
     look: furniture.look,
     caption: furniture.caption,
     swapCall: furniture.swapCall,
@@ -146,7 +149,7 @@ export async function runFilm(api: MatchApi, Q = new URLSearchParams(location.se
   const furniture = makeFurniture(),
     bridge = makeBridge(api),
     { logo, side } = furniture;
-  const ctx = context(api, furniture, bridge, findMoments(api, REPLAY), SCORE);
+  const ctx = context(api, furniture, bridge, makeMap(furniture.wrap, api), findMoments(api, REPLAY), SCORE);
   // Features are in match order. The two that nobody else has get the most time; the rest keep a short, even beat.
   const SCENES: Scene[] = [headsUp, thunderbolt, speakOfTheDevil, onAYellow, yours, dejaVu, calledIt, proof, close].map(
     (make) => make(ctx),

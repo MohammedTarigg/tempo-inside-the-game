@@ -223,12 +223,143 @@ body.topen.tdrawn #board {
   visibility: visible;
 }
 
+/* The map (map.ts): the whole pitch flat from above, held up while the camera is down among the players. Smoked glass, so
+   the picture still shows through it. It opens from its halfway line outwards, its markings draw on, then the players
+   arrive one after another; it folds back to the halfway line as it goes. What a feature draws on it is yellow, as on the
+   turf: an outline while it is only something said, solid once it has happened */
+.tmap {
+  position: absolute;
+  right: 26px;
+  bottom: 24px;
+  width: 330px;
+  aspect-ratio: 111 / 74;
+  z-index: 4;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  clip-path: inset(0 50% 0 50% round 14px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    clip-path 0.4s cubic-bezier(0.6, 0, 0.8, 0.3) 0.15s,
+    opacity 0.2s 0.5s;
+}
+.tmap.on {
+  clip-path: inset(0 0 0 0 round 14px);
+  opacity: 1;
+  transition:
+    clip-path 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.15s;
+}
+.tmap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tmap .lines path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.3s;
+}
+.tmap.on .lines path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.3, 0.6, 0.2, 1) 0.25s;
+}
+.tmap .people circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  stroke-width: 0.45;
+  transition:
+    transform 0.2s,
+    opacity 0.3s;
+}
+.tmap.on .people circle {
+  transform: none;
+  transition:
+    transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) calc(0.55s + var(--k, 0) * 18ms),
+    opacity 0.3s;
+}
+.tmap .home {
+  fill: var(--home);
+  stroke: var(--home-edge);
+}
+.tmap .away {
+  fill: var(--away);
+  stroke: var(--away-edge);
+}
+.tmap .faint {
+  opacity: 0.3;
+}
+.tmap .ball {
+  fill: var(--paper);
+  stroke: #000;
+  stroke-width: 0.3;
+}
+.tmap .zone {
+  fill: var(--card);
+  fill-opacity: 0.16;
+  stroke: var(--card);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transition: fill-opacity 0.35s;
+}
+.tmap .zone.solid {
+  fill-opacity: 0.85;
+}
+.tmap .zone.lane {
+  stroke: none;
+}
+.tmap .arrow,
+.tmap .laneline,
+.tmap .shotline {
+  fill: none;
+  stroke: var(--card);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+}
+.tmap .arrow {
+  marker-end: url(#tmaphead);
+}
+.tmap marker path {
+  fill: var(--card);
+}
+.tmap .laneline {
+  stroke-dasharray: 4 4;
+}
+.tmap .shotline {
+  stroke: var(--home-edge);
+  stroke-width: 1.2;
+}
+.tmap .shot {
+  fill: #6e6e6e;
+  stroke: #000;
+  stroke-width: 0.3;
+  opacity: 0;
+}
+.tmap .shot.in {
+  fill: var(--home);
+  stroke: var(--home-edge);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tlogo,
   .tcap,
   .tside,
   .tveil,
-  .tframe {
+  .tframe,
+  .tmap,
+  .tmap * {
     transition: none !important;
   }
 }

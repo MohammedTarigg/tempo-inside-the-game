@@ -33,7 +33,7 @@ const keyed = (v: number, keys: XY[]) => {
 //      the goal it is about, and both turn solid when the ball goes in.
 // Every position is the match's own; the two runs are the replay's two clips.
 export function calledIt(ctx: FilmCtx): Scene {
-  const { api, M, FPS, DIR, D, REPLAY, full, index, wrap, cut, look, caption, swapCall, capLine, over } = ctx;
+  const { api, M, FPS, DIR, D, REPLAY, full, index, wrap, map, cut, look, caption, swapCall, capLine, over } = ctx;
   // the three calls, which picture is on, and how far that picture has got
   let where: Call | undefined,
     man: Call | undefined,
@@ -147,9 +147,10 @@ export function calledIt(ctx: FilmCtx): Scene {
     dur: D[6]!,
     cutIn: true, // from the replay to the whole pitch at full time: the one real cut in the film
     enter() {
+      // down among the players at the end they attacked; the map at the foot of the picture holds the whole pitch
       cut(api.LAST - 3 * FPS, 0.25, (wantPos, wantAim) => {
-        wantPos.set(0, 94, 96.5);
-        wantAim.set(0, 0, 6);
+        wantPos.set(28, 15, 40);
+        wantAim.set(36, 1, 4);
       });
       DIR.focus = new Set([-1]);
       look(null);
@@ -180,13 +181,14 @@ export function calledIt(ctx: FilmCtx): Scene {
                 [-33, -12.2],
               ]
             : [[-12.2, 12.2]];
-        zones = bands.map(() => svgEl('polygon', { class: 'zone lane' }, over));
+        map.clear();
+        zones = bands.map(() => svgEl('polygon', { class: 'zone lane' }, map.marks));
         lanes = bands.flatMap(() => [
-          svgEl('line', { class: 'laneline' }, over),
-          svgEl('line', { class: 'laneline' }, over),
+          svgEl('line', { class: 'laneline' }, map.marks),
+          svgEl('line', { class: 'laneline' }, map.marks),
         ]);
-        shots = where.points.map((q) => svgEl('line', { class: q.inside ? 'shotline in' : 'shotline' }, over));
-        dots = where.points.map((q) => svgEl('circle', { class: q.inside ? 'shot in' : 'shot', r: 0 }, over));
+        shots = where.points.map((q) => svgEl('line', { class: q.inside ? 'shotline in' : 'shotline' }, map.marks));
+        dots = where.points.map((q) => svgEl('circle', { class: q.inside ? 'shot in' : 'shot', r: 0 }, map.marks));
       }
       R = runs();
       els = R ? drawings() : null;
@@ -239,6 +241,10 @@ export function calledIt(ctx: FilmCtx): Scene {
         if (first && k > 0) api.snapCamera();
       }
       let done = false;
+      // picture 1 is drawn on the map, flat, in the pitch's metres
+      const flat = (x: number, y: number): XY => [x, -y];
+      map.show(k === 0 && v < 0.97);
+      if (k === 0) map.update(null);
       const W = where,
         fade = Math.min(seg(v, 0.02, 0.14), 1 - seg(v, 0.9, 0.99)),
         onPitch = k === 0 ? fade : 0;
@@ -246,14 +252,14 @@ export function calledIt(ctx: FilmCtx): Scene {
         let landed = 0;
         dots.forEach((d, i) => {
           const q = W.points[i]!,
-            [x, y] = xy(q.x ?? 0, q.y ?? 0),
+            [x, y] = flat(q.x ?? 0, q.y ?? 0),
             a = k === 0 ? outCubic(seg(v, 0.14 + i * 0.03, 0.26 + i * 0.03)) : 1;
           d.setAttribute('cx', x.toFixed(1));
           d.setAttribute('cy', y.toFixed(1));
-          d.setAttribute('r', String((q.inside ? 5 : 4) * Math.min(1, a * 3)));
+          d.setAttribute('r', String((q.inside ? 1.3 : 1) * Math.min(1, a * 3)));
           d.style.opacity = String(onPitch);
           // the shot itself, drawn from where it was struck towards the goal mouth
-          const [gx, gy] = xy(52.5, Math.max(-3, Math.min(3, (q.y ?? 0) * 0.2))),
+          const [gx, gy] = flat(52.5, Math.max(-3, Math.min(3, (q.y ?? 0) * 0.2))),
             ln = shots[i]!;
           ln.setAttribute('x1', x.toFixed(1));
           ln.setAttribute('y1', y.toFixed(1));
@@ -271,14 +277,14 @@ export function calledIt(ctx: FilmCtx): Scene {
               [51, b],
               [24, b],
             ];
-          z.setAttribute('points', pts(corners.map(([x, y]) => xy(x, y))));
+          z.setAttribute('points', pts(corners.map(([x, y]) => flat(x, y))));
           z.style.opacity = String(onPitch);
           // the channel's two edges, drawn from halfway towards goal as the picture opens
           const grow = outCubic(seg(v, 0.02, 0.14));
           [a, b].forEach((edge, e) => {
             const ln = lanes[2 * j + e]!,
-              [x1, y1] = xy(24, edge),
-              [x2, y2] = xy(24 + 27 * grow, edge);
+              [x1, y1] = flat(24, edge),
+              [x2, y2] = flat(24 + 27 * grow, edge);
             ln.setAttribute('x1', x1.toFixed(1));
             ln.setAttribute('y1', y1.toFixed(1));
             ln.setAttribute('x2', x2.toFixed(1));
@@ -445,6 +451,7 @@ export function calledIt(ctx: FilmCtx): Scene {
       capLine.classList.toggle('done', done);
     },
     exit() {
+      map.show(false);
       DIR.focus = null;
       DIR.blend = null;
       DIR.clock = null;
