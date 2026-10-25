@@ -1,5 +1,5 @@
 // The film's first feature, Heads up: the three things Tempo says before kick-off, held up one at a time.
-import { svgEl, seg, smooth, outCubic } from '../../shared/util.ts';
+import { svgEl, seg, smooth, outCubic, inOutCubic, lerp } from '../../shared/util.ts';
 import { markShapes } from '../../match/marks.ts';
 import { callLine } from '../furniture.ts';
 import type { FilmCtx, Scene } from '../film.ts';
@@ -10,8 +10,9 @@ import type { FilmCtx, Scene } from '../film.ts';
 // would draw (markShapes), so the map and the turf can never disagree.
 export function headsUp(ctx: FilmCtx): Scene {
   const { api, M, DIR, D, full, map, look, caption, swapCall, capLine } = ctx;
-  // which mark is held up, which of the three is about minutes, the minute it names, and the goal those minutes are about
+  // which mark is held up, how far the camera has come down, which of the three is about minutes, the minute it names, and the goal those minutes are about
   let shown = 0,
+    down = 0,
     wi = -1,
     from = 70,
     gx = 52.5;
@@ -26,10 +27,11 @@ export function headsUp(ctx: FilmCtx): Scene {
       api.setSpeed(0.3);
       DIR.blend = null;
       DIR.focus = null;
-      // from the opening's view of the whole pitch the camera eases down to the players; nothing cuts
+      // from the opening's view of the whole pitch the camera comes down to the players over the first beats; nothing cuts
+      down = 0;
       DIR.cam = (wantPos, wantAim) => {
-        wantPos.set(0, 15, 40);
-        wantAim.set(0, 1, 4);
+        wantPos.set(0, lerp(94, 15, down), lerp(96.5, 40, down));
+        wantAim.set(0, down, lerp(6, 4, down));
       };
       api.setPlaying(true);
       look(null);
@@ -53,6 +55,7 @@ export function headsUp(ctx: FilmCtx): Scene {
       map.show(true);
     },
     update(u) {
+      down = inOutCubic(seg(u, 0, 0.15));
       const k = Math.min(2, Math.floor(u * 3)),
         v = u * 3 - k,
         on = smooth(Math.min(seg(v, 0.03, 0.2), 1 - seg(v, 0.84, 0.99))),

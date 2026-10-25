@@ -233,7 +233,7 @@ body.topen.tdrawn #board {
   bottom: 24px;
   width: 330px;
   aspect-ratio: 111 / 74;
-  z-index: 4;
+  z-index: 6; /* over the scrim that darkens the foot of the picture, as the caption is */
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
@@ -260,8 +260,7 @@ body.topen.tdrawn #board {
 .tmap .lines path {
   fill: none;
   stroke: rgba(255, 255, 255, 0.55);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 0.36; /* in metres, about a pixel at this size: a fixed pixel width would break the draw-on dashes */
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition: stroke-dashoffset 0.3s;
