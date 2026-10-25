@@ -23,6 +23,7 @@ const BASE = `http://localhost:${process.argv[2] ?? '4173'}`,
 // timers that have come due, and every animation by the same amount. A frame inside the page (the replay) is stepped with it.
 const CLOCK = () => {
   const real = performance.now.bind(performance),
+    paint = requestAnimationFrame.bind(window),
     rawTimeout = setTimeout.bind(window),
     rawClear = clearTimeout.bind(window);
   let t = real(),
@@ -42,6 +43,8 @@ const CLOCK = () => {
     else rawClear(n);
   }) as typeof clearTimeout;
   Object.assign(window, {
+    // resolves once the browser has really painted twice, so a capture never takes a layer half drawn (the map's blur)
+    __painted: () => new Promise<void>((done) => paint(() => paint(() => done()))),
     __step: (ms: number) => {
       t += ms;
       for (const a of document.getAnimations())
@@ -76,12 +79,21 @@ let i = 0,
   lead = NaN, // how far into the video the film's clock reads zero
   total = Infinity;
 for (; i < 200 * FPS; i++) {
-  const now = await page.evaluate((ms) => {
-    const w = window as unknown as { __step: (ms: number) => void; __tour?: { TOTAL: number; now: () => number } };
+  const now = await page.evaluate(async (ms) => {
+    const w = window as unknown as {
+      __step: (ms: number) => void;
+      __painted: () => Promise<void>;
+      __tour?: { TOTAL: number; now: () => number };
+    };
     w.__step(ms);
+    await w.__painted();
     return w.__tour ? [w.__tour.now(), w.__tour.TOTAL] : null;
   }, 1000 / FPS);
-  const shot = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 92 });
+  const shot = await cdp.send('Page.captureScreenshot', {
+    format: 'jpeg',
+    quality: 92,
+    clip: { x: 0, y: 0, width: 1280, height: 720, scale: DPR },
+  });
   writeFileSync(join(dir, `${String(i).padStart(5, '0')}.jpg`), Buffer.from(shot.data, 'base64'));
   if (now) {
     if (Number.isNaN(lead)) lead = i / FPS - now[0]!;
@@ -116,8 +128,8 @@ ff([
 ff([
   '-i',
   `${OUT}/tempo-film-silent.mp4`,
-  '-itsoffset',
-  Math.max(0, lead).toFixed(3),
+  // the music starts where the film's clock reads zero: later in the video, or trimmed if that is before its first frame
+  ...(lead >= 0 ? ['-itsoffset', lead.toFixed(3)] : ['-ss', (-lead).toFixed(3)]),
   '-i',
   MUSIC,
   '-map',
