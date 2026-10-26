@@ -136,7 +136,7 @@ export function speakOfTheDevil(ctx: FilmCtx): Scene {
       const i = form ? index(form.payload.player) : 0;
       who = i;
       glide((form ? form.start : api.frameAtClock(35 * 60)) - 2 * FPS, 0.5, onPlayer(i), new Set([i]));
-      caption('3', 'Speak of the devil', 'Say his name, see his numbers', [['speech', 'Speech recognition', true]]);
+      caption('3', 'Speak of the devil', 'Say his name, see his numbers', [['speech', 'Azure AI Speech']]);
       speakSet(form ? form.payload.heard : '', name(M.ids[i]!));
       if (form) playerCard(form);
     },

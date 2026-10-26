@@ -1,5 +1,5 @@
 {
- "ran_at": "2026-10-23 16:51",
+ "ran_at": "2026-10-26 22:59",
  "passed": 14,
  "total": 14,
  "results": [
@@ -81,13 +81,13 @@
   {
    "check": "reflex path under 10 ms a frame",
    "passed": true,
-   "detail": "p50 0.042 ms, p95 1.367 ms, p99 2.389 ms, slowest 243.5 ms, features and network included",
+   "detail": "p50 0.016 ms, p95 0.357 ms, p99 0.425 ms, slowest 33.6 ms, features and network included",
    "counts": {}
   },
   {
    "check": "writing path well inside the replay window",
    "passed": true,
-   "detail": "6 moments, slowest 1.7 ms with the local backend (a cloud model will be slower; the limit is 10 s)",
+   "detail": "6 moments, slowest 0.8 ms with the local backend (a cloud model will be slower; the limit is 10 s)",
    "counts": {}
   },
   {
@@ -132,20 +132,20 @@
   },
   "verifier_rejections": 0,
   "frame_ms": {
-   "p50": 0.042,
-   "p95": 1.367,
-   "p99": 2.389,
-   "max": 243.5
+   "p50": 0.016,
+   "p95": 0.357,
+   "p99": 0.425,
+   "max": 33.6
   },
   "writer_ms": [
-   1.68,
-   0.69,
-   1.17,
-   1.04,
-   1.55,
-   1.33
+   0.68,
+   0.29,
+   0.28,
+   0.83,
+   0.44,
+   0.31
   ],
-  "wall_seconds": 52.6,
+  "wall_seconds": 12.3,
   "writer_backend": "local-templates",
   "stake_model": {
    "faint": 0.02,

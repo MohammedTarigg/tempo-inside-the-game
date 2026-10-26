@@ -155,6 +155,29 @@ def plan(period, first, lift):
     return beats, start
 
 
+def heard_words():
+    """When of each word of the line, as AI Speech heard the clip (`tempo listen`, results/speech.json): each word's
+    match time less the match time the clip was played from. None if it has not been run on this line."""
+    path = os.path.join(ROOT, "results", "speech.json")
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        heard = json.load(f)
+    for line in heard["lines"]:
+        said = [w["word"].strip(".,!?").lower() for w in line["words"]]
+        if said == [w.lower() for w in SPEECH.split()]:
+            return [round(w["at"] - heard["at"], 3) for w in line["words"]]
+    return None
+
+
+def estimated_words(v0, v1):
+    """When of each word, spread across the stretch the voice is heard by each word's length: close enough for words
+    to appear as he says them, until the line has been through AI Speech."""
+    words = SPEECH.split()
+    wlen = np.array([len(w) + 1.5 for w in words], float)
+    return [round(float(v0 + (v1 - v0) * c), 3) for c in np.concatenate([[0], np.cumsum(wlen)[:-1]]) / wlen.sum()]
+
+
 def edit(name):
     src = os.path.join(SOURCES, name + ".mp3")
     title, artist, url = TRACKS[name]
@@ -183,16 +206,13 @@ def edit(name):
     m = (t >= ya) & (t < yb)
     lev[m] = -9 + 7 * ((t[m] - ya) / (yb - ya)) ** 1.5
     # ---- the commentator's line: a clip of a described, invented voice. Where its sound starts and stops is measured,
-    #      and its words are spread across that stretch by their length, which is close enough for words to appear as
-    #      he says them ----
+    #      and each word's time is the one AI Speech heard, or else spread across that stretch by length ----
     voice = load(os.path.join(SOURCES, "commentator.wav"), SR, 1).astype(np.float64)
     win = int(0.02 * SR)
     env = np.array([np.sqrt(np.mean(voice[i : i + win] ** 2)) for i in range(0, len(voice) - win, win)])
     loud = np.where(env > env.max() * 10 ** (-28 / 20))[0]
     v0, v1 = loud[0] * 0.02, (loud[-1] + 1) * 0.02
-    words = SPEECH.split()
-    wlen = np.array([len(w) + 1.5 for w in words], float)
-    word_at = [round(float(v0 + (v1 - v0) * c), 3) for c in np.concatenate([[0], np.cumsum(wlen)[:-1]]) / wlen.sum()]
+    word_at = heard_words() or estimated_words(v0, v1)
     voice *= 10 ** (SPEECH_DB / 20) / np.sqrt(np.mean(voice[int(v0 * SR) : int(v1 * SR)] ** 2))
     sa = at["speak"]
     say = sa + SPEECH_BEATS * period

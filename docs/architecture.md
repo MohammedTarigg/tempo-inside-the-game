@@ -1,6 +1,6 @@
 # Tempo: architecture
 
-How Tempo works, what runs today, and what is designed for Azure. "Built" means it runs in this repository and is covered by the checks in section 12. "Designed" means specified and not wired. Section 15 says which parts are built once, on Azure, and never as a better local version first. Every figure quoted here is read from a file in `results/` or `models/`, and the evidence page (`/evidence/`) shows the same figures with the command that measures each one again.
+How Tempo works, on a laptop and on Azure. "Built" means it runs in this repository and is covered by the checks and tests in section 12. Section 15 is the Azure side: which service each part runs on, the adapter that connects it, and how it is deployed. Every figure quoted here is read from a file in `results/` or `models/`, and the evidence page (`/evidence/`) shows the same figures with the command that measures each one again.
 
 ## 1. The time budget in a real match
 
@@ -23,7 +23,7 @@ The picture a viewer sees is always behind the data.
 |---|---|---|---|
 | Reflex | Under 100 ms a tracking frame | The player layer (ledgers, the stake model, the ghost at each goal), rare-number tags, duel counts, momentum, pressure changes | Built. Under a millisecond a frame at the 95th percentile, no language model |
 | Decision | Under 500 ms | Whether a moment is worth showing, on which screen, and whether it replaces what is there | Built as rules |
-| Writing | 3 to 10 seconds, done before the next pause | Closest-attempt search, the sentence for a known kind of moment, the check, the Arabic line | Built with templates. A model call through Foundry is designed (section 6) |
+| Writing | 3 to 10 seconds, done before the next pause | Closest-attempt search, the sentence for a known kind of moment, the check, the Arabic line | Built. A Foundry model writes on Azure, with the templates as the fallback (section 6) |
 | Study | One to three minutes, shown at the next long pause, half time or full time | Two investigators working out why the match turned, and the agreement gate | Tested as a harness. Section 6 |
 | Offline | Before the match | Season baselines, each player's usual, the calls made before kick-off | Built on a 40-match generated season. Section 11 |
 
@@ -92,7 +92,7 @@ flowchart LR
   CUE --> DSK[Producer's desk]
 ```
 
-Today every store and bus in this diagram is a local stand-in behind the same interface: a SQLite ledger for Cosmos DB, an in-process bus for Event Hubs and Web PubSub, the generator's commentary lines for AI Speech, and templates for the model. The stand-ins are frozen as they are. Section 15 lists what replaces each one.
+Every store, bus and model in this diagram has one interface and two implementations: the Azure service, through an adapter in `tempo/azure/`, and a local one that keeps the whole pipeline running on a laptop and in the tests (a SQLite ledger, an in-process bus, the generator's commentary lines, the templates). Which one a run uses is decided part by part by its settings (section 15). The pipeline's own code is the same either way.
 
 ## 5. Each part
 
@@ -101,18 +101,18 @@ Today every store and bus in this diagram is a local stand-in behind the same in
 | Data contracts | `tempo/contracts.py` | Events, tracking frames, facts and cues, with deterministic IDs | The same |
 | What the site reads | `tempo/pipeline/schema.py` | The shape of `match.json` and `scenes.json`, one definition. `tempo types` writes the site's TypeScript from it and a test holds the demo run to it | The same |
 | Match generator | `tempo/generator/` | A seeded match with a physical ball, a league whose clubs and players keep their habits, a planted story and commentary lines | Replaced by the real feeds |
-| Reflex service | `tempo/pipeline/reflex.py` | One process holding the match state, snapshotted every 30 seconds of match time | A Container App, one replica per match, reading Event Hubs from a stored offset |
+| Reflex service | `tempo/pipeline/reflex.py`, run by `tempo/pipeline/live.py` | One process holding the match state, snapshotted every 30 seconds of match time. The live service rebuilds the match from the feed and steps it frame by frame as it lands | A Container App, one replica per match, reading Event Hubs |
 | Stake model | `tempo/stake/`, `models/stake_model.pt` | A 98,433-weight network, trained and evaluated on real matches (section 7) | The same file |
 | Ghost and reason rule | `tempo/instruments/ghost.py`, `models/ghost_model.pt` | One small network fitted on six generated matches, run at every goal. The rule names a reason when three instruments agree | The same |
-| Closest earlier attempt | `tempo/instruments/twin.py` | Search over this match's attacks in memory | Azure AI Search over the season |
+| Closest earlier attempt | `tempo/instruments/twin.py`, `tempo/azure/search.py` | Search over the season's attacks in memory | AI Search returns the season's nearest attacks by vector; the same exact comparison decides |
 | Calls before kick-off | `tempo/season.py`, `tempo/instruments/habits.py` | Mined from a 40-match generated season, each kept only if its own rule held often enough (section 11) | The same, over the league archive |
-| Fact ledger, cues, checkpoints | `tempo/pipeline/ledger.py` | SQLite | Cosmos DB, partitioned by match |
-| Cue service | `tempo/pipeline/cues.py` | Producer rules, slots, cooldowns, caps, and an audit line for everything shown or held back, with a short reason for the producer's desk | A Container App, out through Web PubSub |
-| Writing and verifier | `tempo/agents/` | One sentence per language from templates, a proof list as data, the verifier, a breaker and a fallback | A writer model through `FoundryBackend` (section 6). The verifier stays code |
+| Fact ledger, cues, checkpoints | `tempo/pipeline/ledger.py`, `tempo/azure/cosmos.py` | SQLite | Cosmos DB, four containers partitioned by match |
+| Cue service | `tempo/pipeline/cues.py`, `tempo/azure/webpubsub.py` | Producer rules, slots, cooldowns, caps, and an audit line for everything shown or held back, with a short reason for the producer's desk | Inside the live service; each cue goes to the screens through Web PubSub as it is issued |
+| Writing and verifier | `tempo/agents/`, `tempo/azure/foundry.py` | One sentence per language from templates, a proof list as data, the verifier, a breaker and a fallback | A Foundry model writes through `FoundryBackend` (section 6), with one repair and the templates as the fallback. The verifier stays code |
 | Study workflow | `experiments/agents/` | A test harness with blind cases and scoring. Not wired into the pipeline | Built once, in Microsoft Agent Framework on Foundry |
-| Listener | `tempo/pipeline/listener.py` | Reads commentary lines as text | Azure AI Speech, real time, with the squad names as its phrase list |
-| The run and its files | `tempo/pipeline/run.py`, `tempo/pipeline/export.py` | Plays a match in, writes `web/public/runs/<match>/` for the site | The same files from Blob Storage, cues pushed live |
-| The site | `web/` | Six pages on one stage: home, film, match, desk, replay, evidence. Vite and TypeScript, three.js for the pitch | Static Web Apps, subscribed to Web PubSub |
+| Listener | `tempo/pipeline/listener.py`, `tempo/azure/speech.py` | Finds the players named in a commentary line. Locally the lines are the generator's | AI Speech transcribes the commentary audio in real time, with both squads as its phrase list, and the listener service publishes each line |
+| The run and its files | `tempo/pipeline/run.py`, `tempo/pipeline/export.py`, `tempo/azure/blob.py` | Plays a match in, writes `web/public/runs/<match>/` for the site | The same files, written to Blob Storage beside the site at full time |
+| The site | `web/` | Six pages on one stage: home, film, match, desk, replay, evidence. Vite and TypeScript, three.js for the pitch | The storage account's static website. A live screen (`/match/?live=<service>`) takes the cues so far from the live service, then each new one through Web PubSub (`web/src/match/live.ts`) |
 
 **Facts and cues.**
 - A fact: `{fact_id, match_id, match_time, kind, subject, value, unit, percentile, source_event_ids, version}`.
@@ -153,9 +153,9 @@ The same two investigators have a second job: before a rule from layer 2 is word
 
 A verdict is a typed object: `{cause_type, team, player_id, onset_minute, evidence[], alternatives_ruled_out[], confidence}`. Every hand-off is a typed object that code validates. Agents never talk to each other. They coordinate through the ledger.
 
-### The writer's contract on Foundry (designed, not built)
+### The writer's contract on Foundry
 
-When a Foundry model goes in behind `FoundryBackend`, its structured output has four fields in this order: the fact ids it cites, in the order the sentence uses them; `nothing_to_say`; the line; the label. Citing first makes the model commit to its evidence before it writes, and lets the verifier check the ids against the facts the moment was given before it reads the text. `nothing_to_say: true` ends the call: the screen stays clear and the audit logs it as held, so the producer's desk shows it like any other hold. A line that fails the verifier goes back once with the exact reasons and one instruction, to fix the wording and keep the facts; a second failure gets the template. The verifier also runs a copy lint: a label of six words or fewer, no em dash, none of the overclaiming words, no minute that is not in a cited fact. Each surface gets one question and is told what it must not repeat: the moment line, the half-time open threads, the full-time pins.
+The Foundry model behind `FoundryBackend` (`tempo/azure/foundry.py`) answers in structured output with four fields in this order: the fact ids it cites, in the order the sentence uses them; `nothing_to_say`; the line; the label. Citing first makes the model commit to its evidence before it writes, and lets the verifier check the ids against the facts the moment was given before it reads the text. `nothing_to_say: true` ends the call: the screen stays clear and the audit logs it as held, so the producer's desk shows it like any other hold. A line that fails the verifier goes back once with the exact reasons and one instruction, to fix the wording and keep the facts; a second failure gets the template. The verifier also runs a copy lint: a label of six words or fewer, no em dash, none of the overclaiming words, no minute that is not in a cited fact. Each surface gets one question and is told what it must not repeat: the moment line, the half-time open threads, the full-time pins.
 
 The same matches measure it. On Foundry, the demo match and the planted matches run 5 times each, and the count of lines that passed first time, needed the repair, or fell back to the template goes to `results/` and the README, with an empty or failed run counted as a failure. The desk is measured the same way: how often the two investigators give the same verdict across runs. The harness already has two runs a case: 14 of 16 case and arm pairs gave the same verdict both times, and the two that did not are the two runs that failed to start. Counts are reported, never percentages, because the samples are small.
 
@@ -313,11 +313,9 @@ Then the calls are measured on matches the season never saw (`uv run tempo calls
 | Speed | The reflex path at 1.4 ms a frame at the 95th percentile, well under the 10 ms limit. The slowest frames are the ghost at a goal |
 | Full cards within the cap | 20 issued against a cap of 20. The model wanted 43, so the cap runs out at minute 65 and the last ten minutes are held; the producer's desk shows each hold |
 
-Beside them, in `tests/`: the IDs stay stable, the Verifier's rules, the desk's short reasons, the site's data matches its schema, and the demo match regenerates byte for byte. In `web/e2e/`: every page is built and opened in a browser with no errors, and the recap, the desk and the evidence page are exercised.
+Beside them, in `tests/`: the IDs stay stable, the Verifier's rules, the desk's short reasons, the site's data matches its schema, and the demo match regenerates byte for byte. The live path (`tests/test_live.py`): the demo match played into the bus by the feeder and followed frame by frame by the live service issues exactly the cues one pass over the same feed issues, and a live service stopped a third of the way in and restarted from its checkpoint ends with exactly the cues of one never stopped. The Azure adapters (`tests/test_azure.py`), each against a stand-in for its SDK client: the ledger's contract on SQLite and on Cosmos DB alike, Event Hubs order and offsets, the cue in the site's shape on Web PubSub and a failed push that never stops the pipeline, the Foundry contract (a cited fact it was not given is refused, nothing to say leaves the screen clear, a rejected line gets one repair with the reasons), the season search finding what the local search finds, a recognised utterance becoming a commentary line with its word times and mentions, the run's files and their content types, and the audit reaching Application Insights. In `web/e2e/`: every page is built and opened in a browser with no errors, and the recap, the desk and the evidence page are exercised.
 
-**Designed and not yet run, and local:** a booked player standing still, a header, a wall at a free kick, a booking that arrives late, a tracking drop.
-
-**Designed and waiting for Azure:** the breaker under a failing model and the cost caps. Both live in the workflow's middleware and mean nothing against templates.
+**Not yet run as checks:** a booked player standing still, a header, a wall at a free kick, a booking that arrives late, a tracking drop; and the breaker under a failing model on Azure.
 
 ## 13. When something is slow or down
 
@@ -332,45 +330,43 @@ Beside them, in `tests/`: the IDs stay stable, the Verifier's rules, the desk's 
 | Half-time and full-time cards | 30 seconds | Cards built from templates |
 
 - **A breaker around the model.** Three failures inside 60 seconds open it for 2 minutes, and the template path is used. Built.
-- **Tracking gap over half a second:** stake triggers switch off until two seconds of clean frames arrive. Designed.
-- **Event feed gap:** no card mark fires, because a booking or a correction may be missing. Designed.
+- **A push that fails:** the cue is counted and logged, and the pipeline carries on; a screen that reconnects takes the cues so far from the live service. Built.
+- **The live service stopping:** it starts again, reads the feed again from the start, and carries on from its last checkpoint with nothing shown twice. Built and tested.
+- **Not in the code:** switching stake triggers off over a tracking gap of more than half a second, and holding card marks over an event feed gap.
 
 ## 14. Cost for a match
 
-Estimates until measured on Azure.
+Estimates. A match played on Azure measures its own: Application Insights has every writer call and its tokens.
 
 - **About 20 moments a match reach the writer:** kick-off, half time, full time, and the goals, bookings and pressure changes. Stake marks, tags and the commentary cue reach no model.
 - **About five turns a match reach the study workflow,** each with two investigators. In the tests one investigator run took 14 tool calls, about 90 seconds and about 0.40 dollars, so about 4 dollars a match. A Foundry deployment will differ.
 - **About 10,000 input and 2,000 output tokens a moment** with one extra language, so about 200,000 in and 40,000 out a match. The system prompt and team profile sit first, so most of the input is cached.
-- **Caps, designed in the workflow's middleware:** 40 moments, 400,000 input and 80,000 output tokens. At the cap the match finishes on templates.
+- **Caps, not in the code:** 40 moments, 400,000 input and 80,000 output tokens a match, after which the match would finish on templates. Today the bound is the number of moments the writer is given, about 20.
 
-## 15. On Azure: what is built once there
+## 15. On Azure
 
-**A local stand-in exists to keep the pipeline running and testable. It is never upgraded. Anything whose real form is an Azure service is built once, on Azure.** Building a better local version first is double work, and what it proves does not carry over.
+Every Azure part is one adapter in `tempo/azure/`, behind an interface the pipeline already had, so the pipeline's code is the same on a laptop and on Azure. `tempo/azure/__init__.py` (`wire()`) picks, part by part, the Azure adapter when its setting is present and the local implementation when it is not. The settings are environment variables (`tempo/azure/settings.py`), which Container Apps hands to each container and `azd` writes for a developer. Identity is Entra ID throughout: one managed identity for the services, the developer's own sign-in on a laptop, a data-plane role on each resource, and local keys turned off everywhere.
 
-The services: Container Apps, Event Hubs, Cosmos DB, Blob Storage, AI Search, Foundry models with Agent Framework, AI Speech, Web PubSub and Application Insights. Static Web Apps for the site, `azd` with Bicep to deploy, managed identity everywhere.
+| Part | Azure service | Adapter | The local implementation |
+|---|---|---|---|
+| Speech to text | AI Speech, continuous recognition with both squads and both clubs as its phrase list, word timestamps | `speech.py`: `SpeechListener`, `audio_chunks`, the listener service | The generator's commentary lines |
+| The bus | Event Hubs: `feed`, `commentary` and `cues`, one partition per match, an offset is a sequence number | `eventhubs.py`: `EventHubsBus` (publish, read from an offset, size) | `LocalBus` |
+| Ledger, cues, checkpoints, audit | Cosmos DB, serverless, four containers partitioned by match | `cosmos.py`: `CosmosLedger` | `Ledger` on SQLite |
+| The writer | A model deployment on AI Services, called through Foundry's OpenAI-compatible endpoint | `foundry.py`: `FoundryBackend`, to the contract in section 6 | `LocalBackend`, the templates, which stay the fallback |
+| Earlier attempts across a season | AI Search, a vector index of the season's attacks | `search.py`: `SeasonSearch`, `upload_season` | `TwinSearch` over the season in memory |
+| Push to the screens | Web PubSub, one group per match, listen-only tokens | `webpubsub.py`: `ScreenPush`, `PushingBus` | The site reads a finished run |
+| The run's files | Blob Storage, the static website the site is served from | `blob.py`: `upload_run` | `web/public/runs/` |
+| Tracing | Application Insights through OpenTelemetry | `telemetry.py`: spans, and the audit as log records | The audit in the ledger |
 
-| Part | The stand-in today | What is built on Azure |
-|---|---|---|
-| Speech recognition | `Listener` reads the generator's commentary lines as text | AI Speech in real time with both squads as its phrase list, which also gives the real word times for the film's commentator line and the latency figure |
-| The writer | Templates, which are also the designed fallback and stay | A Foundry model through `FoundryBackend`, today a stub that raises, to the contract in section 6 |
-| The Arabic line | Arabic templates | The same writer call, re-checked by the verifier |
-| The study workflow | The harness in `experiments/agents/`. Its cases and scorer are reusable | Agent Framework on Foundry: two investigators with code tools, the agreement gate, checkpoints, and the repeat-run measure |
-| The decision step | Rules | Rules |
-| The bus | `LocalBus`: publish, read from an offset, size | An Event Hubs adapter with the same three methods, and a feeder that plays the generated match into it at real-time speed |
-| Ledger, cues, checkpoints | `Ledger` on SQLite | Cosmos DB, partitioned by match |
-| Push to the screens | The site reads a finished run | Web PubSub, with each screen releasing a cue by its own picture's match time |
-| Earlier attempts across a season | `twin.py` searches this match in memory | AI Search over the season |
-| Tracing | The audit line for everything shown or held back | Application Insights |
-| Deployment and identity | None | `azd` with Bicep, managed identity |
+**The speech pipeline.** The commentary audio (a file, or a live HLS or RTMP stream that ffmpeg can open) goes into AI Speech a tenth of a second at a time, as 16 kHz mono PCM. Each recognised utterance becomes one commentary line: the match time it was said, its text, the match time of every word, the recogniser's confidence, and the latency from the end of the utterance to its result. The listener service publishes each line to the match's `commentary` topic, and the live service's Listener finds the players named in it, exactly as it does with the generator's lines. `tempo listen` runs it and writes `results/speech.json`; the film's commentator line takes its word times from that file when it exists (`tools/film_music.py`).
 
-**The seams.** Each stand-in is one class or one function with a small surface, so wiring is a new adapter and not a rewrite: `Listener.mentions(text)`, `LocalBus` (three methods), `Ledger` (facts, cues, checkpoints, audit), `LocalBackend` beside the `FoundryBackend` stub, and the search in `twin.py`. Two things have no seam yet and are written new: the feeder that plays a match into Event Hubs in real time, and the study workflow itself.
+**The live path.** `tempo feed` plays a match into Event Hubs as the providers deliver it, at real-time speed: the match sheet, then each second of tracking in the Second Spectrum frame shape with the Opta-shaped events ahead of it, then an end marker. The live service (`tempo live`, `tempo/pipeline/live.py`) reads the feed and the commentary from the start, rebuilds the match frame by frame, and steps the pipeline over each frame as it lands. Cues leave as they are issued. If it stops, it starts again, reads the feed again to rebuild the match, takes the pipeline's state from its last checkpoint in Cosmos DB and carries on, with nothing shown twice. At full time it writes the run's files to Blob Storage. It answers `/healthz`, `/cues` (everything issued so far, for a screen that joins mid-match) and `/negotiate` (a listen-only Web PubSub URL for this match). On one machine, `tempo live --feed` runs the feeder in the same process over the in-process bus.
 
-**To settle when the subscription is in hand:**
-1. Which region has all of these.
-2. Whether Foundry hosted agents are generally available on the subscription. If not, the same workflow runs in a Container App.
-3. Whether the Agent Framework version installed has the fix for Cosmos checkpoints (issue 8874). If not, use the file store.
-4. How fast AI Speech returns a recognised name. No published figure was found, so this is measured, not looked up.
+**Deployment.** `azd up` provisions `infra/` (Bicep) and deploys the services' image (`Dockerfile`). One resource group: Event Hubs, Cosmos DB, AI Services (Speech and the `writer` deployment), AI Search, Web PubSub, a storage account serving the site as a static website, Application Insights with its Log Analytics workspace, a container registry, and a Container Apps environment with the live service and two jobs, the feeder and the listener. After provisioning, a hook turns on the static website and puts the season's attacks in AI Search (`tempo index`); after deploying, a hook builds the site and publishes it with the demo run. A match is played by starting the two jobs. A live screen is the site's match page with `?live=` and the live service's address.
+
+**What only a deployment measures:** the latency from the commentator saying a name to the line on the bus, the writer's first-pass, repaired and template counts on the demo and planted matches (section 6), and the cost of a match (section 14).
+
+**The study workflow** is the tested harness in `experiments/agents/` (section 6). It is not in the pipeline on either side.
 
 **Left out:** Functions, Logic Apps, Azure Translator, Stream Analytics and Fabric. The logic is custom code, the data is small, and translation is a model call that the verifier re-checks.
 
@@ -381,7 +377,7 @@ The services: Container Apps, Event Hubs, Cosmos DB, Blob Storage, AI Search, Fo
 | Data | The generator, in production shapes | The Opta and Genius feeds through the same adapter |
 | Replay on air | A rule after a goal | A signal from the gallery |
 | Picture | The marker view | The broadcast, with match time carried in the stream |
-| Commentary | The generator's lines as text | The live commentary feed |
+| Commentary | The commentator clip through AI Speech, or the generator's lines as text | The live commentary feed through AI Speech |
 | Season memory | 40 generated matches | The league's archive |
 
 Nothing in the middle changes.
@@ -396,8 +392,6 @@ Nothing in the middle changes.
 - Data Zone: https://www.geniussports.com/newsroom/premier-league-productions-partners-with-genius-to-deliver-ground-breaking-premier-league-data-zone/
 - kloppy parsers (field names): https://github.com/PySport/kloppy
 - DFL open dataset (Bassek et al. 2025, CC BY 4.0): https://doi.org/10.6084/m9.figshare.28196177
-- Agent Framework checkpoints: https://learn.microsoft.com/en-us/agent-framework/workflows/checkpoints
-- Cosmos checkpoint issue: https://github.com/microsoft/agent-framework/issues/8874
 - Agent Framework 1.0: https://devblogs.microsoft.com/agent-framework/microsoft-agent-framework-version-1-0/
 - Microsoft on agent orchestration patterns: https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns
 - Anthropic on its multi-agent research system: https://www.anthropic.com/engineering/built-multi-agent-research-system

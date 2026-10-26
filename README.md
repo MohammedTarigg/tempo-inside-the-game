@@ -44,23 +44,48 @@ uv run tempo run
 | `uv run tempo train` | Trains and evaluates the stake model on the real matches |
 | `uv run tempo ghost` | Fits the ghost defender on generated matches |
 | `uv run tempo types` | Writes the site's TypeScript types from the pipeline's schema |
+| `uv run tempo live --feed` | The live path on one machine: the feeder plays the match into the bus and the live service follows it frame by frame |
 
 ## How it is built
 
 Two feeds go in at the front: events in the Opta shape and tracking in the Second Spectrum shape, 25 frames a second. A reflex service keeps a running record of every player: his card, his duels, his running, the stake model's score for his next challenge, and at a goal where an average defender would have stood. Moments that need words go to a writer, and a verifier holds every sentence to the facts it cites, by position, before it leaves. A cue service applies the producer's rules and stamps each item with the match time it belongs to, so every screen shows it when its own picture reaches that moment.
 
-Today each cloud part has a local stand-in behind the same interface: SQLite for Cosmos DB, an in-process bus for Event Hubs and Web PubSub, templates for the Foundry model. [docs/architecture.md](docs/architecture.md) has the whole design, the evaluations and what is built once on Azure.
+[docs/architecture.md](docs/architecture.md) has the whole design and the evaluations.
+
+## On Azure
+
+Each part runs on an Azure service through one adapter in `tempo/azure/`, behind the same interface it has on a laptop, so the pipeline's code is the same in both places:
+
+| Part | On Azure |
+|---|---|
+| The commentary | AI Speech transcribes it in real time with both squads as its phrase list; each line names the players the cue service listens for |
+| The feeds, the commentary lines, the cues | Event Hubs, one partition per match |
+| The live service | A Container App that rebuilds the match from the feed and plays it through the pipeline frame by frame, and recovers from its last checkpoint |
+| Facts, cues, checkpoints, the audit | Cosmos DB, partitioned by match |
+| The sentence for a moment | A model on Microsoft Foundry, held to the verifier, with one repair and the templates as the fallback |
+| The closest earlier attempt | AI Search over the season's attacks |
+| The screens | Web PubSub pushes each cue as it is issued; the site is a static website in Blob Storage |
+| Tracing | Application Insights, with every hold and its reason |
+
+Each part is chosen by its setting: with `TEMPO_AZURE_*` set it runs on Azure, without it on its local implementation. Identity is Entra ID, with no keys. To deploy (with the [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/)):
+
+```bash
+azd up
+```
+
+That provisions everything in `infra/` and deploys the services. A match is played by starting the feeder and the listener, and watched on the site's match page with `?live=` and the live service's address; `azd up` prints both. On a laptop, `uv sync --extra azure` and `azd env get-values` point the same commands (`tempo feed`, `tempo live`, `tempo listen`, `tempo index`) at the deployed resources.
 
 ## In this repository
 
 | Folder | What is in it |
 |---|---|
-| `tempo/` | The pipeline: `generator/` (the match), `pipeline/` (ledger, reflex service, cue service, the run and its files), `agents/` (writer, backends, verifier), `instruments/` (ghost, earlier attempt, call rules), `stake/` (the stake model), `eval/` (the checks) |
+| `tempo/` | The pipeline: `generator/` (the match), `pipeline/` (ledger, reflex service, cue service, the feeder and the live service, the run and its files), `agents/` (writer, backends, verifier), `instruments/` (ghost, earlier attempt, call rules), `stake/` (the stake model), `eval/` (the checks), `azure/` (the adapter for each Azure service) |
 | `web/` | The site: six pages on one stage, in TypeScript with Vite and three.js. `web/public/runs/m_demo/` is the demo match |
 | `models/` | The trained stake model and ghost, each with its metrics, and the generated season |
+| `infra/`, `azure.yaml`, `Dockerfile` | The Azure deployment: Bicep for every resource and role, the `azd` project and its hooks, the services' image |
 | `results/` | What each evaluation measured. The evidence page reads these |
 | `experiments/` | The tests behind design decisions, with their results |
-| `tests/`, `web/e2e/` | Unit tests, the contract between pipeline and site, the demo match reproduced byte for byte, and every page opened in a browser |
+| `tests/`, `web/e2e/` | Unit tests, the Azure adapters, the contract between pipeline and site, the demo match reproduced byte for byte, the live path over the bus, and every page opened in a browser |
 | `tools/` | The film's sound, the logo files, and the moving previews on the home page |
 | `assets/audio/` | The recordings the film's sound is cut from, with their licences |
 
@@ -69,6 +94,7 @@ Today each cloud part has a local stand-in behind the same interface: SQLite for
 Every push runs the same gates ([.github/workflows/ci.yml](.github/workflows/ci.yml)):
 
 ```bash
+uv sync --extra azure
 uv run ruff check . && uv run ruff format --check . && uv run pyright
 uv run pytest
 uv run tempo check

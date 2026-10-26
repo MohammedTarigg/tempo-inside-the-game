@@ -47,8 +47,8 @@ export const goalBox = (gx: number, gd: number): [number, number, number][] => [
   [gx + gd, 3.66, 1.6],
 ];
 
-// A chip under the caption: an icon, its words, and whether it is still planned.
-export type Chip = [icon: string, text: string, planned?: boolean];
+// A chip under the caption: an icon and its words, saying where what is on screen comes from.
+export type Chip = [icon: string, text: string];
 // The corner logo's parts, kept for the close: the ring, the two limbs, the gradient that fades the word, the soft tails,
 // the eye's radius, and where the word ends and its middle lies, in the drawing's own units.
 export interface LogoArt {
@@ -125,12 +125,10 @@ export function makeFurniture() {
       if (typeof line === 'string') capLine.textContent = line;
       else capLine.replaceChildren(...line);
       capChips.replaceChildren(
-        ...chips.map(([icon, text, planned]) => {
+        ...chips.map(([icon, text]) => {
           const c = document.createElement('span');
-          c.className = planned ? 'planned' : '';
           c.innerHTML = ICON[icon] ?? '';
           el('b', '', c, text);
-          if (planned) el('em', '', c, 'planned');
           return c;
         }),
       );
