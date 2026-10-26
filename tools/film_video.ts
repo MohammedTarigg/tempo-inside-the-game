@@ -1,12 +1,13 @@
 // The product film as video files: bun tools/film_video.ts [port] (the dev server or the preview running on the port
-// given, 4173 by default, and ffmpeg on the path). Writes exports/tempo-film.mp4, with the film's music, and
-// exports/tempo-film-silent.mp4, without it, both 1920 by 1080 at 30 frames a second.
+// given, 4173 by default, and ffmpeg on the path). Writes exports/tempo-film.mp4, with the film's sound, and
+// exports/tempo-film-no-music.mp4, with the same crowd and commentator but no music (tools/film_music.py writes both
+// tracks), each 1920 by 1080 at 30 frames a second.
 //
 // The film is not filmed in real time, where a frame that takes long to draw is a frame dropped. The page's clock is taken
 // over from the first moment: performance.now, requestAnimationFrame, setTimeout and every CSS and web animation (the
 // browser's own animation clock is stopped and each animation is moved on by hand), in the page and in the replay's frame.
 // Each picture moves that clock on by exactly a thirtieth of a second and is then captured, so the video plays every frame
-// at its time however slowly it was drawn. The music is laid under it from the moment the film's clock reads zero, which
+// at its time however slowly it was drawn. The sound is laid under it from the moment the film's clock reads zero, which
 // is where it starts on the page.
 import { chromium } from '@playwright/test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -15,7 +16,10 @@ import { join } from 'node:path';
 
 const BASE = `http://localhost:${process.argv[2] ?? '4173'}`,
   OUT = 'exports',
-  MUSIC = 'web/public/audio/tempo-theme.m4a',
+  SOUND = [
+    ['tempo-film', 'web/public/audio/tempo-theme.m4a'],
+    ['tempo-film-no-music', 'web/public/audio/tempo-theme-room.m4a'],
+  ] as const,
   FPS = 30,
   DPR = 1.5; // a 1280 by 720 page recorded at 1920 by 1080
 
@@ -108,6 +112,7 @@ const ff = (args: string[]) => {
   const run = Bun.spawnSync(['ffmpeg', '-y', '-loglevel', 'error', ...args]);
   if (run.exitCode !== 0) throw new Error(`ffmpeg failed: ${run.stderr.toString()}`);
 };
+const picture = join(dir, 'picture.mp4');
 ff([
   '-framerate',
   String(FPS),
@@ -121,32 +126,30 @@ ff([
   '17',
   '-preset',
   'slow',
-  '-movflags',
-  '+faststart',
-  `${OUT}/tempo-film-silent.mp4`,
+  picture,
 ]);
-ff([
-  '-i',
-  `${OUT}/tempo-film-silent.mp4`,
-  // the music starts where the film's clock reads zero: later in the video, or trimmed if that is before its first frame
-  ...(lead >= 0 ? ['-itsoffset', lead.toFixed(3)] : ['-ss', (-lead).toFixed(3)]),
-  '-i',
-  MUSIC,
-  '-map',
-  '0:v',
-  '-map',
-  '1:a',
-  '-c:v',
-  'copy',
-  '-c:a',
-  'aac',
-  '-b:a',
-  '192k',
-  '-shortest',
-  '-movflags',
-  '+faststart',
-  `${OUT}/tempo-film.mp4`,
-]);
+for (const [name, track] of SOUND)
+  ff([
+    '-i',
+    picture,
+    // the sound starts where the film's clock reads zero: later in the video, or trimmed if that is before its first frame
+    ...(lead >= 0 ? ['-itsoffset', lead.toFixed(3)] : ['-ss', (-lead).toFixed(3)]),
+    '-i',
+    track,
+    '-map',
+    '0:v',
+    '-map',
+    '1:a',
+    '-c:v',
+    'copy',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '192k',
+    '-movflags',
+    '+faststart',
+    `${OUT}/${name}.mp4`,
+  ]);
 rmSync(dir, { recursive: true });
 console.log(
   `wrote ${OUT}/tempo-film.mp4 and ${OUT}/tempo-film-silent.mp4: ${i} frames, music from ${lead.toFixed(2)} s`,

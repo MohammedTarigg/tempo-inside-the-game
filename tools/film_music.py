@@ -27,8 +27,9 @@ What the edit does:
   stops the music, with the room ringing on, before the shot and before the card lights
   dulls it for the close and cuts it at the blink
 
-The sources are read from assets/audio/. For each track it writes web/public/audio/tempo-theme[-name].m4a and a .json of
-the same name, which web/src/film/film.ts reads for its timings. The moments named here (the shot 'strike' beats into Thunderbolt, the
+The sources are read from assets/audio/. For each track it writes web/public/audio/tempo-theme[-name].m4a, the same mix
+without the music as tempo-theme[-name]-room.m4a (the crowd and the commentator alone, for the film without music), and a
+.json of the same name, which web/src/film/film.ts reads for its timings. The moments named here (the shot 'strike' beats into Thunderbolt, the
 card 'lit' beats into On a yellow, the blink in the close) are the film's. If one moves in web/src/film/, move it here."""
 
 import json
@@ -263,11 +264,13 @@ def edit(name):
     k = int(0.6 * SR)
     cg = smooth(cg)
     k = int(0.35 * SR)
-    y = y + crowd * cg[:, None]
+    # ---- the room: the crowd and the commentator, the same with the music and without it ----
+    room = crowd * cg[:, None]
     i_s = int(say * SR)
-    y[i_s : i_s + len(voice)] += voice[: N - i_s, None]
-    y *= (np.minimum(1, t / 0.25) * np.minimum(1, (total - t) / 0.3))[:, None]
-    y = np.tanh(y * 1.2) / 1.2
+    room[i_s : i_s + len(voice)] += voice[: N - i_s, None]
+    ends = (np.minimum(1, t / 0.25) * np.minimum(1, (total - t) / 0.3))[:, None]
+    y = np.tanh((y + room) * ends * 1.2) / 1.2
+    room = np.tanh(room * ends * 1.2) / 1.2
     # ---- report ----
     db = lambda v: 20 * np.log10(np.sqrt(np.mean(v**2)) + 1e-12)
     print(
@@ -297,29 +300,30 @@ def edit(name):
     )
     out = "tempo-theme-" + name
     raw = os.path.join(OUT, "_theme.f32")
-    y.astype("<f4").tofile(raw)
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-loglevel",
-            "error",
-            "-f",
-            "f32le",
-            "-ar",
-            str(SR),
-            "-ac",
-            "2",
-            "-i",
-            raw,
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            os.path.join(OUT, out + ".m4a"),
-        ],
-        check=True,
-    )
+    for mix, tail in ((y, ""), (room, "-room")):
+        mix.astype("<f4").tofile(raw)
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel",
+                "error",
+                "-f",
+                "f32le",
+                "-ar",
+                str(SR),
+                "-ac",
+                "2",
+                "-i",
+                raw,
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                os.path.join(OUT, out + tail + ".m4a"),
+            ],
+            check=True,
+        )
     os.remove(raw)
     with open(os.path.join(OUT, out + ".json"), "w") as fh:
         json.dump(
@@ -344,7 +348,7 @@ def edit(name):
             indent=1,
         )
     if name == next(iter(TRACKS)):  # the default is also written under the plain name
-        for ext in (".m4a", ".json"):
+        for ext in (".m4a", "-room.m4a", ".json"):
             with (
                 open(os.path.join(OUT, out + ext), "rb") as a,
                 open(os.path.join(OUT, "tempo-theme" + ext), "wb") as b,
