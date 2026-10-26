@@ -7,7 +7,7 @@ hear. So the music is a recording by a musician, and this script only edits it.
 
 The track is "With You" by Soft and Furious, from the Free Music Archive, dedicated to the public domain by the artist
 under CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/). No credit is required; it is given anyway in
-assets/audio/README.md. It was chosen by ear from nine public-domain tracks, against a reference measured from two
+CREDITS.md. It was chosen by ear from nine public-domain tracks, against a reference measured from two
 product films: about 129 beats a minute in C major, led by the bass, centred near 250 Hz, at a steady level. Of 109
 tracks measured, this was the closest. Another track can be tried by putting its mp3 in assets/audio/ and adding a line to TRACKS; it plays with
 ?music=<name>.

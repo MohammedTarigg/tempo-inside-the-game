@@ -136,7 +136,7 @@ def write_case(root, name, md, goal_t, net, season, search, ordinary):
         )
         readme = (
             Path(__file__)
-            .with_name("README_case.md")
+            .with_name("brief.md")
             .read_text()
             .replace("{MIN}", str(int(goal_t // 60) + 1))
             .replace("{T}", f"{goal_t:.1f}")
@@ -144,7 +144,7 @@ def write_case(root, name, md, goal_t, net, season, search, ordinary):
         if kind == "inst":
             readme += (
                 Path(__file__)
-                .with_name("README_inst.md")
+                .with_name("brief_instruments.md")
                 .read_text()
                 .replace("{MED}", str(ordinary[0]))
                 .replace("{P90}", str(ordinary[1]))

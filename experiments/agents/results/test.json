@@ -19,7 +19,7 @@
    "case": "case01",
    "kind": "raw",
    "run": 2,
-   "error": "[Errno 2] No such file or directory: '/private/tmp/claude-50"
+   "error": "the run did not start: its verdict file was never written"
   },
   {
    "case": "case01",
@@ -100,7 +100,7 @@
    "case": "case02",
    "kind": "inst",
    "run": 2,
-   "error": "[Errno 2] No such file or directory: '/private/tmp/claude-50"
+   "error": "the run did not start: its verdict file was never written"
   },
   {
    "case": "case03",

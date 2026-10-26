@@ -13,7 +13,7 @@ bun install
 bun run dev
 ```
 
-Then open http://localhost:5173. The home page is the logo's halfway line, and scrolling moves the eye along it to four ways in, each opening a window on its page:
+Then open http://localhost:5173. The home page is the logo's halfway line. The eye follows the pointer along it to four ways in; each opens a window on its page, and a click goes in:
 
 - **The film**, 107 seconds on the real match view: the seven features in match order, then the evidence.
 - **The match**, the whole demo match with everything Tempo chose to show, the phone beside it in English or Arabic, and a follow control for one club or one player. At full time the strip rises into the turning points, and each one plays again when tapped.
@@ -87,11 +87,9 @@ That provisions everything in `infra/` and deploys the services. A match is play
 | `experiments/` | The tests behind design decisions, with their results |
 | `tests/`, `web/e2e/` | Unit tests, the Azure adapters, the contract between pipeline and site, the demo match reproduced byte for byte, the live path over the bus, and every page opened in a browser |
 | `tools/` | The film's sound, the logo files, and the moving previews on the home page |
-| `assets/audio/` | The recordings the film's sound is cut from, with their licences |
+| `assets/audio/` | The recordings the film's sound is cut from (see CREDITS.md) |
 
 ## Checks
-
-Every push runs the same gates ([.github/workflows/ci.yml](.github/workflows/ci.yml)):
 
 ```bash
 uv sync --extra azure

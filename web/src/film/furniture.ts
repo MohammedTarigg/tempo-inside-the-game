@@ -51,7 +51,7 @@ export const goalBox = (gx: number, gd: number): [number, number, number][] => [
 export type Chip = [icon: string, text: string];
 // The corner logo's parts, kept for the close: the ring, the two limbs, the gradient that fades the word, the soft tails,
 // the eye's radius, and where the word ends and its middle lies, in the drawing's own units.
-export interface LogoArt {
+interface LogoArt {
   ring: SVGEllipseElement;
   limbs: SVGPathElement[];
   fade: SVGLinearGradientElement;

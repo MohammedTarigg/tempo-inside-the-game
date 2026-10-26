@@ -278,7 +278,7 @@ export function facing(px: number, py: number, vx: number, vy: number, bx: numbe
   return toBall + off * Math.min(1, Math.max(0, (sp - 2.5) / 4.5));
 }
 // The crest for a club, by its short name. Clubs without one keep their colour bar.
-export const CRESTS: Record<string, string> = { nor: 'northgate.svg', har: 'harbour-city.svg' };
+const CRESTS: Record<string, string> = { nor: 'northgate.svg', har: 'harbour-city.svg' };
 // The address of a club's crest, or null for a club without one.
 export const crestUrl = (short: string) => {
   const f = CRESTS[short.toLowerCase()];

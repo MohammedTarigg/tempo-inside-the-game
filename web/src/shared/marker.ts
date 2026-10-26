@@ -7,7 +7,7 @@ const CARD = 0xffd21f;
 // a marker is a symbol, drawn larger than the man so his number reads
 const R = 0.8;
 
-export function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void) {
+function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void) {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
@@ -16,7 +16,7 @@ export function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingCon
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
-export const css = (hex: number) => `#${hex.toString(16).padStart(6, '0')}`;
+const css = (hex: number) => `#${hex.toString(16).padStart(6, '0')}`;
 const STREAK = canvasTexture(8, 64, (g, w, h) => {
   const r = g.createLinearGradient(0, 0, 0, h);
   r.addColorStop(0, 'rgba(255,255,255,0.5)');

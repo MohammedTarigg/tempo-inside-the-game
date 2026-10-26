@@ -4,7 +4,7 @@ import { lerp, clamp, smooth } from '../shared/util.ts';
 import { startLead } from './start.ts';
 import type { Clip, ReplayScene } from '../types/run.ts';
 
-export type Phase = 'stop' | 'back' | 'then' | 'thenhold' | 'rewind' | 'now' | 'diff' | 'finish' | 'hold';
+type Phase = 'stop' | 'back' | 'then' | 'thenhold' | 'rewind' | 'now' | 'diff' | 'finish' | 'hold';
 // What is on the pitch at one second of the show. a: what the solid markers show, as a clip and a frame of it. b: what
 // they are on the way to, u of the way there. ghost: how strongly the earlier attempt's end is drawn. gap: how far the
 // measured distance is drawn in.

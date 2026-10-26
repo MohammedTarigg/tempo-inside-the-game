@@ -157,11 +157,11 @@ A verdict is a typed object: `{cause_type, team, player_id, onset_minute, eviden
 
 The Foundry model behind `FoundryBackend` (`tempo/azure/foundry.py`) answers in structured output with four fields in this order: the fact ids it cites, in the order the sentence uses them; `nothing_to_say`; the line; the label. Citing first makes the model commit to its evidence before it writes, and lets the verifier check the ids against the facts the moment was given before it reads the text. `nothing_to_say: true` ends the call: the screen stays clear and the audit logs it as held, so the producer's desk shows it like any other hold. A line that fails the verifier goes back once with the exact reasons and one instruction, to fix the wording and keep the facts; a second failure gets the template. The verifier also runs a copy lint: a label of six words or fewer, no em dash, none of the overclaiming words, no minute that is not in a cited fact. Each surface gets one question and is told what it must not repeat: the moment line, the half-time open threads, the full-time pins.
 
-The same matches measure it. On Foundry, the demo match and the planted matches run 5 times each, and the count of lines that passed first time, needed the repair, or fell back to the template goes to `results/` and the README, with an empty or failed run counted as a failure. The desk is measured the same way: how often the two investigators give the same verdict across runs. The harness already has two runs a case: 14 of 16 case and arm pairs gave the same verdict both times, and the two that did not are the two runs that failed to start. Counts are reported, never percentages, because the samples are small.
+The same matches measure it on a deployment: the demo match and the planted matches run 5 times each, counting the lines that passed first time, needed the repair, or fell back to the template, with an empty or failed run counted as a failure. The desk is measured the same way: how often the two investigators give the same verdict across runs. The harness already has two runs a case: 14 of 16 case and arm pairs gave the same verdict both times, and the two that did not are the two runs that failed to start. Counts are reported, never percentages, because the samples are small.
 
 ### The tests behind it
 
-The scripts are in `experiments/ghost/` and `experiments/agents/`, each with its results beside it. The investigators were Claude Sonnet run headless, each in its own folder with no sight of the answers. None of the 42 runs opened a file outside its folder.
+The scripts are in `experiments/`, each with its results beside it, run with `uv run python -m experiments.<folder>.<script>`. In `ghost/`, `evaluate.py` fits the ghost on six real matches and scores the seventh in turn, and `demo_test.py` and `standoff_test.py` fit it on generated matches and look at the demo's goals against ordinary shots. In `agents/`, `build_cases.py` writes the blind cases (eight goals, four with a planted cause, each with the feed only and with the instruments, the answers kept apart), `run_one.sh` gives one case to an investigator in its own folder, `score.py` scores the runs and the agreement gate, `code_rule.py` scores the fixed rule, and `sustained_sim/` with `run_sustained.sh` is the simpler simulator with causes that last. The investigators were Claude Sonnet run headless, each in its own folder with no sight of the answers. None of the 42 runs opened a file outside its folder.
 
 | Question | Test | Result |
 |---|---|---|
@@ -190,16 +190,6 @@ The scripts are in `experiments/ghost/` and `experiments/agents/`, each with its
 - The ghost that found Skoles was fitted on generated matches. The ghost fitted on real matches did not single him out on generated football, where defenders stand closer to the ball than real ones do.
 - The instruments file described two near-identical attacks as "0.4 m average gap". Two investigators read that as a weak signal, so the instruments may have been undersold.
 - The test subjects ran on Claude Sonnet through a command line, not on a Foundry deployment.
-
-### Against the Multi-Agent prize
-
-| What the judges assess | Tempo's answer | State |
-|---|---|---|
-| Specialized agents with distinct roles | 22 player agents with a ledger, a stake score and a ghost. Investigators with code tools. A writer that sees only the verdict | Player layer built. Investigators tested as a harness |
-| Coordination through shared state | Everything goes through the fact ledger | Built |
-| Effective hand-offs | Typed objects that code validates before the next step | Built for the writing path |
-| Recovery from failures | Checkpoint after each step, breaker, template fallback, same cue IDs after a restart | Built and tested for the writing path |
-| An outcome one agent could not achieve as effectively | One language model cannot compute where 22 players should stand. The gate removed the one wrong cause a single investigator named | Measured, on small numbers |
 
 ### What stays from the first design
 

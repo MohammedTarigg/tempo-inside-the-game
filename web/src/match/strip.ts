@@ -7,8 +7,6 @@ import type { Match, ShownMark } from './data.ts';
 import { crestUrl } from '../shared/stage.ts';
 import type { Pin } from '../types/run.ts';
 
-export type Strip = ReturnType<typeof makeStrip>;
-
 // A football for a goal: a white ball with its black centre panel, seams out to five panels cut by the rim, and a ring in the
 // colour of the side that scored (from the goal's class)
 const BALL = (() => {
