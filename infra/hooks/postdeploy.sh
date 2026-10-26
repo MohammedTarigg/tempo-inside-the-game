@@ -4,8 +4,8 @@
 set -eu
 eval "$(azd env get-values)"
 bun install --frozen-lockfile
-bun run build
+VITE_TEMPO_LIVE_URL="$TEMPO_LIVE_URL" bun run build  # the one live service the site's pages will take cues from
 az storage blob upload-batch --auth-mode login --overwrite \
   --account-name "$TEMPO_STORAGE_ACCOUNT" --destination '$web' --source dist
 echo "site: $TEMPO_SITE_URL"
-echo "a live screen: ${TEMPO_SITE_URL}match/?live=$TEMPO_LIVE_URL"
+echo "a live screen: ${TEMPO_SITE_URL}match/?live=1"

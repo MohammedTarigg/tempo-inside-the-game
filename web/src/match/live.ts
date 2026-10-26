@@ -1,4 +1,4 @@
-// A live screen. Opened with ?live=<the live service's address>, the match page takes its cues from the live service
+// A live screen. Opened with ?live=1 (or, while developing, ?live=<a live service on this machine>), the match page takes its cues from the live service
 // rather than from the run's files: first every cue issued so far (/cues), then each new one as it is issued, pushed
 // through Azure Web PubSub. The picture is the run's own positions, and each screen releases a cue only when its picture
 // reaches the frame the cue was issued on, so a screen behind the live picture never shows anything early.
@@ -16,6 +16,28 @@ interface Withdrawn {
 }
 
 const isWithdrawn = (m: Cue | Withdrawn): m is Withdrawn => m.status === 'withdrawn' && !('form' in m);
+
+// Which live service a page may take cues from: the one this build was deployed with, or one on this machine while
+// developing. An address from anywhere else is refused, so a link cannot feed the page someone else's words.
+export function liveService(asked: string | null): string | null {
+  if (!asked) return null;
+  const built = import.meta.env.VITE_TEMPO_LIVE_URL as string | undefined;
+  if (asked === '1') return built ?? null;
+  try {
+    const u = new URL(asked);
+    if (built && u.origin === new URL(built).origin) return u.origin;
+    if (['localhost', '127.0.0.1'].includes(u.hostname)) return u.origin;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+// A socket is opened only on Azure Web PubSub's own hosts
+const onPubSub = (url: string) => {
+  const u = new URL(url);
+  return u.protocol === 'wss:' && u.hostname.endsWith('.webpubsub.azure.com');
+};
 
 // The cues issued so far, to build the page from.
 export async function cuesSoFar(service: string): Promise<Cue[]> {
@@ -46,6 +68,7 @@ export function subscribe(service: string) {
         cache: 'no-store',
       });
       const { url } = (await r.json()) as { url: string };
+      if (!onPubSub(url)) throw new Error('not a Web PubSub address');
       socket = new WebSocket(url);
       socket.onopen = () => (pause = 1000);
       socket.onmessage = (e: MessageEvent<string>) => deliver(JSON.parse(e.data) as Cue | Withdrawn);

@@ -73,7 +73,7 @@ Each part is chosen by its setting: with `TEMPO_AZURE_*` set it runs on Azure, w
 azd up
 ```
 
-That provisions everything in `infra/` and deploys the services. A match is played by starting the feeder and the listener, and watched on the site's match page with `?live=` and the live service's address; `azd up` prints both. On a laptop, `uv sync --extra azure` and `azd env get-values` point the same commands (`tempo feed`, `tempo live`, `tempo listen`, `tempo index`) at the deployed resources.
+That provisions everything in `infra/` and deploys the services. A match is played by starting the feeder and the listener, and watched on the site's match page with `?live=1`; `azd up` prints both addresses. On a laptop, `uv sync --extra azure` and `azd env get-values` point the same commands (`tempo feed`, `tempo live`, `tempo listen`, `tempo index`) at the deployed resources.
 
 ## In this repository
 

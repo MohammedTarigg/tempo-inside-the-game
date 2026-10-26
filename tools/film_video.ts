@@ -152,5 +152,5 @@ for (const [name, track] of SOUND)
   ]);
 rmSync(dir, { recursive: true });
 console.log(
-  `wrote ${OUT}/tempo-film.mp4 and ${OUT}/tempo-film-silent.mp4: ${i} frames, music from ${lead.toFixed(2)} s`,
+  `wrote ${SOUND.map(([n]) => `${OUT}/${n}.mp4`).join(' and ')}: ${i} frames, sound from ${lead.toFixed(2)} s`,
 );
