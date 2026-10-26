@@ -1,0 +1,30 @@
+# Tempo on Azure. `azd up` provisions infra/ and deploys the services' image to the live service's Container App; the
+# hooks enable the site's static website, put the season's attacks in AI Search, and publish the site and the demo run.
+# Then a match is played with two jobs: `az containerapp job start` on the feeder and on the listener.
+name: tempo
+metadata:
+  template: tempo
+infra:
+  provider: bicep
+  path: infra
+services:
+  live:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: Dockerfile
+      remoteBuild: true
+hooks:
+  postprovision:
+    posix:
+      shell: sh
+      run: ./infra/hooks/postprovision.sh
+      interactive: false
+      continueOnError: false
+  postdeploy:
+    posix:
+      shell: sh
+      run: ./infra/hooks/postdeploy.sh
+      interactive: false
+      continueOnError: false

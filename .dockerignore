@@ -1,0 +1,8 @@
+# only what the services run: the package, the models and the season, the commentary clip
+*
+!pyproject.toml
+!uv.lock
+!tempo/
+!models/
+!assets/audio/commentator.wav
+**/__pycache__
