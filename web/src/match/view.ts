@@ -25,6 +25,7 @@ import { Marker } from '../shared/marker.ts';
 import { makeBall, makePulses } from '../shared/shapes.ts';
 import { $, lerp, upper, mmss } from '../shared/util.ts';
 import { loadMatch, type ShownMark } from './data.ts';
+import { cuesSoFar, subscribe } from './live.ts';
 import { mountMatchPage, ICONS } from './markup.ts';
 import { pin, place } from './pins.ts';
 import { makeKickoffMarks, type HeldMark } from './marks.ts';
@@ -74,7 +75,11 @@ export async function startMatch(mode: Mode, Q = new URLSearchParams(location.se
   const intro = wantIntro ? playIntro($('intro')) : Promise.resolve(null);
   if (!wantIntro && !FILM) $('intro').remove();
   await Promise.all([document.fonts.load(`700 20px ${FONT}`), document.fonts.load(`600 20px ${FONT}`)]).catch(() => {}); // the numbers on the markers are drawn once, so the face must be in
-  const match = await loadMatch(Q.get('run') || 'm_demo');
+  // a live screen: cues from the live service, the picture from the run (live.ts)
+  const service = Q.get('live'),
+    push = service ? subscribe(service) : null;
+  const match = await loadMatch(Q.get('run') || 'm_demo', service ? await cuesSoFar(service) : undefined);
+  if (match && push) push.attach(match);
   if (!match) throw new Error('Could not load the match. Run `uv run tempo run` to write it, then reload.');
   const {
     M,

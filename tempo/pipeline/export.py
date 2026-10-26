@@ -16,6 +16,23 @@ if TYPE_CHECKING:
     from .run import Pipeline
 
 
+def screen_cue(c, frame):
+    """A cue as the site reads it, stamped with the frame it was issued on. The run's files and the live push to the
+    screens (tempo/azure/webpubsub.py) both send this shape."""
+    return dict(
+        id=c["cue_id"],
+        frame=frame,
+        t=c["match_time"],
+        form=c["form"],
+        screen=c["screen"],
+        when=c["when"],
+        valid_for=c["valid_for"],
+        priority=c["priority"],
+        payload=c["payload"],
+        status=c["status"],
+    )
+
+
 def _with_gaps(pos):
     """Positions as nested lists, with None where a player is off the pitch."""
     out = pos.astype(object)
@@ -180,21 +197,7 @@ class Export:
         acts.sort(key=lambda a: a["frame"])
         live = md["live"].astype(bool)
         flips = (np.flatnonzero(live[1:] != live[:-1]) + 1).tolist()
-        out_cues = [
-            dict(
-                id=c["cue_id"],
-                frame=self.run.cues.frame_of.get(c["cue_id"], guess(c["match_time"])),
-                t=c["match_time"],
-                form=c["form"],
-                screen=c["screen"],
-                when=c["when"],
-                valid_for=c["valid_for"],
-                priority=c["priority"],
-                payload=c["payload"],
-                status=c["status"],
-            )
-            for c in cues
-        ]
+        out_cues = [screen_cue(c, self.run.cues.frame_of.get(c["cue_id"], guess(c["match_time"]))) for c in cues]
         desk = self.desk_rows(out_cues, guess)
         goals = [
             dict(

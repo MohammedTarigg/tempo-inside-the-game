@@ -84,14 +84,20 @@ class TwinSearch:
             self._pairs.append(compare(vec, o["vec"])["gap_m"])
         self.archive.append(dict(vec=vec, team=team, match_id=match_id, t=t, outcome=outcome, meta=meta or {}))
 
-    def closest_earlier(self, vec, team, match_id, t, outcome) -> dict[str, Any] | None:
-        """The nearest earlier attack by the same team with a different result. Returns None when nothing is close
-        enough."""
-        cands = [
+    def candidates(self, vec, team, match_id, t, outcome):
+        """The earlier attacks this one may be compared with: same team, a different result, and from this match only
+        if it came at least 20 seconds before. Here every attack in the archive is a candidate; on Azure, AI Search
+        retrieves the nearest ones across the season (tempo/azure/search.py)."""
+        return [
             o
             for o in self.archive
             if o["team"] == team and o["outcome"] != outcome and (o["match_id"] != match_id or o["t"] < t - 20)
         ]
+
+    def closest_earlier(self, vec, team, match_id, t, outcome) -> dict[str, Any] | None:
+        """The nearest earlier attack by the same team with a different result. Returns None when nothing is close
+        enough."""
+        cands = self.candidates(vec, team, match_id, t, outcome)
         if not cands or len(self._pairs) < 30:
             return None
         scored = [(compare(vec, o["vec"]), o) for o in cands]

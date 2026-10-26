@@ -5,6 +5,21 @@ description = "Tempo: before the moment, the stake; after it, the reason. A foot
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0", "torch>=2.2"]
 
+# The Azure adapters (tempo/azure/). Without them, and without TEMPO_AZURE_* settings, every part runs on its local
+# stand-in. `uv sync --extra azure` installs them; the container image always has them
+[project.optional-dependencies]
+azure = [
+  "azure-identity>=1.19",
+  "azure-cognitiveservices-speech>=1.41",
+  "azure-eventhub>=5.12",
+  "azure-cosmos>=4.7",
+  "azure-messaging-webpubsubservice>=1.2",
+  "azure-search-documents>=11.5",
+  "azure-storage-blob>=12.23",
+  "azure-monitor-opentelemetry>=1.6",
+  "openai>=1.60",
+]
+
 [dependency-groups]
 dev = ["ruff>=0.6", "pyright>=1.1.380", "pytest>=8"]
 

@@ -16,8 +16,10 @@ export type Match = NonNullable<Awaited<ReturnType<typeof loadMatch>>>;
 export type ShownMark = Timed<KickoffMarkCue> & { again?: boolean };
 
 // Reads runs/<run>/ and returns the match laid out so that any moment can be shown directly, or null if the run cannot be
-// fetched. The address is relative to the page, as every address a page fetches is.
-export async function loadMatch(run: string) {
+// fetched. The address is relative to the page, as every address a page fetches is. `cues`, when given, stands in for
+// the run's own: on a live screen they are the cues the live service has issued so far, and add() and withdraw() take
+// the ones pushed after (live.ts).
+export async function loadMatch(run: string, cues?: Cue[]) {
   const base = `/runs/${run}/`;
   const [M, buf] = await Promise.all([
     fetch(base + 'match.json', { cache: 'no-cache' }).then((r) => {
@@ -81,9 +83,12 @@ export async function loadMatch(run: string) {
     said: PhoneSentenceCue[] = [],
     marks: Timed<KickoffMarkCue>[] = [],
     shownFrames: number[] = [];
-  let danger: DangerWindowPayload | null = null;
-  for (const c of M.cues) {
-    if (c.status === 'withdrawn') continue;
+  let danger = null as DangerWindowPayload | null; // set inside take(), which the type checker does not follow
+  const have = new Set<string>();
+  // one cue into the lists it belongs to
+  const take = (c: Cue) => {
+    if (c.status === 'withdrawn' || have.has(c.id)) return false;
+    have.add(c.id);
     if (c.form !== 'stake_card' || c.payload.level > 0) shownFrames.push(c.frame);
     if (c.form === 'stake_card') {
       const s = stake[index(c.payload.player)]!;
@@ -98,7 +103,9 @@ export async function loadMatch(run: string) {
         c.when === 'next_pause' ? nextDead(c.frame) : c.when === 'next_replay' ? c.frame + 2 * FPS : c.frame;
       timed.push({ ...c, start, end: start + c.valid_for * FPS });
     }
-  }
+    return true;
+  };
+  for (const c of cues ?? M.cues) take(c);
   marks.forEach((c, i) => {
     c.start = i * 8 * FPS;
     c.end = c.start + 8 * FPS;
@@ -122,7 +129,7 @@ export async function loadMatch(run: string) {
 
   // the moments worth jumping to, for the Next and Back buttons
   const moments: Moment[] = [{ f: 0, text: 'Before kick-off: three things to watch' }];
-  for (const c of timed) {
+  const moment = (c: Timed) => {
     if (c.form === 'tag') moments.push({ f: c.start, text: `${name(c.payload.player)}: ${c.payload.text}` });
     else if (c.form === 'duel')
       moments.push({ f: c.start, text: `${name(c.payload.defender)} against ${name(c.payload.attacker)}` });
@@ -131,7 +138,8 @@ export async function loadMatch(run: string) {
     else if (c.form === 'label') moments.push({ f: c.start, text: c.payload.text });
     else if (c.form === 'halftime_card') moments.push({ f: c.start, text: 'Half time' });
     else if (c.form === 'fulltime_card') moments.push({ f: c.start, text: 'Full time' });
-  }
+  };
+  timed.forEach(moment);
   stake.forEach((s, i) =>
     s.v.forEach((v, k) => {
       if (v[0] === 2 && (!k || s.v[k - 1]![0] !== 2))
@@ -140,7 +148,27 @@ export async function loadMatch(run: string) {
   );
   moments.sort((a, b) => a.f - b.f);
 
+  // A cue pushed live, after the page was built: into the same lists, kept in frame order.
+  const add = (c: Cue) => {
+    if (!take(c)) return;
+    shownFrames.sort((a, b) => a - b);
+    const t = timed[timed.length - 1];
+    if (t && t.id === c.id) {
+      moment(t);
+      moments.sort((a, b) => a.f - b.f);
+    }
+  };
+  // A cue taken back after it was issued: off every list the picture reads.
+  const withdraw = (id: string) => {
+    for (const list of [timed, said, marks] as { id: string }[][]) {
+      const k = list.findIndex((c) => c.id === id);
+      if (k >= 0) list.splice(k, 1);
+    }
+  };
+
   return {
+    add,
+    withdraw,
     M,
     N,
     FPS,

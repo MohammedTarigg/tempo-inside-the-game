@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -31,23 +32,43 @@ from .ledger import Ledger
 from .listener import Listener
 from .reflex import Reflex, win_chance
 
+if TYPE_CHECKING:
+    from ..azure import Wiring
+
 
 class Pipeline:
     def __init__(
-        self, md: MatchData, out_dir, model=None, season=None, search=None, rules=None, db_path=None, work_dir=None
+        self,
+        md: MatchData,
+        out_dir,
+        model=None,
+        season=None,
+        search=None,
+        rules=None,
+        db_path=None,
+        work_dir=None,
+        wiring: "Wiring | None" = None,
     ):
-        # out_dir gets what the site reads; work_dir the run's own working files (ledger, bus, audit), out_dir by default
+        # out_dir gets what the site reads; work_dir the run's own working files (ledger, bus, audit), out_dir by default.
+        # wiring is what the run is built from on Azure (tempo/azure/__init__.py); without it every part is local
         self.md, self.meta, self.out, self.work = md, md["meta"], out_dir, work_dir or out_dir
         os.makedirs(out_dir, exist_ok=True)
         os.makedirs(self.work, exist_ok=True)
-        self.ledger = Ledger(db_path or os.path.join(self.work, "tempo.sqlite"))
-        self.bus = LocalBus(self.work)
+        if wiring:
+            self.ledger, bus, search = wiring.ledger, wiring.bus, wiring.search or search
+        else:
+            self.ledger, bus = Ledger(db_path or os.path.join(self.work, "tempo.sqlite")), LocalBus(self.work)
+        if wiring and wiring.push:
+            from ..azure.webpubsub import PushingBus
+
+            bus = PushingBus(bus, wiring.push, lambda: self.cues.frame)
+        self.bus = bus
         self.cues = CueService(self.meta["match_id"], self.ledger, self.bus, rules)
         self.season = season or {}
         self.reflex = Reflex(
             self.meta, md["team"], self.ledger, self.cues, model or StakeModel(), baselines=self.season, search=search
         )
-        self.writer = Writer(self.ledger, self.cues, self.meta)
+        self.writer = Writer(self.ledger, self.cues, self.meta, backend=wiring.backend if wiring else None)
         self.listener = Listener(self.meta)
         self.view = dict(pos=md["pos"], ball=md["ball"], live=md["live"], poss=md["poss"], team=md["team"])
         self.ev_i = self.cm_i = 0
@@ -120,59 +141,76 @@ class Pipeline:
 
     # ----- the run -----
     def run(self, start=0, stop_at=None, checkpoint_every_s=30):
-        md, R = self.md, self.reflex
-        n = len(md["clock"])
-        if start == 0:
-            self.kickoff()
-        last_cp = md["clock"][start] if start < n else 0
+        """The whole match from frame `start`. Returns False if `stop_at` cut it short (a simulated crash)."""
+        n = len(self.md["clock"])
+        self.begin(start, checkpoint_every_s)
         for i in range(start, n):
             if stop_at is not None and i >= stop_at:
                 return False  # a simulated crash: nothing after the last checkpoint is saved
-            t, period = float(md["clock"][i]), int(md["period"][i])
-            self.cues.frame = i
-            if period == 2 and not self.halftime_done:
-                self.halftime(45 * 60.0)
-                self.halftime_done = True
-            t0 = time.perf_counter()
-            while (
-                self.ev_i < len(md["events"])
-                and md["events"][self.ev_i]["periodId"] <= period
-                and md["events"][self.ev_i]["matchTime"] <= t
-            ):
-                e = md["events"][self.ev_i]
-                self.ev_i += 1
-                before = win_chance(R.score, 90 - t / 60)
-                for m in R.on_event(e, self.view, i, md["home_dir"][i]):
-                    if m["kind"] == "goal":
-                        after = win_chance(R.score, 90 - t / 60)
-                        f = self.ledger.put_fact(
-                            fact(self.meta["match_id"], t, "win_chance", "match", after, "home, draw, away")
-                        )
-                        self.swings.append(
-                            dict(
-                                t=t,
-                                swing=round(abs(after[0] - before[0]) + abs(after[2] - before[2]), 3),
-                                moment=m,
-                                fact_id=f["fact_id"],
-                            )
-                        )
-                    self.writer.write_moment(m)
-            while self.cm_i < len(md["commentary"]) and md["commentary"][self.cm_i]["matchTime"] <= t:
-                self.on_commentary(md["commentary"][self.cm_i])
-                self.cm_i += 1
-            for m in R.on_frame(
-                i, t, period, md["pos"][i], md["ball"][i], bool(md["live"][i]), int(md["poss"][i]), md["home_dir"][i]
-            ):
-                if m["kind"] == "pressure":
-                    self.pressures.append(m)
-                self.writer.write_moment(m)
-            self.frame_ms.append((time.perf_counter() - t0) * 1000)
-            if t - last_cp >= checkpoint_every_s:
-                self.checkpoint(i)
-                last_cp = t
-        self.fulltime(float(md["clock"][-1]))
-        self.checkpoint(n - 1)
+            self.step(i)
+        self.end()
         return True
+
+    def begin(self, start=0, checkpoint_every_s=30):
+        """Before the first frame this process plays: the calls at kick-off, if the match is starting."""
+        md = self.md
+        if start == 0:
+            self.kickoff()
+        self.checkpoint_every_s = checkpoint_every_s
+        self.last_cp = float(md["clock"][start]) if start < len(md["clock"]) else 0.0
+
+    def step(self, i: int):
+        """One frame: the events and commentary up to its time, then the frame itself. The live service calls this as
+        each frame arrives; run() calls it for every frame of a finished match."""
+        md, R = self.md, self.reflex
+        t, period = float(md["clock"][i]), int(md["period"][i])
+        self.cues.frame = i
+        if period == 2 and not self.halftime_done:
+            self.halftime(45 * 60.0)
+            self.halftime_done = True
+        t0 = time.perf_counter()
+        while (
+            self.ev_i < len(md["events"])
+            and md["events"][self.ev_i]["periodId"] <= period
+            and md["events"][self.ev_i]["matchTime"] <= t
+        ):
+            e = md["events"][self.ev_i]
+            self.ev_i += 1
+            before = win_chance(R.score, 90 - t / 60)
+            for m in R.on_event(e, self.view, i, md["home_dir"][i]):
+                if m["kind"] == "goal":
+                    after = win_chance(R.score, 90 - t / 60)
+                    f = self.ledger.put_fact(
+                        fact(self.meta["match_id"], t, "win_chance", "match", after, "home, draw, away")
+                    )
+                    self.swings.append(
+                        dict(
+                            t=t,
+                            swing=round(abs(after[0] - before[0]) + abs(after[2] - before[2]), 3),
+                            moment=m,
+                            fact_id=f["fact_id"],
+                        )
+                    )
+                self.writer.write_moment(m)
+        while self.cm_i < len(md["commentary"]) and md["commentary"][self.cm_i]["matchTime"] <= t:
+            self.on_commentary(md["commentary"][self.cm_i])
+            self.cm_i += 1
+        for m in R.on_frame(
+            i, t, period, md["pos"][i], md["ball"][i], bool(md["live"][i]), int(md["poss"][i]), md["home_dir"][i]
+        ):
+            if m["kind"] == "pressure":
+                self.pressures.append(m)
+            self.writer.write_moment(m)
+        self.frame_ms.append((time.perf_counter() - t0) * 1000)
+        if t - self.last_cp >= self.checkpoint_every_s:
+            self.checkpoint(i)
+            self.last_cp = t
+
+    def end(self):
+        """Full time: the closing card and the last checkpoint."""
+        n = len(self.md["clock"])
+        self.fulltime(float(self.md["clock"][n - 1]))
+        self.checkpoint(n - 1)
 
     def kickoff(self):
         habits = []
@@ -487,17 +525,33 @@ def generate(plain_seed=None):
 
 
 def main(argv):
+    """A whole match in one go, wired like the services: each part on Azure when its setting is present."""
+    from ..azure import settings, wire
+    from ..azure.telemetry import start as tracing
+
     plain = int(argv[argv.index("--plain") + 1]) if "--plain" in argv else None
     t0 = time.time()
+    cfg = settings()
+    tracing(cfg, "tempo-run")
     season, search = seasonmod.load()
     md = generate(plain)
-    out, work = os.path.join(RUNS, md["meta"]["match_id"]), os.path.join(WORK, md["meta"]["match_id"])
+    mid = md["meta"]["match_id"]
+    out, work = os.path.join(RUNS, mid), os.path.join(WORK, mid)
     if os.path.exists(os.path.join(work, "tempo.sqlite")):
         os.remove(os.path.join(work, "tempo.sqlite"))
-    p = Pipeline(md, out, season=season, search=search, work_dir=work)
+    w = wire(mid, work, search, cfg)
+    if hasattr(w.ledger, "clear"):
+        w.ledger.clear()  # the match starts again from kick-off
+    if w.on_azure:
+        print(f"{mid}: " + ", ".join(w.on_azure))
+    p = Pipeline(md, out, season=season, work_dir=work, wiring=w)
     p.run()
     s = p.finish(time.time() - t0)
     write_json(os.path.join(work, "planted.json"), md["planted"], indent=1)
+    if cfg.blob_endpoint:
+        from ..azure.blob import upload_run
+
+        upload_run(cfg, out, mid)
     print(json.dumps(s, indent=1))
 
 

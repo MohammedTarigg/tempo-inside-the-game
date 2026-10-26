@@ -1,6 +1,6 @@
 """Where sentences come from. Model calls go through a backend. LocalBackend writes from templates, so the whole
-pipeline runs with no cloud and serves as the fallback when a model is slow or down. FoundryBackend is the seam for a
-model on Azure AI Foundry, built to the contract in docs/architecture.md section 6."""
+pipeline runs with no cloud and serves as the fallback when a model is slow or down. The model on Microsoft Foundry is
+FoundryBackend in tempo/azure/foundry.py, built to the contract in docs/architecture.md section 6."""
 
 
 class LocalBackend:
@@ -233,15 +233,3 @@ class LocalBackend:
         if kind == "season_best":
             return f"{n[ctx['player']]}, fastest this season"
         return ""
-
-
-class FoundryBackend:
-    """Seam for Microsoft Agent Framework on Azure AI Foundry. Not wired in this local build: it needs the
-    subscription."""
-
-    name = "foundry"
-
-    def __init__(self):
-        raise NotImplementedError(
-            "FoundryBackend needs an Azure subscription and is wired on day one; the local backend is the fallback path"
-        )

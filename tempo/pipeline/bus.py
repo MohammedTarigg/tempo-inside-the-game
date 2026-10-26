@@ -1,6 +1,6 @@
 """Message bus. LocalBus keeps every topic as an append-only log with offsets, which is the property the pipeline relies
-on from Azure Event Hubs: a consumer that restarts reads again from its saved offset. An Event Hubs adapter implements
-the same three methods."""
+on from Azure Event Hubs: a consumer that restarts reads again from its saved offset. On Azure the bus is EventHubsBus
+(tempo/azure/eventhubs.py), with the same three methods."""
 
 import json
 import os
@@ -17,7 +17,9 @@ class LocalBus:
         log.append(msg)
         return len(log) - 1
 
-    def read(self, topic, offset=0, limit=None):
+    def read(self, topic, offset=0, limit=None, wait=0.0):
+        """Messages from `offset` on, as (offset, message). Everything published is already here, so `wait` (how long
+        the Event Hubs bus waits for the first one) has nothing to wait for."""
         log = self.topics.get(topic, [])
         end = len(log) if limit is None else min(len(log), offset + limit)
         return [(i, log[i]) for i in range(offset, end)]

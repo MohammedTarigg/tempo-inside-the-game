@@ -15,6 +15,50 @@ def run(a):
     main(["--plain", str(a.plain)] if a.plain is not None else [])
 
 
+def feed(a):
+    from .azure import settings, wire
+    from .pipeline.feeder import play
+    from .pipeline.run import generate
+
+    md = generate(a.plain)
+    mid = md["meta"]["match_id"]
+    if not settings().eventhubs_namespace:
+        sys.exit("tempo feed plays into Event Hubs: set TEMPO_AZURE_EVENTHUBS_NAMESPACE, or run `tempo live --feed`")
+    print(f"{mid}: {play(md, wire(mid, os.path.join('.work', mid)).bus, a.speed, not a.no_commentary)} messages")
+
+
+def live(a):
+    from .pipeline.live import serve
+    from .pipeline.run import generate
+
+    md = generate(a.plain) if a.feed else None
+    match_id = md["meta"]["match_id"] if md else a.match
+    serve(match_id, a.port, feed_md=md, speed=a.speed, out=a.out)
+
+
+def listen(a):
+    from .azure.speech import serve
+    from .jsonio import write_json
+    from .paths import RESULTS
+
+    lines = serve(a.match, a.audio, a.at, live=not a.fast)
+    write_json(
+        os.path.join(RESULTS, "speech.json"), dict(match_id=a.match, audio=a.audio, at=a.at, lines=lines), indent=1
+    )
+    print(f"{len(lines)} lines; results/speech.json")
+
+
+def index(a):
+    from . import season as seasonmod
+    from .azure import settings
+    from .azure.search import upload_season
+
+    cfg = settings()
+    if not cfg.search_endpoint:
+        sys.exit("set TEMPO_AZURE_SEARCH_ENDPOINT")
+    print(f"{upload_season(cfg, seasonmod.load()[1])} attacks in the {cfg.search_index} index")
+
+
 def season(a):
     from .season import build
 
@@ -72,6 +116,10 @@ def types(a):
 
 STEPS = [
     ("run", run, "run the demo match (or a plain one) through the pipeline and write it for the site"),
+    ("feed", feed, "play a match into Event Hubs as the providers deliver it, at real-time speed"),
+    ("live", live, "the live service: play a match through the pipeline from the bus as it arrives"),
+    ("listen", listen, "the listener service: commentary audio through AI Speech, one line per thing said"),
+    ("index", index, "put the season's attacks in AI Search for the closest earlier attempt"),
     ("season", season, "build the generated season: what is usual, the mined habits, the archive of attacks"),
     ("check", check, "the pipeline checks: no reading ahead, recovery, the planted story, the verifier"),
     ("calls", calls, "measure the kick-off calls on matches the season never saw"),
@@ -92,6 +140,23 @@ def main(argv=None):
         s.set_defaults(fn=fn)
         if name == "run":
             s.add_argument("--plain", type=int, metavar="SEED", help="an unscripted match with this seed")
+        if name in ("feed", "live"):
+            s.add_argument("--plain", type=int, metavar="SEED", help="an unscripted match with this seed")
+            s.add_argument("--speed", type=float, default=1.0, help="times real time; 0 is as fast as the bus takes it")
+        if name == "feed":
+            s.add_argument("--no-commentary", action="store_true", help="leave the commentary to the listener service")
+        if name == "live":
+            s.add_argument("match", nargs="?", default="m_demo", help="the match to serve")
+            s.add_argument("--feed", action="store_true", help="play the match into the bus from this process too")
+            s.add_argument("--port", type=int, help="for /healthz, /cues and /negotiate; PORT or 8080 by default")
+            s.add_argument("--out", help="where the run's files go at full time; web/public/runs/<match> by default")
+        if name == "listen":
+            s.add_argument("--match", default="m_demo")
+            s.add_argument(
+                "--audio", default=os.path.join("assets", "audio", "commentator.wav"), help="a file or stream"
+            )
+            s.add_argument("--at", type=float, default=0.0, help="the match time, in seconds, the audio starts at")
+            s.add_argument("--fast", action="store_true", help="as fast as the service takes it, not at speaking speed")
         if name == "season":
             s.add_argument("--matches", type=int, default=40)
         if name == "calls":

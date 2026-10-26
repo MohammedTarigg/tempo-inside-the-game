@@ -1,7 +1,7 @@
 """The writing path. Which facts belong to a moment is decided by code; a backend turns them into one sentence per
 language, and the Verifier holds every sentence to the facts before it leaves. A checkpoint after each step lets a
-restart resume. The agents themselves (two investigators and a gate, for a turn nobody scripted) are described in
-docs/architecture.md section 6 and are not in this build."""
+restart resume. The backend is the templates locally and a Foundry model on Azure (tempo/azure/foundry.py); either way
+the templates are the fallback."""
 
 import time
 from typing import Any
@@ -92,7 +92,26 @@ class Writer:
                 ok, why = verify(
                     text, facts, self.names, allowed_numbers=ctx.get("allowed", ()), expected=want, expected_names=who
                 )
-                if not ok:  # one rewrite, then the template
+                repair = getattr(self.backend, "repair", None)
+                if not ok and repair and how == "ok":  # one rewrite, with the exact reasons
+                    self.ledger.audit(t, "verifier_rejected", dict(text=text, reasons=why, lang=lang))
+                    text, how = self.breaker.call(
+                        lambda lang=lang, fix=repair, bad=text, reasons=why: fix(
+                            moment["kind"], ctx, lang, bad, reasons
+                        ),
+                        lambda lang=lang: self.fallback.narrate(moment["kind"], ctx, lang),
+                        timeout=4.0,
+                    )
+                    ok, why = verify(
+                        text,
+                        facts,
+                        self.names,
+                        allowed_numbers=ctx.get("allowed", ()),
+                        expected=want,
+                        expected_names=who,
+                    )
+                    how = "repaired" if how == "ok" else how
+                if not ok:  # then the template
                     self.ledger.audit(t, "verifier_rejected", dict(text=text, reasons=why, lang=lang))
                     text = self.fallback.narrate(moment["kind"], ctx, lang)
                     ok, why = verify(
@@ -104,6 +123,12 @@ class Writer:
                         expected_names=who,
                     )
                     how = "template_after_rejection"
+                if ok and not text:  # the model had nothing to say: the screen stays clear, and the desk shows the hold
+                    self.ledger.audit(
+                        t,
+                        "held_back",
+                        dict(form="sentence", payload=dict(lang=lang), reason="nothing to say", short="Nothing to say"),
+                    )
                 if ok and text:
                     texts[lang] = dict(
                         text=text,
@@ -113,7 +138,7 @@ class Writer:
                         proof=self.fallback.proof(moment["kind"], ctx, lang),
                     )
             cp["texts"] = texts
-            cp["label"] = self.fallback.label(moment["kind"], ctx)
+            cp["label"] = self.backend.label(moment["kind"], ctx)
             self.ledger.save_checkpoint(key, cp)
         ids = cp["decision"]["fact_ids"]
         for lang, v in cp["texts"].items():
@@ -165,6 +190,7 @@ class Writer:
             minute=minute,
             player=moment.get("player"),
             allowed=[minute],
+            facts=facts,  # what a model is given to write from; the templates read the fields below
         )
         by = {}
         for f in facts:
