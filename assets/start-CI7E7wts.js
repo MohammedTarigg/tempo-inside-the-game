@@ -1,0 +1,1 @@
+var e=(e,t)=>{let n=e.pos[0]?.[t];return Math.max(0,e.pos.findIndex(e=>{let r=e[t];return!!r&&!!n&&Math.hypot(r[0]-n[0],r[1]-n[1])>.4}))},t=(t,n,r)=>Math.max(0,Math.min(e(t,r)-t.start_offset,e(n,r)-n.start_offset)-6),n=(e,t,n,r)=>{e.set(n[0]+2*r,30,-n[1]+30),t.set(n[0]+4*r,0,-n[1]+5)};export{e as n,t as r,n as t};
