@@ -8,6 +8,8 @@ Built for the Microsoft and Premier League "Inside the Game" hackathon. The matc
 
 ## See it
 
+The site is live at https://mohammedtarigg.github.io/tempo-inside-the-game/, built with `TEMPO_BASE=/tempo-inside-the-game/ bun run build` and published from the `gh-pages` branch. To run it yourself:
+
 ```bash
 bun install
 bun run dev

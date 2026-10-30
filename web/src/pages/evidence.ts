@@ -8,7 +8,7 @@ import realism from '../../../results/realism.json';
 import stake from '../../../models/stake_meta.json';
 import summary from '../../public/runs/m_demo/summary.json';
 import { LOGO } from '../match/markup.ts';
-import { el } from '../shared/util.ts';
+import { site, el } from '../shared/util.ts';
 
 const n = (x: number) => x.toLocaleString('en');
 const NS = 'http://www.w3.org/2000/svg';
@@ -287,7 +287,7 @@ const CLAIMS = [
 
 const page = el('main', 'evidence');
 const head = el('a', 'brand', page);
-head.href = '/';
+head.href = site('');
 head.innerHTML = `${LOGO}<b>tempo</b>`;
 el('h1', '', page, 'How we know');
 const list = el('ol', 'claims', page);

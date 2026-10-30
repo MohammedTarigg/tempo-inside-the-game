@@ -1,6 +1,10 @@
 // Small helpers every page uses: finding and making elements, the error plate, a few sums, and the easing curves.
 // Each curve has its own name, so a caller always gets the one it asked for.
 
+// A path on this site. The site is served from the root locally and from the repository's folder on GitHub Pages, so
+// every address a page builds goes through here rather than starting with a bare slash.
+export const site = (path: string) => (import.meta.env?.BASE_URL ?? '/') + path.replace(/^\//, '');
+
 // The element with this id. Every id the pages ask for is in their own markup, so a missing one is a bug, said loudly.
 export const $ = <T extends HTMLElement = HTMLElement>(id: string): T => {
   const e = document.getElementById(id);

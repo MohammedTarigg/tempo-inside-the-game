@@ -1,5 +1,5 @@
 // The film's sixth feature, Déjà vu: the replay view itself, in a frame, put in behind a blink of the eye.
-import { el } from '../../shared/util.ts';
+import { site, el } from '../../shared/util.ts';
 import { startLead, runnerCamera } from '../../replay/start.ts';
 import type { FilmCtx, Scene } from '../film.ts';
 
@@ -43,7 +43,7 @@ export function dejaVu(ctx: FilmCtx): Scene {
       } else if (scene) glide(scene.frame, 0, onBall(46, 44), null, 0);
       look([wrap.clientWidth / 2, wrap.clientHeight / 2]);
       frame = el('iframe', 'tframe', wrap);
-      frame.src = `/replay/?turn=${turn}&wait=0.7&bare=1`;
+      frame.src = site(`replay/?turn=${turn}&wait=0.7&bare=1`);
       frame.title = 'Replay of the closest earlier attempt';
       {
         const f = frame,

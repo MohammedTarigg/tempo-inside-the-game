@@ -4,6 +4,7 @@
 // Importing this file builds the pitch once; mountStage puts the canvas in the page. The players' markers are in marker.ts
 // and the ball and the shapes drawn on the turf in shapes.ts.
 import * as THREE from 'three';
+import { site } from './util.ts';
 
 export interface Kit {
   shirt: number;
@@ -282,7 +283,7 @@ const CRESTS: Record<string, string> = { nor: 'northgate.svg', har: 'harbour-cit
 // The address of a club's crest, or null for a club without one.
 export const crestUrl = (short: string) => {
   const f = CRESTS[short.toLowerCase()];
-  return f ? `/brand/${f}` : null;
+  return f ? site(`brand/${f}`) : null;
 };
 
 export { renderer, scene, camera, stageEl };

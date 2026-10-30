@@ -10,7 +10,7 @@ import '../styles/replay.css';
 import { renderer, scene, camera, KITS, crestUrl, FONT, mountStage } from '../shared/stage.ts';
 import { Marker } from '../shared/marker.ts';
 import { makeBall, makePulses } from '../shared/shapes.ts';
-import { $, lerp, clamp, mmss } from '../shared/util.ts';
+import { $, site, lerp, clamp, mmss } from '../shared/util.ts';
 import { runnerCamera } from './start.ts';
 import { sample, sampleBall, place } from './clip.ts';
 import { makeShow, type ShowState } from './show.ts';
@@ -35,7 +35,7 @@ export async function startReplay(Q = new URLSearchParams(location.search)) {
     WAIT = parseFloat(Q.get('wait') || '0');
   if (Q.get('bare')) document.documentElement.classList.add('bare');
   await Promise.all([document.fonts.load(`700 20px ${FONT}`), document.fonts.load(`600 20px ${FONT}`)]).catch(() => {}); // the numbers on the markers are drawn once, so the face must be in
-  const scenes = await fetch(`/runs/${RUN}/scenes.json`, { cache: 'no-cache' })
+  const scenes = await fetch(site(`runs/${RUN}/scenes.json`), { cache: 'no-cache' })
     .then((r) => {
       if (!r.ok) throw new Error('run');
       return r.json() as Promise<ReplayScene[]>;

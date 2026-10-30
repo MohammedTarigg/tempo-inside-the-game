@@ -1,6 +1,7 @@
 // The match view's page: the picture with its scoreboard and plates, the match's strip under it edge to edge, and under
 // that one row: the mark, the controls, the phone's words for this moment, and the viewer's choices. One definition, used
 // by the match, the desk and the film, so the three pages cannot drift apart.
+import { site } from '../shared/util.ts';
 
 export const LOGO = `<svg class="logo" viewBox="0 0 120 120" width="34" height="34" aria-hidden="true"><circle cx="60" cy="60" r="27.5" fill="none" stroke="#fff" stroke-width="13"/><rect x="54.93" y="6" width="10.14" height="26.5" rx="5.07" fill="#fff"/><rect x="54.93" y="87.5" width="10.14" height="26.5" rx="5.07" fill="#fff"/><circle id="eye" cx="60" cy="60" r="13.2" fill="#fff"/></svg>`;
 
@@ -19,7 +20,7 @@ const PICTURE = `
       </span>
       <span class="clock" id="clock">00:00</span>
     </div>
-    <div id="replaytag"><b>Replay</b><a id="replaylink" href="/replay/">Watch the earlier attempt</a></div>
+    <div id="replaytag"><b>Replay</b><a id="replaylink" href="${site('replay/')}">Watch the earlier attempt</a></div>
     <div id="counter"><p><span><b id="seen">0</b>events seen</span><span><b id="shown">0</b>shown</span></p><i><b id="sieve"></b></i></div>
     <div id="lower">
       <div id="kmhead" class="plate">Three things to watch, from the season so far</div>
@@ -45,7 +46,7 @@ export const ICONS = {
 };
 
 const PHONE = `
-  <a id="brand" href="/" aria-label="Tempo">${LOGO}</a>
+  <a id="brand" href="${site('')}" aria-label="Tempo">${LOGO}</a>
   <div id="controls"><button id="play" aria-label="Pause">${ICONS.Pause}</button><button id="speed" aria-label="Playback speed">1x</button><button id="prev" aria-label="Previous moment">${ICONS.prev}</button><button id="next" aria-label="Next moment">${ICONS.next}</button></div>
   <div id="story">
     <p id="psc" class="sr"></p>

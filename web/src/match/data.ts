@@ -1,6 +1,6 @@
 // The match as data, with nothing drawn: one run's positions and cues, and the questions the match view asks of them.
 // Positions come from match.bin (25 frames a second, whole centimetres) and everything else from match.json.
-import { lerp, clamp, upper } from '../shared/util.ts';
+import { site, lerp, clamp, upper } from '../shared/util.ts';
 import type { Pt } from '../shared/stage.ts';
 import type { Action, Cue, DangerWindowPayload, KickoffMarkCue, MatchView, PhoneSentenceCue } from '../types/run.ts';
 
@@ -20,7 +20,7 @@ export type ShownMark = Timed<KickoffMarkCue> & { again?: boolean };
 // the run's own: on a live screen they are the cues the live service has issued so far, and add() and withdraw() take
 // the ones pushed after (live.ts).
 export async function loadMatch(run: string, cues?: Cue[]) {
-  const base = `/runs/${run}/`;
+  const base = site(`runs/${run}/`);
   const [M, buf] = await Promise.all([
     fetch(base + 'match.json', { cache: 'no-cache' }).then((r) => {
       if (!r.ok) throw new Error('run');

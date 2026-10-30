@@ -6,6 +6,8 @@ const page = (path: string) => resolve(import.meta.dirname, 'web', path);
 
 export default defineConfig({
   root: 'web',
+  // '/' for the dev server and the e2e tests; the GitHub Pages build sets the repository's folder (see the README)
+  base: process.env.TEMPO_BASE ?? '/',
   build: {
     outDir: '../dist',
     emptyOutDir: true,

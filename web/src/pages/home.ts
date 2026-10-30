@@ -6,20 +6,20 @@
 import '../styles/home.css';
 import calls from '../../../results/calls.json';
 import summary from '../../public/runs/m_demo/summary.json';
-import { el, svgEl, seg, lerp, inOutCubic, outBack } from '../shared/util.ts';
+import { site, el, svgEl, seg, lerp, inOutCubic, outBack } from '../shared/util.ts';
 
 const [home, away] = summary.final_score;
 const STOPS = [
-  { href: '/film/', name: 'Watch the film', line: '107 seconds, seven features', loop: '/previews/film.mp4' },
+  { href: site('film/'), name: 'Watch the film', line: '107 seconds, seven features', loop: site('previews/film.mp4') },
   {
-    href: '/match/?intro=0',
+    href: site('match/?intro=0'),
     name: 'Watch the match',
     line: `Northgate ${home}, Harbour City ${away}`,
-    loop: '/previews/match.mp4',
+    loop: site('previews/match.mp4'),
   },
-  { href: '/desk/', name: 'Producer desk', line: 'What aired and what was held', loop: '/previews/desk.mp4' },
+  { href: site('desk/'), name: 'Producer desk', line: 'What aired and what was held', loop: site('previews/desk.mp4') },
   {
-    href: '/evidence/',
+    href: site('evidence/'),
     name: 'How we know',
     line: 'Every figure, with its check',
     figure: `${calls.held} of ${calls.tested}`,

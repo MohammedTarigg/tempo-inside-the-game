@@ -13,7 +13,7 @@ import checks from '../../../results/checks.json';
 import stakeMeta from '../../../models/stake_meta.json';
 import { playIntro } from '../brand/intro.ts';
 import { renderer, scene, camera } from '../shared/stage.ts';
-import { $, el, clamp, seg, smooth, outBack } from '../shared/util.ts';
+import { $, site, el, clamp, seg, smooth, outBack } from '../shared/util.ts';
 import type { MatchApi } from '../match/view.ts';
 import type { Cue, ReplayScene } from '../types/run.ts';
 import type { CueOf, Timed } from '../match/data.ts';
@@ -137,12 +137,12 @@ export async function runFilm(api: MatchApi, Q = new URLSearchParams(location.se
   const { DIR } = api;
   // The film's timings come from the music. tools/film_music.py cuts a track to the film and writes, beside it, the length of its
   // beat and how many beats each part lasts, so every feature starts on a beat of whichever track is playing.
-  const THEME = `/audio/tempo-theme${/^[a-z-]+$/.test(Q.get('music') || '') ? `-${Q.get('music')}` : ''}`;
+  const THEME = site(`audio/tempo-theme${/^[a-z-]+$/.test(Q.get('music') || '') ? `-${Q.get('music')}` : ''}`);
   const SCORE: Score = (await fetch(`${THEME}.json`, { cache: 'no-cache' })
     .then((r) => (r.ok ? (r.json() as Promise<Score>) : null))
     .catch(() => null)) ?? { beat: 0.6, open: 16, parts: [16, 12, 16, 24, 12, 28, 24, 18, 12], strike: 4, lit: 16 };
   // The replay's own data: the film has to arrive on the exact frame and framing the replay opens with.
-  const REPLAY = await fetch(`/runs/${Q.get('run') || 'm_demo'}/scenes.json`, { cache: 'no-cache' })
+  const REPLAY = await fetch(site(`runs/${Q.get('run') || 'm_demo'}/scenes.json`), { cache: 'no-cache' })
     .then((r) => (r.ok ? (r.json() as Promise<ReplayScene[]>) : []))
     .then((a) => a[0] ?? null)
     .catch(() => null);
