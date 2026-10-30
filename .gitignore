@@ -1,6 +1,10 @@
-# never in any public copy
+# never in any public copy: the working notes, the strategy and the research behind them
 data/
 private/
+CLAUDE.md
+00-strategy.md
+reports/
+research/
 .claude/
 .env
 .env.*

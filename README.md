@@ -104,4 +104,4 @@ bun run e2e
 
 ## Data and credits
 
-The match data on screen is generated. The stake model is trained on the DFL open tracking dataset (Bassek et al. 2025, CC BY 4.0). The film's music, crowd and commentator voice are public domain or made for it. All sources and licences are in [CREDITS.md](CREDITS.md).
+The match data on screen is generated. The stake model is trained on the DFL open tracking dataset (Bassek et al. 2025, CC BY 4.0). The film's music, crowd and commentator voice are public domain or made for it. All sources and licences are in [CREDITS.md](CREDITS.md). The code is open to read, run and build on, and licensed for noncommercial use only, under PolyForm Noncommercial 1.0.0 in [LICENSE](LICENSE): nobody sells it or makes money from it. The data and sound keep the licences their credits name.
